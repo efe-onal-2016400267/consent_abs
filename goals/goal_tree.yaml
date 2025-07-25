@@ -1,0 +1,36 @@
+goals:
+  - name: make_cake
+    sub_goals:
+    - name: use_oven
+    - name: use_flour
+    - name: use_egg
+    - name: use_sugar
+  - name: make_ratatouille
+    sub_goals:
+    - name: use_oven
+    - name: use_tomato
+    - name: use_zucchini
+    - name: use_garlic
+    - name: use_onion
+    - name: use_oliveoil
+  - name: make_pastanapolitana
+    sub_goals:
+    - name: use_stove
+    - name: use_pasta
+    - name: use_tomato
+    - name: use_onion
+    - name: use_garlic
+    - name: use_oliveoil
+    - name: use_parmesan
+  - name: make_omelette
+    sub_goals:
+    - name: use_stove
+    - name: use_egg
+    - name: use_butter
+  - name: make_rice
+    sub_goals:
+    - name: use_stove
+    - name: use_rice
+    - name: use_butter
+  
+  
