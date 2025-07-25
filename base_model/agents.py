@@ -46,6 +46,7 @@ class ChefAgent(CellAgent):
             return
         
         # For each subgoal of each goal, call the necessary handler
+        # TODO: We created a single resource finder function, revisit this handler logic.
         # TODO: Do we want any planning logic here?
         for goal in self.goals:
             for subgoal in goal:
@@ -66,20 +67,27 @@ class ChefAgent(CellAgent):
     def resource_finder(self, resource_type):
         """
         This function finds the required resource instance for the goal.
-        1. Check resources owned by the agent and not lent to another.
+        3. Check resources owned by the agent and not lent to another.
         2. Check resources borrowed from other agents and currently held.
-        3. Check the closest resource owner who hasn't lent the resource.
+        1. Check the closest resource owner who hasn't lent the resource.
         """
-
-        # check resources owned by the agent
+        
+        # TODO: when do we release? Can I borrow for one goal and use for 2 goals? That might be an instance of a prohibition.
+        
+        # Owned by the agent, currently in use by the agent.
+        for res in self.sovereigned_resources_self_use:
+            if res.type == resource_type:
+                return
+            
+        # Owned by the agent, currently used by nobody
         for res in self.available_sovereigned_resources:
             if res.type == resource_type:
-                
-
-        
-
-
-        
-
-
-        
+                res.in_use_by = self
+                self.available_sovereigned_resources.remove(res)
+                self.sovereigned_resources_self_use.append(res)
+                return
+            
+        # Get the closest available resource of this type
+        # 1. Get a list of all the agents, that hold one of the required type of resource
+        # 2. Get the closest agent
+        # 3. Negoiate? and borrow the resource
