@@ -6,6 +6,19 @@ import pandas as pd
 from mesa.experimental.cell_space import CellAgent
 import math
 
+def get_distance(cell_1, cell_2):
+    """
+    Returns the eucledian distance between two cells.
+    Used in resource_finder function.
+    """
+
+    x1, y1 = cell_1.coordinate
+    x2, y2 = cell_2.coordinate
+
+    dx = x1 - x2
+    dy = y1 - y2
+
+    return math.sqrt(dx ** 2 + dy ** 2)
 
 """
 
@@ -82,6 +95,7 @@ class ChefAgent(CellAgent):
         # Owned by the agent, currently used by nobody
         for res in self.available_sovereigned_resources:
             if res.type == resource_type:
+                # TODO: If this is just the resource finder function, then maybe the following 3 lines should be inside another function.
                 res.in_use_by = self
                 self.available_sovereigned_resources.remove(res)
                 self.sovereigned_resources_self_use.append(res)
