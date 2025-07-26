@@ -51,6 +51,7 @@ class ChefAgent(CellAgent):
         self.available_sovereigned_resources = []
         self.sovereigned_resources_self_use = []
         self.current_borrowed_resources = []
+        self.cell = cell
 
 
     def interpret_goals(self):
@@ -105,3 +106,7 @@ class ChefAgent(CellAgent):
         # 1. Get a list of all the agents, that hold one of the required type of resource
         # 2. Get the closest agent
         # 3. Negoiate? and borrow the resource
+
+    def print_goals_and_resources(self):
+        print(f"Agent: {self.unique_id}, coords: {self.cell.coordinate}")
+        print(f"Agent: {self.unique_id}, resources: {self.sovereigned_resources}, goals: {self.goals}")
