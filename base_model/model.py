@@ -21,7 +21,8 @@ class NoConsentModel(mesa.Model):
                 initial_population=100,
                 seed = None,
                 goal_per_agent = 2,
-                resource_per_agent = 2
+                resource_per_agent = 2,
+                resources = []
                 ):
         super().__init__(seed=seed)
 
@@ -30,7 +31,7 @@ class NoConsentModel(mesa.Model):
         self.height = height
         self.goal_per_agent = goal_per_agent
         self.resource_per_agent = resource_per_agent
-
+        self.resources = resources
         self.running = True
         self.grid = OrthogonalVonNeumannGrid(
             (self.width, self.height), torus=False, random=self.random
@@ -73,7 +74,7 @@ class NoConsentModel(mesa.Model):
 
     def step(self):
         self.agents.do("print_goals_and_resources")
-
+        self.agents.do("interpret_goals")
 
     
 model = NoConsentModel(seed=42)
