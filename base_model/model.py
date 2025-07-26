@@ -20,12 +20,16 @@ class NoConsentModel(mesa.Model):
                 height=50,
                 initial_population=100,
                 seed = None,
+                goal_per_agent = 2,
+                resource_per_agent = 2
                 ):
         super().__init__(seed=seed)
 
         # initiate width and height of the grid
         self.width = width
         self.height = height
+        self.goal_per_agent = goal_per_agent
+        self.resource_per_agent = resource_per_agent
 
         self.running = True
         self.grid = OrthogonalVonNeumannGrid(
@@ -50,14 +54,21 @@ class NoConsentModel(mesa.Model):
         self.goals = list(self.goals)
         self.resources = list(self.resources)
 
+        # now for each agent, we'll create a different set of goals and resources. Let each agent have 2 goals and 2 resources.
+        # TODO: Make sure all resources exist in the model, that is all goals are achievable.
+        self.goals_of_agents = []
+        self.resources_of_agents = []
+        for _ in range(initial_population):
+            self.goals_of_agents.append(self.random.sample(self.goals, k=self.goal_per_agent))
+            self.resources_of_agents.append(self.random.sample(self.resources, k=self.resource_per_agent))
 
         ChefAgent.create_agents(
             self,
             initial_population,
             cell=self.random.choices(self.grid.all_cells.cells, k=initial_population),
             # Now I need to feed goals and sovereign resources at random.
-            goals = self.random.choices(self.goals, k=initial_population),
-            sovereigned_resources = self.random.choices(self.resources, k=initial_population)
+            goals = self.goals_of_agents,
+            sovereigned_resources = self.resources_of_agents
         )
 
     def step(self):
@@ -65,5 +76,5 @@ class NoConsentModel(mesa.Model):
 
 
     
-model = NoConsentModel(seed=None)
+model = NoConsentModel(seed=42)
 model.step()
