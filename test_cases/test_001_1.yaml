@@ -1,0 +1,38 @@
+# 1. Can an agent obtain a resource thats in use by taking a resource
+# that is owned by and used by another agent.
+
+# 2. What happens when agent starts with no goals?
+
+# 3. What happens when agent starts with no resources?
+
+# 4. What happens when an agent starts with no goals and no resources?
+
+agents:
+  - id: 1
+    goals:
+      - name: make_cake
+        sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
+      - name: make_ratatouille
+        sub_goals: ["use_oven", "use_tomato", "use_zucchini", "use_garlic", "use_onion", "use_oliveoil"]
+    resources:
+      - name: oven_1
+        type: oven
+      - name: egg_1
+        type: egg
+
+  # Agent 1 with different goals
+  - id: 2
+    goals:
+      - name: make_cake
+        sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
+    resources:
+      - name: tomato_2
+        type: tomato
+      - name: zucchini_2
+        type: zucchini
+      - name: garlic_2
+        type: garlic
+      - name: onion_2
+        type: onion
+      - name: oliveoil_2
+        type: oliveoil
