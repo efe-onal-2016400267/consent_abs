@@ -6,6 +6,8 @@ import pandas as pd
 from mesa.experimental.cell_space import CellAgent
 import math
 
+# TODO: Right now, if the agent cannot find a resource, th goal still gets accomplished. Gotta fix that.
+
 """
 1.  So at each step, an agent can accomplish 1 goal 
     by collecting all resources it needs in a single step for a single goal.
@@ -101,7 +103,7 @@ class ChefAgent(CellAgent):
                     self.all_resources_self_use.remove(res)
                     
                     # other is the owner of the resource.
-                    other = self.model._all_agents[res.owner]
+                    other = self.model._all_agents[res.owner - 1]
                     # If its your resource, make it available.
                     if other == self:
                         self.sovereigned_resources_available.append(res)
