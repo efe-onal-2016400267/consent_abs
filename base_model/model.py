@@ -20,8 +20,8 @@ class NoConsentModel(mesa.Model):
                 height=50,
                 initial_population=100,
                 seed = None,
-                goal_per_agent = 2,
-                resource_per_agent = 2,
+                goal_per_agent = 5,
+                resource_per_agent = 1,
                 resources = []
                 ):
         super().__init__(seed=seed)
@@ -57,11 +57,21 @@ class NoConsentModel(mesa.Model):
 
         # now for each agent, we'll create a different set of goals and resources. Let each agent have 2 goals and 2 resources.
         # TODO: Make sure all resources exist in the model, that is all goals are achievable.
+        # TODO: But we need to make these resources instances of the resource class. How would we do that?
         self.goals_of_agents = []
         self.resources_of_agents = []
-        for _ in range(initial_population):
+        for agent_index in range(initial_population):
             self.goals_of_agents.append(self.random.sample(self.goals, k=self.goal_per_agent))
-            self.resources_of_agents.append(self.random.sample(self.resources, k=self.resource_per_agent))
+
+            # Sample resource types (e.g., 'egg', 'oven')
+            resource_types = self.random.sample(self.resources, k=self.resource_per_agent)
+
+            # Create Resource instances and assign ownership
+            resource_instances = [
+                Resource(name=f"{res_type}_{agent_index}_{i}", owner=agent_index, type=res_type)
+                for i, res_type in enumerate(resource_types)
+            ]
+            self.resources_of_agents.append(resource_instances)
 
         ChefAgent.create_agents(
             self,
@@ -73,9 +83,20 @@ class NoConsentModel(mesa.Model):
         )
 
     def step(self):
-        self.agents.do("print_goals_and_resources")
+        #self.agents.do("print_goals_and_resources")
         self.agents.do("interpret_goals")
 
     
 model = NoConsentModel(seed=42)
-model.step()
+
+while 1:
+    model.step()
+    fin = 1
+    for agent in model._all_agents:
+        print(agent)
+        if len(agent.remaining_goals) > 0:
+            print(f"Agent: {agent.unique_id}, remaining goal count: {len(agent.remaining_goals)}")
+            fin = 0
+
+    if fin:
+        break

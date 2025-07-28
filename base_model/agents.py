@@ -67,9 +67,11 @@ class ChefAgent(CellAgent):
         self.remaining_goals = goals
         self.current_goal = None
         self.sovereigned_resources = sovereigned_resources
-        self.available_sovereigned_resources = []
+        self.sovereigned_resources_available = sovereigned_resources.copy()
         self.sovereigned_resources_self_use = []
         self.current_borrowed_resources = []
+        self.all_resources_self_use = []
+        self.lent_away_resources = []
         self.accomplished_goals = []
         self.cell = cell
         self.all_required_future_resources = self.initialize_required_future_resources()
@@ -80,27 +82,49 @@ class ChefAgent(CellAgent):
         if not self.remaining_goals:
             return
         
-        # For each subgoal of each goal, call the necessary handler
-        # TODO: We created a single resource finder function, revisit this handler logic.
-        # TODO: Do we want any planning logic here?
-        for goal in self.remaining_goals:
-            for subgoal in goal:
-                subgoal_name = subgoal["name"]
-                handler = getattr(self, subgoal_name, None)
-                if handler:
-                    handler()
-                else:
-                    print(f"No subgoal or handler.")
+        for goal in self.remaining_goals[:]:
+            self.current_goal = goal
+            for subgoal in goal[1]:
+                res_type = subgoal.split("_")[1]
+                # try obtaining required resources for the goal
+                self.resource_finder(res_type)
+
+            # If the agent has acquired all the resources, it should complete the goal
+            self.accomplished_goals.append(self.current_goal)
+            # Remove the goal from remanining goals, update resources that will be needed in the future
+            self.remaining_goals.remove(self.current_goal)
+            self.all_required_future_resources = self.initialize_required_future_resources()
+            # If the resource wont be needed again, release it.
+            for res in self.all_resources_self_use[:]:
+                if res.type not in self.all_required_future_resources:
+                    res.in_use_by = None
+                    self.all_resources_self_use.remove(res)
+                    
+                    # other is the owner of the resource.
+                    other = self.model._all_agents[res.owner]
+                    # If its your resource, make it available.
+                    if other == self:
+                        self.sovereigned_resources_available.append(res)
+                        self.sovereigned_resources_self_use.remove(res)
+                    # If its other's resource, make it available.
+                    else:
+                        self.current_borrowed_resources.remove(res)
+                        other.sovereigned_resources_available.append(res)
+                        other.lent_away_resources.remove(res)
 
 
-    #########################################
-    #                                       #
-    #            Handler functions          #
-    #                                       #
-    #########################################
+            # TODO: Before releasing I can do extensive tests by using assesrt statements.
+            # Check if the agent has obtained all the resources needed for the goal.
+            # Check if the lists are correctly updated at self side, owner side, etc.
+            # I'll need to create the test cases myself for this, probably.
+            
+            break # treat only 1 goal at each tick
+
+
     def initialize_required_future_resources(self):
         """
-        In __init__, initialize the list of required future resources.
+        In __init__, initialize the list of required future resources, as resource type strings.
+        Also will be ran after each goal completion.
         """
         required_future_resources = []
         for goal in self.remaining_goals:
@@ -109,6 +133,83 @@ class ChefAgent(CellAgent):
                     required_future_resources.append(res.split("_")[1])
 
         return required_future_resources
+
+
+    def resource_finder(self, res_type):
+        """
+        This function finds the required resource instance for the goal.
+        4. Check resources already borrowed and not yet released.
+        3. Check resources owned by the agent and not lent to another.
+        2. Check resources borrowed from other agents and currently held.
+        1. Check the closest resource owner who hasn't lent the resource.
+
+        Called from self.interpret_resources function.
+        """
+
+        # Well since this is already reasource finder, it can be found in self.current_borrowed resources.
+        # Any changes in the goal completion scheme will be handled from self.goal_interpreter.
+        # Borrowed from other agents and not yet released.
+        for res in self.current_borrowed_resources:
+            if res.type == res_type:
+                return
+        
+        # Owned by the agent, currently in use by the agent.
+        for res in self.sovereigned_resources_self_use:
+            if res.type == res_type:
+                return
+            
+        # Owned by the agent, currently used by nobody
+        for res in self.sovereigned_resources_available[:]:
+            if res.type == res_type:
+                # TODO: If this is just the resource finder function, then maybe the following 3 lines should be inside another function.
+                # TODO: Check if the loop runs properly, we remove from the list after all.
+                res.in_use_by = self
+                self.sovereigned_resources_available.remove(res)
+                self.sovereigned_resources_self_use.append(res)
+                self.all_resources_self_use.append(res)
+                return
+            
+        # Get the closest available resource of this type
+        # 1. Get a list of all the agents, that hold one of the required type of resource, which is also non-acquired
+        # Get a list of all the agents with distances.
+        agent_distances = self.get_agent_distances()
+        # Sort in ascending order by distance
+        sorted_agents = sorted(agent_distances, key=lambda x: x[1])
+        for agent, dist in sorted_agents:
+            # 2. If the resource is not in use, acquire it.
+            res = self.check_available_resource_of_agent(res_type=res_type, agent=agent)
+            if res:
+                res.in_use_by = self
+                agent.sovereigned_resources_available.remove(res)
+                agent.lent_away_resources.append(res)
+                self.current_borrowed_resources.append(res)
+                self.all_resources_self_use.append(res)
+                return
+            
+        
+    def check_available_resource_of_agent(self, res_type, agent: "ChefAgent"):
+        """
+        Function that checks if the agent in the arguments owns a resource of type res_type that is also available.
+        Called from self.resource_finder function.
+        """
+        for res in agent.sovereigned_resources_available:
+            if res.type == res_type:
+                return res
+        
+        return None
+    
+    def get_agent_distances(self):
+        """
+        Returns all agents except self with distances to self.
+        Called from self.resource_finder
+        """
+        all_agents = self.model.agents
+        agent_distances = []
+        for agent in all_agents:
+            if agent != self:
+                agent_distances.append((agent, get_distance(self.cell, agent.cell)))
+        return agent_distances
+    
 
     def update_required_future_resources(self):
         """
@@ -130,38 +231,6 @@ class ChefAgent(CellAgent):
                 if not res_needed:
                     self.all_required_future_resources.remove(res)
 
-
-
-
-    def resource_finder(self, resource_type):
-        """
-        This function finds the required resource instance for the goal.
-        3. Check resources owned by the agent and not lent to another.
-        2. Check resources borrowed from other agents and currently held.
-        1. Check the closest resource owner who hasn't lent the resource.
-        """
-        
-        # TODO: when do we release? Can I borrow for one goal and use for 2 goals? That might be an instance of a prohibition.
-        
-        # Owned by the agent, currently in use by the agent.
-        for res in self.sovereigned_resources_self_use:
-            if res.type == resource_type:
-                return
-            
-        # Owned by the agent, currently used by nobody
-        for res in self.available_sovereigned_resources:
-            if res.type == resource_type:
-                # TODO: If this is just the resource finder function, then maybe the following 3 lines should be inside another function.
-                res.in_use_by = self
-                self.available_sovereigned_resources.remove(res)
-                self.sovereigned_resources_self_use.append(res)
-                return
-            
-        # Get the closest available resource of this type
-        # 1. Get a list of all the agents, that hold one of the required type of resource
-        # 2. Get the closest agent
-        # 3. Negoiate? and borrow the resource
-
     def print_goals_and_resources(self):
         print(f"Agent: {self.unique_id}, coords: {self.cell.coordinate}")
-        print(f"Agent: {self.unique_id}, resources: {self.sovereigned_resources}, goals: {self.goals}")
+        print(f"Agent: {self.unique_id}, resources: {self.sovereigned_resources}, goals: {self.remaining_goals}")
