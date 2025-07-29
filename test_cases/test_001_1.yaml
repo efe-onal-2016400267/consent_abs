@@ -1,11 +1,8 @@
-# 1. Can an agent obtain a resource thats in use by taking a resource
-# that is owned by and used by another agent.
-
-# 2. What happens when agent starts with no goals?
-
-# 3. What happens when agent starts with no resources?
-
-# 4. What happens when an agent starts with no goals and no resources?
+# OK. 1. Can an agent obtain a resource thats in use by taking a resource that is owned by and used by another agent.
+# OK. 2. Agents cannot acquire resources that are in use by other agents.
+# OK. 3. Resource obtaining works properly.
+# OK. 4. If the agent cannot obtain all resources, the goal is not accomplished.
+# OK. 5. If the goal is not accomplished in the current step, the agent continues from the same goal in the next step.
 
 agents:
   - id: 1
