@@ -7,6 +7,7 @@ from mesa.experimental.cell_space import CellAgent
 import math
 
 # TODO: Right now, if the agent cannot find a resource, th goal still gets accomplished. Gotta fix that.
+# TODO: Functions for printing resource lists properly.
 
 """
 1.  So at each step, an agent can accomplish 1 goal 
@@ -91,28 +92,35 @@ class ChefAgent(CellAgent):
                 # try obtaining required resources for the goal
                 self.resource_finder(res_type)
 
-            # If the agent has acquired all the resources, it should complete the goal
-            self.accomplished_goals.append(self.current_goal)
-            # Remove the goal from remanining goals, update resources that will be needed in the future
-            self.remaining_goals.remove(self.current_goal)
-            self.all_required_future_resources = self.initialize_required_future_resources()
-            # If the resource wont be needed again, release it.
-            for res in self.all_resources_self_use[:]:
-                if res.type not in self.all_required_future_resources:
-                    res.in_use_by = None
-                    self.all_resources_self_use.remove(res)
-                    
-                    # other is the owner of the resource.
-                    other = self.model._all_agents[res.owner - 1]
-                    # If its your resource, make it available.
-                    if other == self:
-                        self.sovereigned_resources_available.append(res)
-                        self.sovereigned_resources_self_use.remove(res)
-                    # If its other's resource, make it available.
-                    else:
-                        self.current_borrowed_resources.remove(res)
-                        other.sovereigned_resources_available.append(res)
-                        other.lent_away_resources.remove(res)
+            # TODO: check goal accomplishment.
+            if self.check_goal_accomplisment():
+                print(f"Agent: {self.unique_id} accomplished goal: {self.current_goal[0]}.")
+                # If the agent has acquired all the resources, it should complete the goal
+                self.accomplished_goals.append(self.current_goal)
+                # Remove the goal from remanining goals, update resources that will be needed in the future
+                self.remaining_goals.remove(self.current_goal)
+                self.current_goal = None
+                self.all_required_future_resources = self.initialize_required_future_resources()
+                # If the resource wont be needed again, release it.
+                for res in self.all_resources_self_use[:]:
+                    if res.type not in self.all_required_future_resources:
+                        print(f"Agent: {self.unique_id} has released resource: {res.name}, owned by: {res.owner}")
+                        res.in_use_by = None
+                        self.all_resources_self_use.remove(res)
+                        
+                        # other is the owner of the resource.
+                        other = self.model._all_agents[res.owner - 1]
+                        # If its your resource, make it available.
+                        if other == self:
+                            self.sovereigned_resources_available.append(res)
+                            self.sovereigned_resources_self_use.remove(res)
+                        # If its other's resource, make it available.
+                        else:
+                            self.current_borrowed_resources.remove(res)
+                            other.sovereigned_resources_available.append(res)
+                            other.lent_away_resources.remove(res)
+            else:
+                print(f"Agent: {self.unique_id} could not accomplish the goal: {self.current_goal[0]}")
 
 
             # TODO: Before releasing I can do extensive tests by using assesrt statements.
@@ -153,11 +161,13 @@ class ChefAgent(CellAgent):
         # Borrowed from other agents and not yet released.
         for res in self.current_borrowed_resources:
             if res.type == res_type:
+                print(f"Agent: {self.unique_id}, has already borrowed {res.name}, owned by {res.owner}")
                 return
         
         # Owned by the agent, currently in use by the agent.
         for res in self.sovereigned_resources_self_use:
             if res.type == res_type:
+                print(f"Agent: {self.unique_id}, has already acquired its own resource: {res.name}, owned by: {res.owner}")
                 return
             
         # Owned by the agent, currently used by nobody
@@ -165,6 +175,7 @@ class ChefAgent(CellAgent):
             if res.type == res_type:
                 # TODO: If this is just the resource finder function, then maybe the following 3 lines should be inside another function.
                 # TODO: Check if the loop runs properly, we remove from the list after all.
+                print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
                 res.in_use_by = self
                 self.sovereigned_resources_available.remove(res)
                 self.sovereigned_resources_self_use.append(res)
@@ -181,12 +192,14 @@ class ChefAgent(CellAgent):
             # 2. If the resource is not in use, acquire it.
             res = self.check_available_resource_of_agent(res_type=res_type, agent=agent)
             if res:
+                print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
                 res.in_use_by = self
                 agent.sovereigned_resources_available.remove(res)
                 agent.lent_away_resources.append(res)
                 self.current_borrowed_resources.append(res)
                 self.all_resources_self_use.append(res)
                 return
+        print(f"Agent: {self.unique_id}, tried to acquire resource: {res_type}, but could not find any available.")
             
         
     def check_available_resource_of_agent(self, res_type, agent: "ChefAgent"):
@@ -232,6 +245,11 @@ class ChefAgent(CellAgent):
                         res_needed = True
                 if not res_needed:
                     self.all_required_future_resources.remove(res)
+
+    def check_goal_accomplisment(self):
+        for subgoal in self.current_goal[1]:
+            if subgoal.split("_")[1] not in self.all_resources_self_use:
+                return False
 
     def print_goals_and_resources(self):
         print(f"Agent: {self.unique_id}, coords: {self.cell.coordinate}")

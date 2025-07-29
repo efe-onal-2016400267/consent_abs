@@ -20,7 +20,6 @@ agents:
       - name: egg_1
         type: egg
 
-  # Agent 1 with different goals
   - id: 2
     goals:
       - name: make_cake
