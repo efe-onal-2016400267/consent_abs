@@ -11,7 +11,7 @@ import yaml
 GOAL_FILE_PATH = "./goals/goal_tree.yaml"
 TEST_CASE_PATH = "./test_cases/test_001_2.yaml"
 TEST = False
-MAX_STEP_COUNT = 20
+MAX_STEP_COUNT = 100
 
 class NoConsentModel(mesa.Model):
     """
@@ -131,9 +131,8 @@ while 1:
     step_count += 1
     fin = 1
     for agent in model._all_agents:
-        print(agent)
+        print(f"Agent: {agent.unique_id}, remaining goal count: {len(agent.remaining_goals)}")
         if len(agent.remaining_goals) > 0:
-            print(f"Agent: {agent.unique_id}, remaining goal count: {len(agent.remaining_goals)}")
             fin = 0
 
     if fin or step_count >= MAX_STEP_COUNT:
