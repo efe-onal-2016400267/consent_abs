@@ -247,9 +247,16 @@ class ChefAgent(CellAgent):
                     self.all_required_future_resources.remove(res)
 
     def check_goal_accomplisment(self):
+        """
+        This function checks if the agent has accomplished the current goal by checking if all resources for all subgoals were acquired.
+        Called from self.interpret_goals.
+        """
+        all_resource_types_used = [r.type for r in self.all_resources_self_use]
+
         for subgoal in self.current_goal[1]:
-            if subgoal.split("_")[1] not in self.all_resources_self_use:
+            if subgoal.split("_")[1] not in all_resource_types_used:
                 return False
+        return True
 
     def print_goals_and_resources(self):
         print(f"Agent: {self.unique_id}, coords: {self.cell.coordinate}")

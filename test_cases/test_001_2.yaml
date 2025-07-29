@@ -1,10 +1,11 @@
-# 1. Agent1 accomplishes the goal by using Agent1's and Agent2's resources.
-# 2. Agent1 relases all those resources after goal completion.
-# 3. In the next step Agent2 accomplishes the same goal by acquiring all those resources.
+# OK 1. Agent1 accomplishes the goal by using Agent1's and Agent2's resources.
+# OK 2. Agent1 relases all those resources after goal completion.
+# OK 3. In the next step Agent2 accomplishes the same goal by acquiring all those resources.
+# OK 4. Agent2 releases all those resources upon completion.
 
-# 4. What happens when agent starts with no goals?
-# 5. What happens when agent starts with no resources?
-# 6. What happens when an agent starts with no goals and no resources?
+# OK 5. What happens when agent starts with no goals?
+# OK 6. What happens when agent starts with no resources?
+# OK 7. What happens when an agent starts with no goals and no resources?
 
 agents:
   - id: 1
@@ -38,3 +39,19 @@ agents:
         type: flour
       - name: sugar_2
         type: sugar
+
+  - id: 3
+    goals:
+    resources:
+      - name: tomato_3
+        type: tomato
+
+  - id: 4
+    goals:
+      - name: make_cake
+        sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
+    resources:
+
+  - id: 5
+    goals:
+    resources:

@@ -9,8 +9,8 @@ from mesa.experimental.cell_space import OrthogonalVonNeumannGrid
 import yaml
 
 GOAL_FILE_PATH = "./goals/goal_tree.yaml"
-TEST_CASE_PATH = "./test_cases/test_001_1.yaml"
-TEST = True
+TEST_CASE_PATH = "./test_cases/test_001_2.yaml"
+TEST = False
 MAX_STEP_COUNT = 20
 
 class NoConsentModel(mesa.Model):
@@ -23,8 +23,8 @@ class NoConsentModel(mesa.Model):
                 height=50,
                 initial_population=100,
                 seed = None,
-                goal_per_agent = 5,
-                resource_per_agent = 1,
+                goal_per_agent = 2,
+                resource_per_agent = 2,
                 resources = []
                 ):
         super().__init__(seed=seed)
@@ -48,14 +48,20 @@ class NoConsentModel(mesa.Model):
 
                 for agent in test_case_data:
                     # prepare goal tuples
-                    goals = [(g["name"], tuple(g["sub_goals"])) for g in agent["goals"]]
+                    if agent["goals"]:
+                        goals = [(g["name"], tuple(g["sub_goals"])) for g in agent["goals"]]
+                    else:
+                        goals = []
                     self.goals_of_agents.append(goals)
 
                     # prepare resource tuples
                     # Create Resource instances and assign ownership
-                    resource_instances = [
-                        Resource(name=r["name"], owner=agent["id"], type=r["type"]) for r in agent["resources"]
-                    ]
+                    if agent["resources"]:
+                        resource_instances = [
+                            Resource(name=r["name"], owner=agent["id"], type=r["type"]) for r in agent["resources"]
+                        ]
+                    else:
+                        resource_instances = []
                     self.resources_of_agents.append(resource_instances)
 
                 ChefAgent.create_agents(
@@ -98,7 +104,7 @@ class NoConsentModel(mesa.Model):
 
                 # Create Resource instances and assign ownership
                 resource_instances = [
-                    Resource(name=f"{res_type}_{agent_index}_{i}", owner=agent_index, type=res_type)
+                    Resource(name=f"{res_type}_{agent_index+1}_{i}", owner=agent_index+1, type=res_type)
                     for i, res_type in enumerate(resource_types)
                 ]
                 self.resources_of_agents.append(resource_instances)
