@@ -5,7 +5,7 @@ from atom import Atom
 from pathlib import Path
 import mesa
 import numpy as np
-from agents import ChefAgent
+from base_agent import BaseChefAgent
 from resource import Resource
 from mesa.experimental.cell_space import OrthogonalVonNeumannGrid
 #from mesa.experimental.cell_space.property_layer import PropertyLayer

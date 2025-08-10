@@ -31,20 +31,6 @@ import math
 
 """
 
-def get_distance(cell_1, cell_2):
-    """
-    Returns the eucledian distance between two cells.
-    Used in resource_finder function.
-    """
-
-    x1, y1 = cell_1.coordinate
-    x2, y2 = cell_2.coordinate
-
-    dx = x1 - x2
-    dy = y1 - y2
-
-    return math.sqrt(dx ** 2 + dy ** 2)
-
 """
 
 I made available resources types of ingredients, oven, and stove. This way it will be easy to come up with goals.
@@ -59,7 +45,7 @@ If they do not own the ingredient they need, they have to take it from another a
 # How should I implement these goals tho.
 
 
-class ChefAgent(CellAgent):
+class BaseChefAgent(CellAgent):
     """An agent that needs to cook certain dishes and owns some resources. """
 
     def __init__(self, 
@@ -84,7 +70,7 @@ class ChefAgent(CellAgent):
 
 
     def interpret_goals(self):
-        """ The agent needs to interpret its goals and needs to use a handler to accomplish that goal. """
+        """ The agent needs to interpret its goals and needs to use the handler to accomplish that goal. """
         if not self.remaining_goals:
             return
         
@@ -205,7 +191,7 @@ class ChefAgent(CellAgent):
         print(f"Agent: {self.unique_id}, tried to acquire resource: {res_type}, but could not find any available.")
             
         
-    def check_available_resource_of_agent(self, res_type, agent: "ChefAgent"):
+    def check_available_resource_of_agent(self, res_type, agent: "BaseChefAgent"):
         """
         Function that checks if the agent in the arguments owns a resource of type res_type that is also available.
         Called from self.resource_finder function.
@@ -225,7 +211,7 @@ class ChefAgent(CellAgent):
         agent_distances = []
         for agent in all_agents:
             if agent != self:
-                agent_distances.append((agent, get_distance(self.cell, agent.cell)))
+                agent_distances.append((agent, self.get_distance(self.cell, agent.cell)))
         return agent_distances
     
 
@@ -260,6 +246,20 @@ class ChefAgent(CellAgent):
             if subgoal.split("_")[1] not in all_resource_types_used:
                 return False
         return True
+
+    def get_distance(self, cell_1, cell_2):
+        """
+        Returns the eucledian distance between two cells.
+        Used in resource_finder function.
+        """
+
+        x1, y1 = cell_1.coordinate
+        x2, y2 = cell_2.coordinate
+
+        dx = x1 - x2
+        dy = y1 - y2
+
+        return math.sqrt(dx ** 2 + dy ** 2)
 
     def print_goals_and_resources(self):
         print(f"Agent: {self.unique_id}, coords: {self.cell.coordinate}")

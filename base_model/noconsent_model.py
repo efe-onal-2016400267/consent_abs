@@ -1,7 +1,7 @@
 from pathlib import Path
 import mesa
 import numpy as np
-from agents import ChefAgent
+from base_agent import BaseChefAgent
 from resource import Resource
 from mesa.experimental.cell_space import OrthogonalVonNeumannGrid
 #from mesa.experimental.cell_space.property_layer import PropertyLayer
@@ -64,7 +64,7 @@ class NoConsentModel(mesa.Model):
                         resource_instances = []
                     self.resources_of_agents.append(resource_instances)
 
-                ChefAgent.create_agents(
+                BaseChefAgent.create_agents(
                     self,
                     len(test_case_data),
                     cell=self.random.choices(self.grid.all_cells.cells, k=len(test_case_data)),
@@ -109,7 +109,7 @@ class NoConsentModel(mesa.Model):
                 ]
                 self.resources_of_agents.append(resource_instances)
 
-            ChefAgent.create_agents(
+            BaseChefAgent.create_agents(
                 self,
                 initial_population,
                 cell=self.random.choices(self.grid.all_cells.cells, k=initial_population),
@@ -121,7 +121,7 @@ class NoConsentModel(mesa.Model):
     def step(self):
         self.agents.do("interpret_goals")
 
-"""    
+"""   
 model = NoConsentModel(seed=42)
 
 step_count = 0
