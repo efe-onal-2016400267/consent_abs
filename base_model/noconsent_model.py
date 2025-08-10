@@ -121,7 +121,7 @@ class NoConsentModel(mesa.Model):
     def step(self):
         self.agents.do("interpret_goals")
 
-    
+"""    
 model = NoConsentModel(seed=42)
 
 step_count = 0
@@ -137,3 +137,4 @@ while 1:
 
     if fin or step_count >= MAX_STEP_COUNT:
         break
+"""
