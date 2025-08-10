@@ -1,3 +1,5 @@
+from atom import Atom
+
 import mesa
 import seaborn as sns
 import numpy as np
@@ -5,6 +7,7 @@ import pandas as pd
 
 from mesa.experimental.cell_space import CellAgent
 import math
+
 
 # TODO: Right now, if the agent cannot find a resource, th goal still gets accomplished. Gotta fix that.
 # TODO: Functions for printing resource lists properly.

@@ -34,7 +34,7 @@ class EnvState:
         Return the truth value of an atom.
         """
         if atom_name in self.atoms.keys:
-            return self.atoms["atom_name"]
+            return self.atoms["atom_name"].truth
         return False
     
 

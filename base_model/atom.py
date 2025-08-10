@@ -2,6 +2,9 @@ class Atom:
     """
     Atom can be epistemic or temporal. 
     A class definition will be convinient to create various attributes to either.
+
+    Atom naming convention:
+    <agent_id>_<resource_id>_<valid_tick_count>
     """
     def __init__(self, name, truth, agent, resource, valid_from, valid_to):
         self.name = name
