@@ -20,6 +20,8 @@ class Norm:
         self.model = model
         self.active = False
         self.violated = False
+        self.ever_active = False
+        self.fulfilled = False
 
     def is_fulfilled(self):
         """
@@ -35,12 +37,22 @@ class Norm:
         """
         pass
 
-    def activate(self):
+    def activation_update(self):
         """
         This function should run at each step for all inactive norms
         So that if the activation conditions are met (c_det for AU, p for CO) we can activate the norm
         """
         pass
+
+    def condition_checker(self, cond_list):
+        """
+        Function that checks if a list of conditions match the environment state
+        """
+        all_match = True
+        for cond in cond_list:
+            if self.model.state.is_true(cond.atom_name) != cond.truth:
+                all_match = False
+        return all_match
 
 
 class Authorization(Norm):
@@ -52,20 +64,43 @@ class Authorization(Norm):
         self.expired = False # AUs can expire
 
         self.c = c
+        self.t = t
         self.c_det = self.c[0]
         self.c_exp = self.c[1]
 
-    def activate(self):
+    def activation_update(self):
         """
         For each condition, check if their required values are the same as their values in model state
         A condition is an Atom instance with a truth value T or F
         """
-        for cond in self.c_det:
-            # If any of the atoms in the c_det and current model state dont match: do NOT activate.
-            # If all atoms match, activate
-            if self.model.state.is_true(cond.atom_name) != cond.truth:
-                break
-        self.activate = True
+        # Did it detach:
+        det = self.condition_checker(self.c_det)
+        if det and not self.active:
+            self.active = True
+            self.ever_active = True
+
+        # Did it expire:
+        exp = self.condition_checker(self.c_exp)
+        if exp and self.active:
+            self.active = False
+
+    def is_violated(self):
+        """
+        Checks if an AU is violated. That is, atoms in p (t=<p, r>) are become true although the AU is not active.
+        """
+        done = self.condition_checker(self.t.p)
+        if done and not self.active and not self.is_fulfilled:
+            self.violated = True
+
+    def is_fulfilled(self):
+        """
+        Checks if an AU was ever fulfilled (if post condition p of action t was true when the AU was active)
+        If an AU is fulfilled, it cannot be violated again
+        Called from self.is_violated
+        """
+        done = self.condition_checker(self.t.p)
+        if done and self.active:
+            self.fulfilled = True
 
 
 class Commitment(Norm):

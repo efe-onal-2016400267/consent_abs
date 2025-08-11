@@ -270,3 +270,6 @@ class BaseChefAgent(CellAgent):
     def print_goals_and_resources(self):
         print(f"Agent: {self.unique_id}, coords: {self.cell.coordinate}")
         print(f"Agent: {self.unique_id}, resources: {self.sovereigned_resources}, goals: {self.remaining_goals}")
+
+    def negotiate(self):
+        pass
