@@ -107,9 +107,46 @@ class Commitment(Norm):
     """
     A commitment has a consent giver (g), a consent receiver (r), an antecedent (p), and a consequent stated goal (g_R)
     g_R is an atom of shape <agent_id>-<goal_name>--
+
+    TODO:
+    How is a CO violated. 
+    In the paper its said that if p holds and g_R doesn't, then CO is violated. 
+    But shouldn't there be time between when the antecedent turns true and then the consequent turns true.
     """
+
+
     def __init__(self, model, g, r, p, g_R):
         super().__init__(model, g, r)
 
         self.p = p
         self.g_R = g_R
+
+    def activation_update(self):
+        """
+        A commitment should be active once the antecedent turns true.
+        """
+        
+        # det
+        det = self.condition_checker([self.p])
+        if det and not self.active:
+            self.active = True
+
+        # TODO: Do we need expiration? No?
+
+    def is_violated(self):
+        """
+        Checks if an AU is violated. That is, atoms in p (t=<p, r>) are become true although the AU is not active.
+        """
+        pass
+
+    def is_fulfilled(self):
+        """
+        Checks if a CO was ever fulfilled (if g_R was ever True)
+        If an CO is fulfilled, it cannot be violated again
+        Called from self.is_violated
+        """
+
+        done = self.condition_checker([self.g_R])
+        # No need to check for activation, a commitment can be fulfilled before being detached.
+        if done:
+            self.fulfilled = True

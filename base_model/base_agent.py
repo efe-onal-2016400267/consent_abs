@@ -182,18 +182,20 @@ class BaseChefAgent(CellAgent):
         # Sort in ascending order by distance
         sorted_agents = sorted(agent_distances, key=lambda x: x[1])
         for agent, dist in sorted_agents:
-            # 2. If the resource is not in use, acquire it.
+            # 2. If the resource is not in use, request for a consent, if you get it, acquire the resource.
             res = self.check_available_resource_of_agent(res_type=res_type, agent=agent)
             if res:
-                print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
-                res.in_use_by = self
-                agent.sovereigned_resources_available.remove(res)
-                agent.lent_away_resources.append(res)
-                self.current_borrowed_resources.append(res)
-                self.all_resources_self_use.append(res)
-                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id))
-                self.model.state.print_state()
-                return
+                has_consent = self.request_consent(other=agent, res=res)
+                if has_consent:
+                    print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
+                    res.in_use_by = self
+                    agent.sovereigned_resources_available.remove(res)
+                    agent.lent_away_resources.append(res)
+                    self.current_borrowed_resources.append(res)
+                    self.all_resources_self_use.append(res)
+                    self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id))
+                    self.model.state.print_state()
+                    return
         print(f"Agent: {self.unique_id}, tried to acquire resource: {res_type}, but could not find any available.")
             
         
@@ -272,4 +274,20 @@ class BaseChefAgent(CellAgent):
         print(f"Agent: {self.unique_id}, resources: {self.sovereigned_resources}, goals: {self.remaining_goals}")
 
     def negotiate(self):
+        pass
+
+    def request_consent(self, other:"BaseChefAgent", res):
+        """
+        Function that request consent from another agent.
+        Will be overriden in ConsentChefAgent class.
+        """
+        return True
+    
+    def check_given_consents(self):
+        """
+        Function that checks 
+        """
+        pass
+
+    def check_received_consents(self):
         pass

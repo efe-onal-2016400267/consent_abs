@@ -48,6 +48,9 @@ class ConsentModel(NoConsentModel):
                 goals = self.goals_of_agents,
                 sovereigned_resources = self.resources_of_agents
             )
+        
+    def step(self):
+        self.agents.do("interpret_goals")
 
 model = ConsentModel(seed=42)
 
