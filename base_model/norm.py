@@ -61,8 +61,8 @@ class Authorization(Norm):
     """
     def __init__(self, model: "ConsentModel", g, r, c, t):
         super().__init__(model, g, r)
+        self.type = "AU"
         self.expired = False # AUs can expire
-
         self.c = c
         self.t = t
         self.c_det = self.c[0]
@@ -83,6 +83,7 @@ class Authorization(Norm):
         exp = self.condition_checker(self.c_exp)
         if exp and self.active:
             self.active = False
+            self.expired = True
 
     def is_violated(self):
         """
@@ -91,6 +92,8 @@ class Authorization(Norm):
         done = self.condition_checker(self.t.p)
         if done and not self.active and not self.is_fulfilled:
             self.violated = True
+            return True
+        return False
 
     def is_fulfilled(self):
         """
@@ -120,6 +123,7 @@ class Commitment(Norm):
 
         self.p = p
         self.g_R = g_R
+        self.type = "CO"
 
     def activation_update(self):
         """
