@@ -1,3 +1,5 @@
+from atom import Atom
+
 import mesa
 import seaborn as sns
 import numpy as np
@@ -5,6 +7,7 @@ import pandas as pd
 
 from mesa.experimental.cell_space import CellAgent
 import math
+
 
 # TODO: Right now, if the agent cannot find a resource, th goal still gets accomplished. Gotta fix that.
 # TODO: Functions for printing resource lists properly.
@@ -26,21 +29,9 @@ import math
 
 4. But how are we going to use consent in this scheme? Maybe if an agent will use a resource, they wont give to other agents?
 
+5. An agent cannot get the same goal twice. Handled by using random.sample in NoConsentModel class.
+
 """
-
-def get_distance(cell_1, cell_2):
-    """
-    Returns the eucledian distance between two cells.
-    Used in resource_finder function.
-    """
-
-    x1, y1 = cell_1.coordinate
-    x2, y2 = cell_2.coordinate
-
-    dx = x1 - x2
-    dy = y1 - y2
-
-    return math.sqrt(dx ** 2 + dy ** 2)
 
 """
 
@@ -50,13 +41,8 @@ If they do not own the ingredient they need, they have to take it from another a
 
 """
 
-# So different agents will own different resources.
-# Different agents will have different goals.
-# These goals will require certain resources.
-# How should I implement these goals tho.
 
-
-class ChefAgent(CellAgent):
+class BaseChefAgent(CellAgent):
     """An agent that needs to cook certain dishes and owns some resources. """
 
     def __init__(self, 
@@ -65,7 +51,7 @@ class ChefAgent(CellAgent):
                  goals = [],
                  sovereigned_resources = []
                  ):
-        # Pass the parameters to the parent class.
+        
         super().__init__(model)
         self.remaining_goals = goals
         self.current_goal = None
@@ -81,7 +67,7 @@ class ChefAgent(CellAgent):
 
 
     def interpret_goals(self):
-        """ The agent needs to interpret its goals and needs to use a handler to accomplish that goal. """
+        """ The agent needs to interpret its goals and needs to use the handler to accomplish that goal. """
         if not self.remaining_goals:
             return
         
@@ -97,9 +83,11 @@ class ChefAgent(CellAgent):
                 print(f"Agent: {self.unique_id} accomplished goal: {self.current_goal[0]}.")
                 # If the agent has acquired all the resources, it should complete the goal
                 self.accomplished_goals.append(self.current_goal)
-                # Remove the goal from remanining goals, update resources that will be needed in the future
+                # Remove the goal from remanining goals, update resources that will be needed in the future, update model state.
                 self.remaining_goals.remove(self.current_goal)
+                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id))
                 self.current_goal = None
+                self.model.state.print_state()
                 self.all_required_future_resources = self.initialize_required_future_resources()
                 # If the resource wont be needed again, release it.
                 for res in self.all_resources_self_use[:]:
@@ -107,6 +95,10 @@ class ChefAgent(CellAgent):
                         print(f"Agent: {self.unique_id} has released resource: {res.name}, owned by: {res.owner}")
                         res.in_use_by = None
                         self.all_resources_self_use.remove(res)
+
+                        # Make related subgoal atoms False
+                        self.model.state.set_false(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id))
+                        self.model.state.print_state()
                         
                         # other is the owner of the resource.
                         other = self.model._all_agents[res.owner - 1]
@@ -173,13 +165,14 @@ class ChefAgent(CellAgent):
         # Owned by the agent, currently used by nobody
         for res in self.sovereigned_resources_available[:]:
             if res.type == res_type:
-                # TODO: If this is just the resource finder function, then maybe the following 3 lines should be inside another function.
-                # TODO: Check if the loop runs properly, we remove from the list after all.
                 print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
                 res.in_use_by = self
                 self.sovereigned_resources_available.remove(res)
                 self.sovereigned_resources_self_use.append(res)
                 self.all_resources_self_use.append(res)
+                # Update the state with the subgoal
+                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id))
+                self.model.state.print_state()
                 return
             
         # Get the closest available resource of this type
@@ -198,11 +191,13 @@ class ChefAgent(CellAgent):
                 agent.lent_away_resources.append(res)
                 self.current_borrowed_resources.append(res)
                 self.all_resources_self_use.append(res)
+                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id))
+                self.model.state.print_state()
                 return
         print(f"Agent: {self.unique_id}, tried to acquire resource: {res_type}, but could not find any available.")
             
         
-    def check_available_resource_of_agent(self, res_type, agent: "ChefAgent"):
+    def check_available_resource_of_agent(self, res_type, agent: "BaseChefAgent"):
         """
         Function that checks if the agent in the arguments owns a resource of type res_type that is also available.
         Called from self.resource_finder function.
@@ -222,7 +217,7 @@ class ChefAgent(CellAgent):
         agent_distances = []
         for agent in all_agents:
             if agent != self:
-                agent_distances.append((agent, get_distance(self.cell, agent.cell)))
+                agent_distances.append((agent, self.get_distance(self.cell, agent.cell)))
         return agent_distances
     
 
@@ -257,6 +252,20 @@ class ChefAgent(CellAgent):
             if subgoal.split("_")[1] not in all_resource_types_used:
                 return False
         return True
+
+    def get_distance(self, cell_1, cell_2):
+        """
+        Returns the eucledian distance between two cells.
+        Used in resource_finder function.
+        """
+
+        x1, y1 = cell_1.coordinate
+        x2, y2 = cell_2.coordinate
+
+        dx = x1 - x2
+        dy = y1 - y2
+
+        return math.sqrt(dx ** 2 + dy ** 2)
 
     def print_goals_and_resources(self):
         print(f"Agent: {self.unique_id}, coords: {self.cell.coordinate}")
