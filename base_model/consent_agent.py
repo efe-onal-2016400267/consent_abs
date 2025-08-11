@@ -34,8 +34,9 @@ class ConsentChefAgent(BaseChefAgent):
                 # Remove the goal from remanining goals, update resources that will be needed in the future
                 self.remaining_goals.remove(self.current_goal)
                 # TODO: Implement goal related proposition update
-                self.model.state.set_true(Atom(name=f"{self.unique_id}-"))
+                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}--", agent_id=self.unique_id))
                 self.current_goal = None
+                self.model.state.print_state()
                 
 
                 self.all_required_future_resources = self.initialize_required_future_resources()

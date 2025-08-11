@@ -29,6 +29,8 @@ import math
 
 4. But how are we going to use consent in this scheme? Maybe if an agent will use a resource, they wont give to other agents?
 
+5. An agent cannot get the same goal twice. Handled by using random.sample in NoConsentModel class.
+
 """
 
 """
@@ -157,8 +159,6 @@ class BaseChefAgent(CellAgent):
         # Owned by the agent, currently used by nobody
         for res in self.sovereigned_resources_available[:]:
             if res.type == res_type:
-                # TODO: If this is just the resource finder function, then maybe the following 3 lines should be inside another function.
-                # TODO: Check if the loop runs properly, we remove from the list after all.
                 print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
                 res.in_use_by = self
                 self.sovereigned_resources_available.remove(res)
