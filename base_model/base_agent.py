@@ -83,9 +83,11 @@ class BaseChefAgent(CellAgent):
                 print(f"Agent: {self.unique_id} accomplished goal: {self.current_goal[0]}.")
                 # If the agent has acquired all the resources, it should complete the goal
                 self.accomplished_goals.append(self.current_goal)
-                # Remove the goal from remanining goals, update resources that will be needed in the future
+                # Remove the goal from remanining goals, update resources that will be needed in the future, update model state.
                 self.remaining_goals.remove(self.current_goal)
+                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}--", agent_id=self.unique_id))
                 self.current_goal = None
+                self.model.state.print_state()
                 self.all_required_future_resources = self.initialize_required_future_resources()
                 # If the resource wont be needed again, release it.
                 for res in self.all_resources_self_use[:]:

@@ -1,8 +1,9 @@
 class Action:
     """
     An action t consists of a list of truth values for certain atoms and a list of affected (used) resources.
-    t = <truth_list, resources>
+    t = <p, r>  where p is the subgoal atom, also the antecedent of a commitment, and r are the affected resources
+    truth
     """
-    def __init__(self, truth_list=None, resources=None):
-        self.truth_list = truth_list
-        self.resources = resources
+    def __init__(self, p=None, r=None):
+        self.p = p
+        self.r = r

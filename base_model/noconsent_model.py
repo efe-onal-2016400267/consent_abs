@@ -1,5 +1,5 @@
 from config import GOAL_FILE_PATH, TEST_CASE_PATH, TEST, MAX_STEP_COUNT
-
+from state import EnvState
 
 from pathlib import Path
 import mesa
@@ -27,6 +27,7 @@ class NoConsentModel(mesa.Model):
                 resources = []
                 ):
         super().__init__(seed=seed)
+        self.state = EnvState()
 
          # initiate width and height of the grid
         self.width = width

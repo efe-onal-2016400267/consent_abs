@@ -30,12 +30,9 @@ class ConsentModel(NoConsentModel):
                 goal_per_agent = 2,
                 resource_per_agent = 2,
                 resources = [],
-                state = EnvState() # Empty state as the model is initialized
                 ):
         
         super().__init__(width, height, initial_population, seed, goal_per_agent, resource_per_agent, resources)
-        
-        self.state = state
 
     def create_agents_from_model(self, n):
         """
