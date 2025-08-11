@@ -85,7 +85,7 @@ class BaseChefAgent(CellAgent):
                 self.accomplished_goals.append(self.current_goal)
                 # Remove the goal from remanining goals, update resources that will be needed in the future, update model state.
                 self.remaining_goals.remove(self.current_goal)
-                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}--", agent_id=self.unique_id))
+                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id))
                 self.current_goal = None
                 self.model.state.print_state()
                 self.all_required_future_resources = self.initialize_required_future_resources()
@@ -95,6 +95,10 @@ class BaseChefAgent(CellAgent):
                         print(f"Agent: {self.unique_id} has released resource: {res.name}, owned by: {res.owner}")
                         res.in_use_by = None
                         self.all_resources_self_use.remove(res)
+
+                        # Make related subgoal atoms False
+                        self.model.state.set_false(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id))
+                        self.model.state.print_state()
                         
                         # other is the owner of the resource.
                         other = self.model._all_agents[res.owner - 1]
@@ -166,6 +170,9 @@ class BaseChefAgent(CellAgent):
                 self.sovereigned_resources_available.remove(res)
                 self.sovereigned_resources_self_use.append(res)
                 self.all_resources_self_use.append(res)
+                # Update the state with the subgoal
+                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id))
+                self.model.state.print_state()
                 return
             
         # Get the closest available resource of this type
@@ -184,6 +191,8 @@ class BaseChefAgent(CellAgent):
                 agent.lent_away_resources.append(res)
                 self.current_borrowed_resources.append(res)
                 self.all_resources_self_use.append(res)
+                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id))
+                self.model.state.print_state()
                 return
         print(f"Agent: {self.unique_id}, tried to acquire resource: {res_type}, but could not find any available.")
             
