@@ -1,6 +1,7 @@
 from noconsent_model import NoConsentModel
 from state import EnvState
 from atom import Atom
+from config import GOAL_FILE_PATH, TEST_CASE_PATH, TEST, MAX_STEP_COUNT
 
 from pathlib import Path
 import mesa
@@ -13,10 +14,7 @@ from mesa.experimental.cell_space import OrthogonalVonNeumannGrid
 
 import yaml
 
-GOAL_FILE_PATH = "./goals/goal_tree.yaml"
-TEST_CASE_PATH = "./test_cases/test_001_2.yaml"
-TEST = False
-MAX_STEP_COUNT = 100
+
 
 class ConsentModel(NoConsentModel):
     """
@@ -38,6 +36,21 @@ class ConsentModel(NoConsentModel):
         super().__init__(width, height, initial_population, seed, goal_per_agent, resource_per_agent, resources)
         
         self.state = state
+
+    def create_agents_from_model(self, n):
+        """
+        A helper function to create agents.
+        Called from __init__ function.
+        This way, I dont have to override the whole __init__ in ConsentChefAgent class.
+        """
+        ConsentChefAgent.create_agents(
+                self,
+                n,
+                cell=self.random.choices(self.grid.all_cells.cells, k=n),
+                # Now I need to feed goals and sovereign resources at random.
+                goals = self.goals_of_agents,
+                sovereigned_resources = self.resources_of_agents
+            )
 
 model = ConsentModel(seed=42)
 

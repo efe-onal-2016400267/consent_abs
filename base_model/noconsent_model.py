@@ -1,3 +1,6 @@
+from config import GOAL_FILE_PATH, TEST_CASE_PATH, TEST, MAX_STEP_COUNT
+
+
 from pathlib import Path
 import mesa
 import numpy as np
@@ -8,10 +11,6 @@ from mesa.experimental.cell_space import OrthogonalVonNeumannGrid
 
 import yaml
 
-GOAL_FILE_PATH = "./goals/goal_tree.yaml"
-TEST_CASE_PATH = "./test_cases/test_001_2.yaml"
-TEST = True
-MAX_STEP_COUNT = 100
 
 class NoConsentModel(mesa.Model):
     """
@@ -144,7 +143,7 @@ class NoConsentModel(mesa.Model):
                 sovereigned_resources = self.resources_of_agents
             )
 
-   
+"""   
 model = NoConsentModel(seed=42)
 
 step_count = 0
@@ -160,3 +159,4 @@ while 1:
 
     if fin or step_count >= MAX_STEP_COUNT:
         break
+"""

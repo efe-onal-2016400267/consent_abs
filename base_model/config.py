@@ -1,0 +1,4 @@
+GOAL_FILE_PATH = "./goals/goal_tree.yaml"
+TEST_CASE_PATH = "./test_cases/test_001_2.yaml"
+TEST = False
+MAX_STEP_COUNT = 100
