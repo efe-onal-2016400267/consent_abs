@@ -10,7 +10,7 @@ import yaml
 
 GOAL_FILE_PATH = "./goals/goal_tree.yaml"
 TEST_CASE_PATH = "./test_cases/test_001_2.yaml"
-TEST = False
+TEST = True
 MAX_STEP_COUNT = 100
 
 class NoConsentModel(mesa.Model):
@@ -34,6 +34,7 @@ class NoConsentModel(mesa.Model):
         self.height = height
         self.goal_per_agent = goal_per_agent
         self.resource_per_agent = resource_per_agent
+        self.initial_population = initial_population
         self.resources = resources
         self.running = True
         self.grid = OrthogonalVonNeumannGrid(
@@ -64,6 +65,8 @@ class NoConsentModel(mesa.Model):
                         resource_instances = []
                     self.resources_of_agents.append(resource_instances)
 
+                self.create_agents_from_model(n=len(test_case_data))
+                """
                 BaseChefAgent.create_agents(
                     self,
                     len(test_case_data),
@@ -72,6 +75,7 @@ class NoConsentModel(mesa.Model):
                     goals = self.goals_of_agents,
                     sovereigned_resources = self.resources_of_agents
                 )
+                """
         else:
             # Read the yaml file first to get the goals
             with open(GOAL_FILE_PATH, 'r') as f:
@@ -96,7 +100,7 @@ class NoConsentModel(mesa.Model):
             # TODO: But we need to make these resources instances of the resource class. How would we do that?
             self.goals_of_agents = []
             self.resources_of_agents = []
-            for agent_index in range(initial_population):
+            for agent_index in range(self.initial_population):
                 self.goals_of_agents.append(self.random.sample(self.goals, k=self.goal_per_agent))
 
                 # Sample resource types (e.g., 'egg', 'oven')
@@ -109,19 +113,38 @@ class NoConsentModel(mesa.Model):
                 ]
                 self.resources_of_agents.append(resource_instances)
 
+            self.create_agents_from_model(n=self.initial_population)
+
+            """
             BaseChefAgent.create_agents(
                 self,
-                initial_population,
-                cell=self.random.choices(self.grid.all_cells.cells, k=initial_population),
+                self.initial_population,
+                cell=self.random.choices(self.grid.all_cells.cells, k=self.initial_population),
+                # Now I need to feed goals and sovereign resources at random.
+                goals = self.goals_of_agents,
+                sovereigned_resources = self.resources_of_agents
+            )
+            """
+
+    def step(self):
+        self.agents.do("interpret_goals")
+
+    def create_agents_from_model(self, n):
+        """
+        A helper function to create agents.
+        Called from __init__ function.
+        This way, I dont have to override the whole init in ConsentChefAgent class.
+        """
+        BaseChefAgent.create_agents(
+                self,
+                n,
+                cell=self.random.choices(self.grid.all_cells.cells, k=n),
                 # Now I need to feed goals and sovereign resources at random.
                 goals = self.goals_of_agents,
                 sovereigned_resources = self.resources_of_agents
             )
 
-    def step(self):
-        self.agents.do("interpret_goals")
-
-"""   
+   
 model = NoConsentModel(seed=42)
 
 step_count = 0
@@ -137,4 +160,3 @@ while 1:
 
     if fin or step_count >= MAX_STEP_COUNT:
         break
-"""

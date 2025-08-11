@@ -6,6 +6,7 @@ from pathlib import Path
 import mesa
 import numpy as np
 from base_agent import BaseChefAgent
+from consent_agent import ConsentChefAgent
 from resource import Resource
 from mesa.experimental.cell_space import OrthogonalVonNeumannGrid
 #from mesa.experimental.cell_space.property_layer import PropertyLayer

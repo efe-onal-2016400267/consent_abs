@@ -6,11 +6,11 @@ class Atom:
     Atom naming convention:
     <agent_id>_<resource_id>_<valid_tick_count>
     """
-    def __init__(self, name, truth, agent, resource, valid_from, valid_to):
+    def __init__(self, name, truth, agent_id, resource_id, valid_from, valid_to):
         self.name = name
         self.truth = truth # TODO: If existence in set is enough then truth might not be needed.
-        self.agent = agent # TODO: Might be depricated if naming is enough
-        self.resource = resource # TODO: Might be depricated if naming is enough 
+        self.agent_id = agent_id # TODO: Might be depricated if naming is enough
+        self.resource_id = resource_id # TODO: Might be depricated if naming is enough 
         self.valid_from = valid_from
         self.valid_to = valid_to # If none, then no time constraint on the atom
 

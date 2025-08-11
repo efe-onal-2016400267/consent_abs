@@ -39,11 +39,6 @@ If they do not own the ingredient they need, they have to take it from another a
 
 """
 
-# So different agents will own different resources.
-# Different agents will have different goals.
-# These goals will require certain resources.
-# How should I implement these goals tho.
-
 
 class BaseChefAgent(CellAgent):
     """An agent that needs to cook certain dishes and owns some resources. """
@@ -54,7 +49,7 @@ class BaseChefAgent(CellAgent):
                  goals = [],
                  sovereigned_resources = []
                  ):
-        # Pass the parameters to the parent class.
+        
         super().__init__(model)
         self.remaining_goals = goals
         self.current_goal = None
