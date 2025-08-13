@@ -1,3 +1,25 @@
+# Requirement Aperion's Paper
+
+## Agents
+- Each agent owns only 1 resource in the paper. We abandon this assumption.
+- Goals of the agents are represented as propositional atoms in $\mathbb{G}$. For us, subgoals are represented likewise.
+- An action: $t = <p, r>, where p \subseteq \Omega$ is the non-empty post condition (changes it makes in the state) of t and r is the affected resources.
+
+
+## Norms
+- There is a set of norms $\mathbb{L}$ in the STS, that are active even before any execution begins. (e.g. Prohibitions that keep agents from using others' resources.)
+- Some norms might conflict. For such cases, a norm recency based priority ordering is used.
+- 
+
+## Consent
+- A consent instance must be constrained to a specific agent, action, goal, and norms.
+- Consent must be feasible. The agent need to be able to perform the stated goal if it acquires consent. (e.g., if G is lending their car, the car should not be broken.)
+- $R$ requires consent from $G$ to use $r \in \mathbb{R}_G$
+
+### Unsolicited Consent
+
+
+
 # consent_abs
 
 Naming Convention for atoms:
