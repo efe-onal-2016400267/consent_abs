@@ -2,7 +2,7 @@
 
 ## Agents
 - Each agent owns only 1 resource in the paper. We abandon this assumption.
-- Goals of the agents are represented as propositional atoms in &#U+1D53E. For us, subgoals are represented likewise.
+- Goals of the agents are represented as propositional atoms in $\mathbb{G}$. For us, subgoals are represented likewise.
 - An action: $t = <p, r>, where p \subseteq \Omega$ is the non-empty post condition (changes it makes in the state) of t and r is the affected resources.
 
 
@@ -15,6 +15,8 @@
 - A consent instance must be constrained to a specific agent, action, goal, and norms.
 - Consent must be feasible. The agent need to be able to perform the stated goal if it acquires consent. (e.g., if G is lending their car, the car should not be broken.)
 - $R$ requires consent from $G$ to use $r \in \mathbb{R}_G$
+- $G$ and $R$ can negotiate to agree upon the details of consent. When negotiation begins, a consent instance is initialized. A negotiation ends when $G$ and $R$ come to an agreement about the norms in $\mathbb{N}$
+- Agreed upon norms = $\mathbb{N} = \{AU, CO\} \union \mathbb{N'}$
 
 ### Unsolicited Consent
 
