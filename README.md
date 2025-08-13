@@ -13,10 +13,12 @@
 
 ## Consent
 - A consent instance must be constrained to a specific agent, action, goal, and norms.
+- $CI = <G, R, c, <p, r>>$ where $\mathbb{G}$ is the consent giver, $\mathbb{R}$ is the consent receiver, $c = c_det \land \lnot c_exp$, $<p, r>$ is the action $t$.
 - Consent must be feasible. The agent need to be able to perform the stated goal if it acquires consent. (e.g., if G is lending their car, the car should not be broken.)
 - $R$ requires consent from $G$ to use $r \in \mathbb{R}_G$
 - $G$ and $R$ can negotiate to agree upon the details of consent. When negotiation begins, a consent instance is initialized. A negotiation ends when $G$ and $R$ come to an agreement about the norms in $\mathbb{N}$
-- Agreed upon norms = $\mathbb{N} = \{AU, CO\} \union \mathbb{N'}$
+- Agreed upon norms = $\mathbb{N} = \{AU, CO\} \cup \mathbb{N'}$, where $\mathbb{N'}$ includes any other norms that might have been invoked during the negotiation. E.g., Prohibitions to use $r$ for a goal different than $g_R$ Hence an agreement results in at least 1 CO and 1 AU (unsolicited consent is an exception to this rule).
+
 
 ### Unsolicited Consent
 
