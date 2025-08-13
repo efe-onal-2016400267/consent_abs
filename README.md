@@ -1,8 +1,8 @@
-# Requirement Aperion's Paper
+# Requirements from Aperion's Paper
 
 ## Agents
 - Each agent owns only 1 resource in the paper. We abandon this assumption.
-- Goals of the agents are represented as propositional atoms in $\mathbb{G}$. For us, subgoals are represented likewise.
+- Goals of the agents are represented as propositional atoms in &#U+1D53E. For us, subgoals are represented likewise.
 - An action: $t = <p, r>, where p \subseteq \Omega$ is the non-empty post condition (changes it makes in the state) of t and r is the affected resources.
 
 
