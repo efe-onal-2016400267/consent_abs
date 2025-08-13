@@ -1,7 +1,3 @@
-from consent_agent import ConsentChefAgent
-from action import Action
-from consent_model import ConsentModel
-
 """
 * Can an AU be violated?
     It can be violated if the action is taken after the authorization has expired.
@@ -14,7 +10,7 @@ class Norm:
     Base class for norms.
     Each norm has a consent giver (g) and a consent receiver (r) who are ConsentChefAgents
     """
-    def __init__(self, model: "ConsentModel", g:"ConsentChefAgent", r:"ConsentChefAgent"):
+    def __init__(self, model, g, r):
         self.g = g
         self.r = r
         self.model = model
@@ -41,6 +37,7 @@ class Norm:
         """
         This function should run at each step for all inactive norms
         So that if the activation conditions are met (c_det for AU, p for CO) we can activate the norm
+        Called from ConsentChefAgent.norm_state_update
         """
         pass
 
@@ -50,7 +47,7 @@ class Norm:
         """
         all_match = True
         for cond in cond_list:
-            if self.model.state.is_true(cond.atom_name) != cond.truth:
+            if self.model.state.is_true(cond.name) != cond.truth:
                 all_match = False
         return all_match
 
@@ -59,7 +56,7 @@ class Authorization(Norm):
     """
     An authorization has a consent giver (g), a consent receiver (r), a tuple of activation conditions (c), and an associated action t
     """
-    def __init__(self, model: "ConsentModel", g, r, c, t):
+    def __init__(self, model, g, r, c, t):
         super().__init__(model, g, r)
         self.type = "AU"
         self.expired = False # AUs can expire
@@ -72,6 +69,7 @@ class Authorization(Norm):
         """
         For each condition, check if their required values are the same as their values in model state
         A condition is an Atom instance with a truth value T or F
+        Called from ConsentChefAgent.norm_state_update
         """
         # Did it detach:
         det = self.condition_checker(self.c_det)
@@ -89,9 +87,10 @@ class Authorization(Norm):
         """
         Checks if an AU is violated. That is, atoms in p (t=<p, r>) are become true although the AU is not active.
         """
-        done = self.condition_checker(self.t.p)
+        done = self.condition_checker([self.t.p])
         if done and not self.active and not self.is_fulfilled:
             self.violated = True
+            self.active = False
             return True
         return False
 
@@ -101,9 +100,10 @@ class Authorization(Norm):
         If an AU is fulfilled, it cannot be violated again
         Called from self.is_violated
         """
-        done = self.condition_checker(self.t.p)
+        done = self.condition_checker([self.t.p])
         if done and self.active:
             self.fulfilled = True
+            self.active = False
 
 
 class Commitment(Norm):
@@ -128,12 +128,14 @@ class Commitment(Norm):
     def activation_update(self):
         """
         A commitment should be active once the antecedent turns true.
+        Called from ConsentChefAgent.norm_state_update
         """
         
         # det
         det = self.condition_checker([self.p])
         if det and not self.active:
             self.active = True
+            self.ever_active = True
 
         # TODO: Do we need expiration? No?
 
@@ -154,3 +156,4 @@ class Commitment(Norm):
         # No need to check for activation, a commitment can be fulfilled before being detached.
         if done:
             self.fulfilled = True
+            self.active = False

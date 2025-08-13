@@ -1,4 +1,3 @@
-from consent_agent import ConsentChefAgent
 from action import Action
 from norm import Norm, Authorization, Commitment
 
@@ -11,7 +10,7 @@ class ConsentInstance:
         g_R: Stated goal that becomes true after CO is fulfilled. So the main goal of the agent
         t: The action for which the consent is given
     """
-    def __init__(self, g: "ConsentChefAgent", r: "ConsentChefAgent", N: "Norm", g_R, t:"Action"):
+    def __init__(self, g, r, N: "Norm", g_R, t:"Action"):
         self.g = g
         self.r = r
         self.N = N
@@ -28,7 +27,7 @@ class ConsentInstance:
             return True
         
         # If ConsentInstance hasnt already completed its life
-        if self.state not in ("FULFILLED", "UNREALIZED"):
+        if self.state not in ("FULFILLED", "UNREALIZED", "DEFERRED"): # Icould just check ACTIVE
             violated = False
             for n in self.N:
                 if n.is_violated():
@@ -48,7 +47,7 @@ class ConsentInstance:
             return True
 
         # If the norm was already violated, it cannot be fulfilled.
-        if self.state in ("VIOLATED", "UNREALIZED"):
+        if self.state in ("VIOLATED", "UNREALIZED", "DEFERRED"):
             return False
         
         # If any of the norms is not fulfilled, ConsentInstance is not fulfilled either.
@@ -73,8 +72,11 @@ class ConsentInstance:
 
     def is_renegotiate(self):
         """
-        TODO: How can we find a use case for renegotiation.
+        TODO: How can we find a use case for renegotiation?
         """
         pass
+
+    def is_active(self):
+        return self.state == "ACTIVE"
 
     

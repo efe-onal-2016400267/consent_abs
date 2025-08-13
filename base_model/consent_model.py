@@ -1,18 +1,7 @@
 from noconsent_model import NoConsentModel
-from state import EnvState
-from atom import Atom
 from config import GOAL_FILE_PATH, TEST_CASE_PATH, TEST, MAX_STEP_COUNT
 
-from pathlib import Path
-import mesa
-import numpy as np
-from base_agent import BaseChefAgent
 from consent_agent import ConsentChefAgent
-from resource import Resource
-from mesa.experimental.cell_space import OrthogonalVonNeumannGrid
-#from mesa.experimental.cell_space.property_layer import PropertyLayer
-
-import yaml
 
 
 
@@ -33,6 +22,8 @@ class ConsentModel(NoConsentModel):
                 ):
         
         super().__init__(width, height, initial_population, seed, goal_per_agent, resource_per_agent, resources)
+        # To hold a history of all the ConsentInstances, will be used to count the number of fulfillments, violations, etc.
+        self.consent_history = []
 
     def create_agents_from_model(self, n):
         """
@@ -50,7 +41,14 @@ class ConsentModel(NoConsentModel):
             )
         
     def step(self):
-        self.agents.do("interpret_goals")
+        # Agents update the states of the norms of the consents they have given and received.
+        # This could be done by the model as well?
+        # self.agents.do("norm_state_update") : DEPRICATED
+        # Agents check the states of the consents they have given or received.
+        # TODO: They should change behavour based on current consent state.
+        self.agents.do("check_given_consents")
+        # The actual step function that runs the agent, interpret_goals.
+        self.agents.do("interpret_goals")   
 
 model = ConsentModel(seed=42)
 

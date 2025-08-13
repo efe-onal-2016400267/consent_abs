@@ -78,6 +78,9 @@ class BaseChefAgent(CellAgent):
                 # try obtaining required resources for the goal
                 self.resource_finder(res_type)
 
+            # Once all resources are acquired, update norm states if self is a ConsentChefAgent
+            self.norm_state_update()
+
             # TODO: check goal accomplishment.
             if self.check_goal_accomplisment():
                 print(f"Agent: {self.unique_id} accomplished goal: {self.current_goal[0]}.")
@@ -111,6 +114,9 @@ class BaseChefAgent(CellAgent):
                             self.current_borrowed_resources.remove(res)
                             other.sovereigned_resources_available.append(res)
                             other.lent_away_resources.remove(res)
+                
+                # Once all resources are released, update norm states again, if self is a ConsentChefAgent
+                self.norm_state_update()
             else:
                 print(f"Agent: {self.unique_id} could not accomplish the goal: {self.current_goal[0]}")
 
@@ -290,4 +296,12 @@ class BaseChefAgent(CellAgent):
         pass
 
     def check_received_consents(self):
+        pass
+
+    def norm_state_update(self):
+        """
+        At each step all agents should update the states of the norms they have for the consents they have received and given.
+        They should do it at the beginning of the step.
+        So this function is called from self.step.
+        """
         pass
