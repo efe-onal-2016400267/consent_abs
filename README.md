@@ -9,7 +9,9 @@
 ## Norms
 - There is a set of norms $\mathbb{L}$ in the STS, that are active even before any execution begins. (e.g. Prohibitions that keep agents from using others' resources.)
 - Some norms might conflict. For such cases, a norm recency based priority ordering is used.
-- 
+- $AU = <G, R, c, <p, r>>$, where $c = c_{det} \land \lnot c_{exp}$
+- $ CO = <R, G, p, g_R>$, where $g_R$ is the stated goal of $R$ and $p$ is the postcondition of the action $t$ in $AU$. 
+- An AU expires if $c_{exp}$ becomes true and the authorized action was never executed. This transitions the CI into UNREALIZED state. 
 
 ## Consent
 - A consent instance must be constrained to a specific agent, action, goal, and norms.
@@ -19,8 +21,13 @@
 - $G$ and $R$ can negotiate to agree upon the details of consent. When negotiation begins, a consent instance is initialized. A negotiation ends when $G$ and $R$ come to an agreement about the norms in $\mathbb{N}$
 - Agreed upon norms = $\mathbb{N} = \{AU, CO\} \cup \mathbb{N'}$, where $\mathbb{N'}$ includes any other norms that might have been invoked during the negotiation. E.g., Prohibitions to use $r$ for a goal different than $g_R$ Hence an agreement results in at least 1 CO and 1 AU (unsolicited consent is an exception to this rule).
 
+- Consent Life-Cycle and States:
+![Alt text](images/my_photo.png)
+
 
 ### Unsolicited Consent
+
+- Unsolicited consents do not invoke COs, only AUs.
 
 
 
