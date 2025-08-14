@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 basemodel/__pycache__
+.DS_Store
 
 # C extensions
 *.so

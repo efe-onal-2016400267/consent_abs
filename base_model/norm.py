@@ -72,6 +72,9 @@ class Authorization(Norm):
         Called from ConsentChefAgent.norm_state_update
         """
         # Did it detach:
+        # What kind of detachment conditions can there be?
+        # For now, we implemented sub_goals as the post conditions of an action 
+        # And an AU is activated immediately
         det = self.condition_checker(self.c_det)
         if det and not self.active:
             self.active = True

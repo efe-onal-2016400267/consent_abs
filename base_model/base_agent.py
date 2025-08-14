@@ -114,6 +114,7 @@ class BaseChefAgent(CellAgent):
                             self.current_borrowed_resources.remove(res)
                             other.sovereigned_resources_available.append(res)
                             other.lent_away_resources.remove(res)
+                            self.update_exp_cond(res)
                 
                 # Once all resources are released, update norm states again, if self is a ConsentChefAgent
                 self.norm_state_update()
@@ -303,5 +304,19 @@ class BaseChefAgent(CellAgent):
         At each step all agents should update the states of the norms they have for the consents they have received and given.
         They should do it at the beginning of the step.
         So this function is called from self.step.
+        """
+        pass
+
+    def update_exp_cond(self, res):
+        """
+        After releasing a resource, an agent should check if it needs to update any expiration conditions.
+        An expiration condition states that the resource must be released before a certain step of the simulation.
+        """
+        pass
+
+    def get_exp_atoms(self):
+        """
+        Returns the active AU norms as a list.
+        Called from self.update_exp_cond function.
         """
         pass

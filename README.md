@@ -11,6 +11,7 @@
 - Some norms might conflict. For such cases, a norm recency based priority ordering is used.
 - $AU = <G, R, c, <p, r>>$, where $c = c_{det} \land \lnot c_{exp}$
 - $ CO = <R, G, p, g_R>$, where $g_R$ is the stated goal of $R$ and $p$ is the postcondition of the action $t$ in $AU$. 
+- An AU is activated when $c_{det}$ becomes true.
 - An AU expires if $c_{exp}$ becomes true and the authorized action was never executed. This transitions the CI into UNREALIZED state.
 - An AU is violated in a state $\mathbb{S}$ of the STS if  $R$ executes an action $<p, r>$ eventhough $c_{det}$ in $c$ remains false or after $c_{exp}$ becomaes true.
 - A CO is violated when the consequent $g_R$ does not hold after the antecedenet $p$ holds. (!!! This is problematic. We need time in between antecedent and consequent)
@@ -66,5 +67,6 @@ What kind atoms will there be?
 - agentx--use_stove--: Agent x has acquired a stove, so we need to update the state about this
 - agentX-make_rice---20: AgentX will make rice in 20 ticks. (Turns FALSE after 20 ticks passes from its creation): TO BE IMPLEMENTED AFTER NEGOTIATION.
 - agentX-make_rice--resourceY-: AgentX made rice by using resourceY: TO BE IMPLEMENTED AFTER GOAL COMPLETION
+- EXP_agentX--use_butter-10-20: Expiration conditions: Becomes true if agentX hasnt made rice between steps 10 and 20. An agent can give consent until they will need the resource for example. This can be a key part of negotiaion.
 
 - Do I need soverignty atoms like: AgentX--resourceY-: AgentX holds resourceY. I don't think so

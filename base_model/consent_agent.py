@@ -3,6 +3,7 @@ from atom import Atom
 from norm import Authorization, Commitment
 from action import Action
 from consent import ConsentInstance
+import copy
 
 class ConsentChefAgent(BaseChefAgent):
     """
@@ -18,7 +19,7 @@ class ConsentChefAgent(BaseChefAgent):
 
         # maybe some lists to keep track of the related propositions.
 
-    def negotiate(self, other:"ConsentChefAgent", res, g_R, p):
+    def negotiate(self, other:"ConsentChefAgent", res, g_R, p, exp_step):
         """
         Consent negotiation function.
         Called from self.request_consent.
@@ -30,8 +31,18 @@ class ConsentChefAgent(BaseChefAgent):
         agreement = True
         if agreement:
             c_det = []
-            # A dummy c_exp for the 
-            c_exp = [Atom(name=f"Agent99---", agent_id=self.unique_id, truth=True)]
+            # c_exp shows until which step the auth is valid.
+            # After taking an action, an agent should check.
+            # EXP_agentX--use_butter-10-20 the agent must release the rice before step 20. 10 is just the current step where consent is initiated.
+            # So the agent should make this atom True after realeasing the resource.
+            subgoal_name = p.name.split("-")
+            subgoal_name = subgoal_name[2]
+            c_exp = [Atom(name=f"EXP-Agent{self.unique_id}-{subgoal_name}--10-20", agent_id=self.unique_id, truth=True, resource_id=res.name, valid_from=self.model.step, valid_to=exp_step)]
+            # Add a copy of the c_exp object to model.state
+            c_exp_to_state = [copy.deepcopy(c_exp[0])]
+            # in the state, it starts as False. After releasing, we turn it to True so it matches the expiration condition.
+            for cond in c_exp_to_state:
+                self.model.state.set_false(cond)
             AU = Authorization(model=self.model, g=other.unique_id, r=self.unique_id, c=tuple((c_det, c_exp)), t=Action(p=p, r=res))
             CO = Commitment(model=self.model, g=other.unique_id, r=self.unique_id, p=p, g_R=g_R)
             return [AU, CO]
@@ -52,7 +63,8 @@ class ConsentChefAgent(BaseChefAgent):
 
         agreement = False
         # Perform negotiation
-        N = self.negotiate(other=other, res=res, g_R=g_R, p=p)
+        # Lets give exp_step as current_step + 10
+        N = self.negotiate(other=other, res=res, g_R=g_R, p=p, exp_step=self.model.step)
         if N:
             agreement = True
             CI.N = N
@@ -100,6 +112,7 @@ class ConsentChefAgent(BaseChefAgent):
         At each step all agents should update the states of the norms they have for the consents they have received and given.
         They should do it at the beginning of the step.
         So this function is called from self.step.
+        Called from BaseChefAgent.interpret goals, after all resources tried to be acquired
         """
         # Given consents, to keep track of your own resources
         # Received consents, to be able to inform your behavior, maybe self will release the resource if consent is violated.
@@ -108,4 +121,28 @@ class ConsentChefAgent(BaseChefAgent):
             for norm in CI.N:
                 norm.activation_update()
         
+
+    def update_exp_cond(self, res):
+        """
+        After releasing a resource, an agent should check if it needs to update any expiration conditions.
+        An expiration condition states that the resource must be released before a certain step of the simulation.
+        """
+        exp_atoms = self.get_exp_atoms()
+        for atom in exp_atoms:
+            if atom.resource_id == res.name and atom.agent_id == self.unique_id:
+                atom.truth = True
+
+    def get_exp_atoms(self):
+        """
+        Returns the active AU norms as a list, from model.state.
+        Called from self.update_exp_cond function.
+        """
+        atom_list = []
+        for atom in self.model.state:
+            if atom.agent_id == self.unique_id and atom.name.split("-", 0) == "EXP":    
+                atom_list.append(atom)
+
+        return atom_list
+
+
 
