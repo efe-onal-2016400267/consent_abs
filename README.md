@@ -22,7 +22,7 @@
 - Agreed upon norms = $\mathbb{N} = \{AU, CO\} \cup \mathbb{N'}$, where $\mathbb{N'}$ includes any other norms that might have been invoked during the negotiation. E.g., Prohibitions to use $r$ for a goal different than $g_R$ Hence an agreement results in at least 1 CO and 1 AU (unsolicited consent is an exception to this rule).
 
 - Consent Life-Cycle and States:
-![Alt text](images/my_photo.png)
+![Alt text](images/consent_life_cycle.png)
 
 
 ### Unsolicited Consent
