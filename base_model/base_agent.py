@@ -79,7 +79,8 @@ class BaseChefAgent(CellAgent):
                 self.resource_finder(res_type)
 
             # Once all resources are acquired, update norm states if self is a ConsentChefAgent
-            self.norm_state_update()
+            # Done here because norms will find their actual states after the resources were acquired and related atoms were reflected into model.state.
+            self.norm_activation_update()
 
             # TODO: check goal accomplishment.
             if self.check_goal_accomplisment():
@@ -88,7 +89,7 @@ class BaseChefAgent(CellAgent):
                 self.accomplished_goals.append(self.current_goal)
                 # Remove the goal from remanining goals, update resources that will be needed in the future, update model state.
                 self.remaining_goals.remove(self.current_goal)
-                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id))
+                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id, resource_id=res.name))
                 self.current_goal = None
                 self.model.state.print_state()
                 self.all_required_future_resources = self.initialize_required_future_resources()
@@ -114,10 +115,11 @@ class BaseChefAgent(CellAgent):
                             self.current_borrowed_resources.remove(res)
                             other.sovereigned_resources_available.append(res)
                             other.lent_away_resources.remove(res)
-                            self.update_exp_cond(res)
+                            # If the agent has released another agent's resource, then it should update the expiration conditions.
+                            # self.update_exp_cond(res)
                 
                 # Once all resources are released, update norm states again, if self is a ConsentChefAgent
-                self.norm_state_update()
+                self.norm_activation_update()
             else:
                 print(f"Agent: {self.unique_id} could not accomplish the goal: {self.current_goal[0]}")
 
@@ -178,7 +180,7 @@ class BaseChefAgent(CellAgent):
                 self.sovereigned_resources_self_use.append(res)
                 self.all_resources_self_use.append(res)
                 # Update the state with the subgoal
-                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id))
+                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id, resource_id=res.name))
                 self.model.state.print_state()
                 return
             
@@ -200,7 +202,7 @@ class BaseChefAgent(CellAgent):
                     agent.lent_away_resources.append(res)
                     self.current_borrowed_resources.append(res)
                     self.all_resources_self_use.append(res)
-                    self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id))
+                    self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id, resource_id=res.name))
                     self.model.state.print_state()
                     return
         print(f"Agent: {self.unique_id}, tried to acquire resource: {res_type}, but could not find any available.")
@@ -299,24 +301,28 @@ class BaseChefAgent(CellAgent):
     def check_received_consents(self):
         pass
 
-    def norm_state_update(self):
+    def norm_activation_update(self):
         """
         At each step all agents should update the states of the norms they have for the consents they have received and given.
-        They should do it at the beginning of the step.
-        So this function is called from self.step.
+        Once all resources are acquired, update norm states if self is a ConsentChefAgent.
+        Done after the resource transactions because norms will find their actual states after the resources were acquired and related atoms were reflected into model.state.
+        Called from BaseChefAgent.interpret goals, after all resources tried to be acquired.
         """
         pass
 
     def update_exp_cond(self, res):
         """
-        After releasing a resource, an agent should check if it needs to update any expiration conditions.
+        At the beginning of each step, an agent should check if it needs to update any expiration conditions.
         An expiration condition states that the resource must be released before a certain step of the simulation.
+        At CI state check that occurs in every step, this expiration is carried to AU, which is carried to CI.
+        TODO: EXP atoms should be deleted after the norm state was updated.
+        Called from self.model.step() function.
         """
         pass
 
     def get_exp_atoms(self):
         """
-        Returns the active AU norms as a list.
+        Returns the exp atom list concerning the agent along with the related epistemic atoms.
         Called from self.update_exp_cond function.
         """
         pass

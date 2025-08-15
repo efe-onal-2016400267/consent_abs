@@ -37,7 +37,9 @@ class ConsentChefAgent(BaseChefAgent):
             # So the agent should make this atom True after realeasing the resource.
             subgoal_name = p.name.split("-")
             subgoal_name = subgoal_name[2]
-            c_exp = [Atom(name=f"EXP-Agent{self.unique_id}-{subgoal_name}--10-20", agent_id=self.unique_id, truth=True, resource_id=res.name, valid_from=self.model.step, valid_to=exp_step)]
+            # TODO: implement relative time
+            current_step = self.model.steps
+            c_exp = [Atom(name=f"EXP-Agent{self.unique_id}--{subgoal_name}--{current_step}-{exp_step}", agent_id=self.unique_id, truth=True, resource_id=res.name, valid_from=self.model.steps, valid_to=exp_step)]
             # Add a copy of the c_exp object to model.state
             c_exp_to_state = [copy.deepcopy(c_exp[0])]
             # in the state, it starts as False. After releasing, we turn it to True so it matches the expiration condition.
@@ -64,7 +66,7 @@ class ConsentChefAgent(BaseChefAgent):
         agreement = False
         # Perform negotiation
         # Lets give exp_step as current_step + 10
-        N = self.negotiate(other=other, res=res, g_R=g_R, p=p, exp_step=self.model.step)
+        N = self.negotiate(other=other, res=res, g_R=g_R, p=p, exp_step=self.model.steps + 1)
         if N:
             agreement = True
             CI.N = N
@@ -87,6 +89,7 @@ class ConsentChefAgent(BaseChefAgent):
         """
         for CI in self.consents_given:
             # Call consent functions
+            CI.update_norm_activations() # First lets see states of the norms
             violated = CI.is_violated()
             fulfilled = CI.is_fulfilled()
             unrealized = CI.is_unrealized()
@@ -101,18 +104,19 @@ class ConsentChefAgent(BaseChefAgent):
         """
         for CI in self.consents_received:
             # Call consent functions
+            CI.update_norm_activations() # First lets see states of the norms
             violated = CI.is_violated()
             fulfilled = CI.is_fulfilled()
             unrealized = CI.is_unrealized()
             reneg = CI.is_renegotiate()
             active = CI.is_active()
 
-    def norm_state_update(self):
+    def norm_activation_update(self):
         """
         At each step all agents should update the states of the norms they have for the consents they have received and given.
-        They should do it at the beginning of the step.
-        So this function is called from self.step.
-        Called from BaseChefAgent.interpret goals, after all resources tried to be acquired
+        Once all resources are acquired, update norm states if self is a ConsentChefAgent.
+        Done after the resource transactions because norms will find their actual states after the resources were acquired and related atoms were reflected into model.state.
+        Called from BaseChefAgent.interpret goals, after all resources tried to be acquired.
         """
         # Given consents, to keep track of your own resources
         # Received consents, to be able to inform your behavior, maybe self will release the resource if consent is violated.
@@ -122,27 +126,38 @@ class ConsentChefAgent(BaseChefAgent):
                 norm.activation_update()
         
 
-    def update_exp_cond(self, res):
+    def update_exp_cond(self):
         """
-        After releasing a resource, an agent should check if it needs to update any expiration conditions.
+        At the beginning of each step, an agent should check if it needs to update any expiration conditions.
         An expiration condition states that the resource must be released before a certain step of the simulation.
+        At CI state check that occurs in every step, this expiration is carried to AU, which is carried to CI.
+        TODO: EXP atoms should be deleted after the norm state was updated.
+        Called from self.model.step() function.
         """
-        exp_atoms = self.get_exp_atoms()
-        for atom in exp_atoms:
-            if atom.resource_id == res.name and atom.agent_id == self.unique_id:
-                atom.truth = True
+        exp_atoms, ep_atoms = self.get_exp_atoms()
+        for exp_atom in exp_atoms:
+            #if atom.resource_id == res.name and atom.agent_id == self.unique_id:
+            for ep_atom in ep_atoms:
+                # if the exp atom and ep atom are from the same resource and the deadline has passed, then the exp atom turns true, meaning the AU has expired.
+                if ep_atom.resource_id == exp_atom.resource_id and self.model.steps > exp_atom.valid_to:
+                    self.model.state.set_true(exp_atom)
+
 
     def get_exp_atoms(self):
         """
-        Returns the active AU norms as a list, from model.state.
+        Returns the exp atom list concerning the agent along with the related epistemic atoms.
         Called from self.update_exp_cond function.
         """
-        atom_list = []
-        for atom in self.model.state:
-            if atom.agent_id == self.unique_id and atom.name.split("-", 0) == "EXP":    
-                atom_list.append(atom)
 
-        return atom_list
+        # Return exp atoms
+        exp_atom_list = []
+        ep_atom_list = []
+        for atom_name, atom in self.model.state.atoms.items():
+            if atom.agent_id == self.unique_id and atom.name.split("-", 1)[0] == "EXP":    
+                exp_atom_list.append(atom)
+            if atom.agent_id == self.unique_id and atom.name.split("-", 1)[0] != "EXP":
+                ep_atom_list.append(atom)
+        # Return related epistemic atoms
 
 
-
+        return exp_atom_list, ep_atom_list

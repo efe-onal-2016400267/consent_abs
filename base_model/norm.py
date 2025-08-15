@@ -76,37 +76,48 @@ class Authorization(Norm):
         # For now, we implemented sub_goals as the post conditions of an action 
         # And an AU is activated immediately
         det = self.condition_checker(self.c_det)
-        if det and not self.active:
+        if det and not (self.active or self.violated):
             self.active = True
             self.ever_active = True
 
         # Did it expire:
         exp = self.condition_checker(self.c_exp)
-        if exp and self.active:
+        if exp and (self.active or self.fulfilled):
             self.active = False
             self.expired = True
+            # For us, an expired AU is also violated
+            self.violated = True
+            self.fulfilled = False
 
     def is_violated(self):
         """
-        Checks if an AU is violated. That is, atoms in p (t=<p, r>) are become true although the AU is not active.
+        Checks if an AU is violated. That is, atoms in p (t=<p, r>) become true although the AU is not active.
         """
         done = self.condition_checker([self.t.p])
-        if done and not self.active and not self.is_fulfilled:
+        if (done and not self.active) or (done and self.fulfilled):
             self.violated = True
             self.active = False
+            self.fulfilled = False
             return True
         return False
 
     def is_fulfilled(self):
         """
         Checks if an AU was ever fulfilled (if post condition p of action t was true when the AU was active)
-        If an AU is fulfilled, it cannot be violated again
+        Even if an AU is fulfilled it can still be violated because p is true until g_R is true.
+        But a violated AU cannot be fulfilled again.
+        So when checking we need to do: if fulfilled and not violated
         Called from self.is_violated
         """
         done = self.condition_checker([self.t.p])
-        if done and self.active:
+        if self.fulfilled:
+            return True
+        elif done and self.active:
             self.fulfilled = True
-            self.active = False
+            # self.active = False
+            return True
+        else:
+            return False
 
 
 class Commitment(Norm):
@@ -156,7 +167,14 @@ class Commitment(Norm):
         """
 
         done = self.condition_checker([self.g_R])
+        due_passed = False
+        valid_to = self.g_R.valid_to
+        if valid_to and self.model.steps > valid_to:
+            due_passed = True
+
         # No need to check for activation, a commitment can be fulfilled before being detached.
-        if done:
+        if done and self.active and not self.violated and not due_passed:
             self.fulfilled = True
             self.active = False
+            return True
+        return False

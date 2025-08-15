@@ -1,0 +1,44 @@
+# Check if agent4 can wait for the egg to be released in 2 steps by Agent2
+# If Agent1's consents, AUs, COs, get violated/expired
+# If Agent4's consents, AUs, COs, get fulfilled.
+# Use this one with default expiry step = 2
+agents:
+  - id: 1
+    goals:
+      - name: make_ratatouille
+        sub_goals: ["use_oven", "use_tomato", "use_zucchini", "use_garlic", "use_onion", "use_oliveoil"]
+      - name: make_cake
+        sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
+    resources:
+      - name: oven_1
+        type: oven
+      - name: egg_1
+        type: egg
+
+  - id: 2
+    goals:
+      - name: make_cake
+        sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
+      - name: make_cake
+        sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
+    resources:
+      - name: tomato_2
+        type: tomato
+      - name: zucchini_2
+        type: zucchini
+      - name: garlic_2
+        type: garlic
+      - name: onion_2
+        type: onion
+
+  - id: 3
+    goals:
+    resources:
+      - name: oven_3
+        type: oven
+
+  - id: 4
+    goals: 
+      - name: make_egg
+        sub_goals: ["use_egg"]
+    resources:

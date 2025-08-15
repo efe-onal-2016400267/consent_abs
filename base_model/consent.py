@@ -52,7 +52,7 @@ class ConsentInstance:
         
         # If any of the norms is not fulfilled, ConsentInstance is not fulfilled either.
         for n in self.N:
-            if not n.is_fulfilled():
+            if not n.is_fulfilled() or n.is_violated():
                 return False
             
         # Otherwise, ConsentInstance is fulfilled.
@@ -65,7 +65,7 @@ class ConsentInstance:
         """
         if self.state not in ("FULFILLED", "VIOLATED"):
             for n in self.N:
-                if n.type == "AU" and n.expired:
+                if n.type == "AU" and n.expired():
                     self.state = "UNREALIZED"
                     return True
         return False
@@ -78,5 +78,9 @@ class ConsentInstance:
 
     def is_active(self):
         return self.state == "ACTIVE"
+    
+    def update_norm_activations(self):
+        for n in self.N:
+            n.activation_update()
 
     

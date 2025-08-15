@@ -44,6 +44,9 @@ class ConsentModel(NoConsentModel):
         # Agents update the states of the norms of the consents they have given and received.
         # This could be done by the model as well?
         # self.agents.do("norm_state_update") : DEPRICATED
+
+        self.agents.do("update_exp_cond")
+
         # Agents check the states of the consents they have given or received.
         # TODO: They should change behavour based on current consent state.
         self.agents.do("check_given_consents")
@@ -52,12 +55,12 @@ class ConsentModel(NoConsentModel):
 
 model = ConsentModel(seed=42)
 
-step_count = 0
+step_count = 1
 while 1:
     print(f"-----------STEP: {step_count}--------------")
     model.step()
-    step_count += 1
     fin = 1
+    step_count += 1
     for agent in model._all_agents:
         print(f"Agent: {agent.unique_id}, remaining goal count: {len(agent.remaining_goals)}")
         if len(agent.remaining_goals) > 0:
