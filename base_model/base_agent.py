@@ -89,7 +89,10 @@ class BaseChefAgent(CellAgent):
                 self.accomplished_goals.append(self.current_goal)
                 # Remove the goal from remanining goals, update resources that will be needed in the future, update model state.
                 self.remaining_goals.remove(self.current_goal)
-                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id, resource_id=res.name))
+                # We dont feed res.name here because the atom is a main goal atom.
+                self.model.state.set_true(Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id))
+                # After accomplishing a goal, an agent should update the states of the CI's it has received
+                self.check_received_consents()
                 self.current_goal = None
                 self.model.state.print_state()
                 self.all_required_future_resources = self.initialize_required_future_resources()

@@ -12,8 +12,6 @@ agents:
     resources:
       - name: oven_1
         type: oven
-      - name: egg_1
-        type: egg
 
   - id: 2
     goals:
@@ -30,12 +28,18 @@ agents:
         type: garlic
       - name: onion_2
         type: onion
+      - name: flour_2
+        type: flour
+      - name: sugar_2
+        type: sugar
 
   - id: 3
     goals:
     resources:
       - name: oven_3
         type: oven
+      - name: egg_3
+        type: egg
 
   - id: 4
     goals: 

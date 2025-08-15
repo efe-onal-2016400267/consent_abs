@@ -94,7 +94,7 @@ class Authorization(Norm):
         Checks if an AU is violated. That is, atoms in p (t=<p, r>) become true although the AU is not active.
         """
         done = self.condition_checker([self.t.p])
-        if (done and not self.active) or (done and self.fulfilled):
+        if (done and not self.active) or (done and self.fulfilled and self.expired):
             self.violated = True
             self.active = False
             self.fulfilled = False
@@ -155,7 +155,7 @@ class Commitment(Norm):
 
     def is_violated(self):
         """
-        Checks if an AU is violated. That is, atoms in p (t=<p, r>) are become true although the AU is not active.
+        Checks if a CO is violated. That is, atoms in p (t=<p, r>) are become true although the AU is not active.
         """
         pass
 

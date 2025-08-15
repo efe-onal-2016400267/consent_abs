@@ -65,7 +65,7 @@ class ConsentInstance:
         """
         if self.state not in ("FULFILLED", "VIOLATED"):
             for n in self.N:
-                if n.type == "AU" and n.expired():
+                if n.type == "AU" and n.expired:
                     self.state = "UNREALIZED"
                     return True
         return False

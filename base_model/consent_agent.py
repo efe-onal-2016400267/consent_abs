@@ -86,6 +86,8 @@ class ConsentChefAgent(BaseChefAgent):
         """
         Function that checks and updated consent state given by the agent.
         Update is handled in the functions of ConsentInstance.
+        Agents check for the violations of the consents they have given.
+        After accomplishing a goal, they should update the states of the received consents.
         """
         for CI in self.consents_given:
             # Call consent functions
