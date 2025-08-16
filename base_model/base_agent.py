@@ -304,16 +304,24 @@ class BaseChefAgent(CellAgent):
         """
         pass
 
-    def treat_consent_violations(self, CI):
+    def check_received_consents(self):
         """
-        This function will be overriten in different consent agent personas.
-        Lets say the base form of the consent agent reclaims the resource and makes necessary changes in necessary agent lists, it also makes the necessary changes in the env state.
-        Called from self.check_given_consents() function.
-        That is, an agent takes action as soon as it realizes a consent it has given was violated.
+        Function that checks the consent states received by the agent.
+        Called after goal accomplishment in BaseChefAgent.interpret_goals.
         """
         pass
 
-    def check_received_consents(self):
+    def treat_consent_violations(self, agent, other, CI):
+        """
+        This function will be overriten in different consent agent personas.
+        Lets say the base form of the consent agent reclaims the resource and makes necessary changes in necessary agent lists, 
+        it also makes the necessary changes in the env state and removes the CI from reveived/given consents lists of the agent
+        Called from self.check_given_consents() function.
+        That is, an agent takes action as soon as it realizes a consent it has given was violated.
+        other is the receiver of the CI and resource.
+        agent is the consent giver.
+        When we call this function from self.check_received_consents(), we switch agent and other arguments.
+        """
         pass
 
     def norm_activation_update(self):

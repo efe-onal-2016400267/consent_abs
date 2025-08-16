@@ -46,15 +46,6 @@ class ConsentChefAgent(BaseChefAgent):
             for cond in au_c_exp_to_state:
                 self.model.state.set_false(cond)
 
-            """
-            # Now we need to treat CO (g_R) expiration (violation)
-            goal_name = g_R.name.split("-")[1]
-            co_c_exp = [Atom(name=f"EXP-Agent{self.unique_id}-{goal_name}--{current_step}-{co_exp_step}")]
-            co_c_exp_to_state = [copy.deepcopy(co_c_exp[0])]
-            # in the state, it starts as False. After releasing, we turn it to True so it matches the expiration condition.
-            for cond in co_c_exp_to_state:
-                self.model.state.set_false(cond)
-            """
             AU = Authorization(model=self.model, g=other.unique_id, r=self.unique_id, c=tuple((c_det, au_c_exp)), t=Action(p=p, r=res))
             CO = Commitment(model=self.model, g=other.unique_id, r=self.unique_id, p=p, g_R=g_R)
             return [AU, CO]
@@ -112,37 +103,12 @@ class ConsentChefAgent(BaseChefAgent):
 
             # If given CI is vioalted, the agent treats the issue
             if violated:
-                self.treat_consent_violations(CI)
-
-    def treat_consent_violations(self, CI):
-        """
-        This function will be overriten in different consent agent personas.
-        Lets say the base form of the consent agent reclaims the resource and makes necessary changes in necessary agent lists, 
-        it also makes the necessary changes in the env state and removes the CI from reveived/given consents lists of the agent
-        Called from self.check_given_consents() function.
-        That is, an agent takes action as soon as it realizes a consent it has given was violated.
-        """
-        # other agent is the receiver of consent. violator.
-        other = CI.r
-        # Treat the resource lists.
-        self.sovereigned_resources_available.append(CI.res)
-        other.current_borrowed_resources.remove(CI.res)
-        other.all_resources_self_use.remove(CI.res)
-        self.lent_away_resources.remove(CI.res)
-        # Update model.state.
-        self.model.state.set_false(Atom(name=f"Agent{other.unique_id}--use_{CI.res.type}--", agent_id=other.unique_id))
-        self.model.state.print_state()
-        # Remove the consent from living consents list.
-        self.model.living_consents.remove(CI)
-        # Remove the consent from given/received lists of the two agents.
-        self.consents_given.remove(CI)
-        other.consents_received.remove(CI)
-        print(f"Consent violation treated by consent giver: {self.unique_id}, for resource: {CI.res.name} borrowed by: {other.unique_id}")
-
+                self.treat_consent_violations(agent=self, other=CI.r, CI=CI)
 
     def check_received_consents(self):
         """
         Function that checks the consent states received by the agent.
+        Called after goal accomplishment in BaseChefAgent.interpret_goals.
         """
         for CI in self.consents_received[:]:
             # Call consent functions
@@ -152,6 +118,43 @@ class ConsentChefAgent(BaseChefAgent):
             unrealized = CI.is_unrealized()
             reneg = CI.is_renegotiate()
             active = CI.is_active()
+
+            # If received CI is violated agent treats the issue
+            # TODO: If violated was never tested!!! I couldnt come up with a usecase.
+            if violated:
+                self.treat_consent_violations(agent=CI.g, other=self, CI=CI)
+
+            
+
+    def treat_consent_violations(self, agent, other, CI):
+        """
+        This function will be overriten in different consent agent personas.
+        Lets say the base form of the consent agent reclaims the resource and makes necessary changes in necessary agent lists, 
+        it also makes the necessary changes in the env state and removes the CI from reveived/given consents lists of the agent
+        Called from self.check_given_consents() function.
+        That is, an agent takes action as soon as it realizes a consent it has given was violated.
+        other is the receiver of the CI and resource.
+        agent is the consent giver.
+        When we call this function from self.check_received_consents(), we switch agent and other arguments.
+        """
+        # Treat the resource lists.
+        agent.sovereigned_resources_available.append(CI.res)
+        other.current_borrowed_resources.remove(CI.res)
+        other.all_resources_self_use.remove(CI.res)
+        agent.lent_away_resources.remove(CI.res)
+        # Update model.state.
+        agent.model.state.set_false(Atom(name=f"Agent{other.unique_id}--use_{CI.res.type}--", agent_id=other.unique_id))
+        agent.model.state.print_state()
+        # Delete expiration condition, it was created solely for the consent, it is not epistemic.
+        exp_atoms = [atom for key, atom in self.model.state.atoms.items() if "EXP" in atom.name and atom.agent_id==other.unique_id and atom.resource_id==CI.res.name]
+        for exp_atom in exp_atoms[:]:
+            self.model.state.atoms.pop(exp_atom.name)
+        # Remove the consent from living consents list.
+        agent.model.living_consents.remove(CI)
+        # Remove the consent from given/received lists of the two agents.
+        agent.consents_given.remove(CI)
+        other.consents_received.remove(CI)
+        print(f"Consent violation treated by consent giver: {agent.unique_id}, for resource: {CI.res.name} borrowed by: {other.unique_id}")
 
     def norm_activation_update(self):
         """
