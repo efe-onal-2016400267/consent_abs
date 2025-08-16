@@ -297,7 +297,19 @@ class BaseChefAgent(CellAgent):
     
     def check_given_consents(self):
         """
-        Function that checks 
+        Function that checks and updated consent state given by the agent.
+        Update is handled in the functions of ConsentInstance.
+        Agents check for the violations of the consents they have given.
+        After accomplishing a goal, they should update the states of the received consents.
+        """
+        pass
+
+    def treat_consent_violations(self, CI):
+        """
+        This function will be overriten in different consent agent personas.
+        Lets say the base form of the consent agent reclaims the resource and makes necessary changes in necessary agent lists, it also makes the necessary changes in the env state.
+        Called from self.check_given_consents() function.
+        That is, an agent takes action as soon as it realizes a consent it has given was violated.
         """
         pass
 

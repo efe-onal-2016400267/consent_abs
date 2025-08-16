@@ -69,15 +69,15 @@ class ConsentChefAgent(BaseChefAgent):
         # Create stated goal g_R: the main goal the agent wants to accomplish
         # For now let g_Rs violate after 3 steps
         
-        g_R = Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id, truth=True, valid_from=self.model.steps, valid_to=self.model.steps + 2)
+        g_R = Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id, truth=True, valid_from=self.model.steps, valid_to=self.model.steps + 1)
         # Create action t = <p, r> 
         t = tuple((Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id, truth=True), res))
         p = t[0]
-        CI = ConsentInstance(g=other, r=self, N=None, g_R=g_R, t=t)
+        CI = ConsentInstance(g=other, r=self, N=None, g_R=g_R, t=t, res=res)
 
         agreement = False
         # Perform negotiation
-        N = self.negotiate(other=other, res=res, g_R=g_R, p=p, au_exp_step=self.model.steps + 3, co_exp_step=self.model.steps + 2)
+        N = self.negotiate(other=other, res=res, g_R=g_R, p=p, au_exp_step=self.model.steps + 2, co_exp_step=self.model.steps + 1)
         if N:
             agreement = True
             CI.N = N
@@ -89,6 +89,7 @@ class ConsentChefAgent(BaseChefAgent):
         self.consents_received.append(CI)
         other.consents_given.append(CI)
         self.last_consent_received = CI
+        self.model.living_consents.append(CI)
         self.model.consent_history.append(CI)
 
         return CI
@@ -100,7 +101,7 @@ class ConsentChefAgent(BaseChefAgent):
         Agents check for the violations of the consents they have given.
         After accomplishing a goal, they should update the states of the received consents.
         """
-        for CI in self.consents_given:
+        for CI in self.consents_given[:]:
             # Call consent functions
             CI.update_norm_activations() # First lets see states of the norms
             violated = CI.is_violated()
@@ -109,13 +110,41 @@ class ConsentChefAgent(BaseChefAgent):
             reneg = CI.is_renegotiate()
             active = CI.is_active()
 
-            # TODO: What happens when the agent realizes that consent was violated for example.
+            # If given CI is vioalted, the agent treats the issue
+            if violated:
+                self.treat_consent_violations(CI)
+
+    def treat_consent_violations(self, CI):
+        """
+        This function will be overriten in different consent agent personas.
+        Lets say the base form of the consent agent reclaims the resource and makes necessary changes in necessary agent lists, 
+        it also makes the necessary changes in the env state and removes the CI from reveived/given consents lists of the agent
+        Called from self.check_given_consents() function.
+        That is, an agent takes action as soon as it realizes a consent it has given was violated.
+        """
+        # other agent is the receiver of consent. violator.
+        other = CI.r
+        # Treat the resource lists.
+        self.sovereigned_resources_available.append(CI.res)
+        other.current_borrowed_resources.remove(CI.res)
+        other.all_resources_self_use.remove(CI.res)
+        self.lent_away_resources.remove(CI.res)
+        # Update model.state.
+        self.model.state.set_false(Atom(name=f"Agent{other.unique_id}--use_{CI.res.type}--", agent_id=other.unique_id))
+        self.model.state.print_state()
+        # Remove the consent from living consents list.
+        self.model.living_consents.remove(CI)
+        # Remove the consent from given/received lists of the two agents.
+        self.consents_given.remove(CI)
+        other.consents_received.remove(CI)
+        print(f"Consent violation treated by consent giver: {self.unique_id}, for resource: {CI.res.name} borrowed by: {other.unique_id}")
+
 
     def check_received_consents(self):
         """
         Function that checks the consent states received by the agent.
         """
-        for CI in self.consents_received:
+        for CI in self.consents_received[:]:
             # Call consent functions
             CI.update_norm_activations() # First lets see states of the norms
             violated = CI.is_violated()

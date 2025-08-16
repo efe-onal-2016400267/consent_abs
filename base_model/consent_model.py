@@ -24,6 +24,7 @@ class ConsentModel(NoConsentModel):
         super().__init__(width, height, initial_population, seed, goal_per_agent, resource_per_agent, resources)
         # To hold a history of all the ConsentInstances, will be used to count the number of fulfillments, violations, etc.
         self.consent_history = []
+        self.living_consents = []
 
     def create_agents_from_model(self, n):
         """
@@ -46,7 +47,6 @@ class ConsentModel(NoConsentModel):
         # self.agents.do("norm_state_update") : DEPRICATED
 
         self.agents.do("update_exp_cond")
-
         # Agents check the states of the consents they have given or received.
         # TODO: They should change behavour based on current consent state.
         self.agents.do("check_given_consents")

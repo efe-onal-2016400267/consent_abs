@@ -162,8 +162,8 @@ class Commitment(Norm):
         exp_step = self.g_R.valid_to
         done = self.condition_checker([self.g_R])
         if not done and self.model.steps > exp_step:
-            active = False
-            violated = True
+            self.active = False
+            self.violated = True
             return True
         return False
 
