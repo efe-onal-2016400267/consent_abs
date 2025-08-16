@@ -104,6 +104,10 @@ class ConsentChefAgent(BaseChefAgent):
             # If given CI is vioalted, the agent treats the issue
             if violated:
                 self.treat_consent_violations(agent=self, other=CI.r, CI=CI)
+            # TODO: If fulfilled was never tested!!! I couldnt come up with a usecase because when an agent fulfils a CI (accomplishes a goal) 
+            # it automatically updates received consents.
+            if fulfilled:
+                self.treat_consent_fulfilment(agent=self, other=CI.r, CI=CI)
 
     def check_received_consents(self):
         """
@@ -123,8 +127,9 @@ class ConsentChefAgent(BaseChefAgent):
             # TODO: If violated was never tested!!! I couldnt come up with a usecase.
             if violated:
                 self.treat_consent_violations(agent=CI.g, other=self, CI=CI)
+            if fulfilled:
+                self.treat_consent_fulfilment(agent=CI.g, other=self, CI=CI)
 
-            
 
     def treat_consent_violations(self, agent, other, CI):
         """
@@ -155,6 +160,21 @@ class ConsentChefAgent(BaseChefAgent):
         agent.consents_given.remove(CI)
         other.consents_received.remove(CI)
         print(f"Consent violation treated by consent giver: {agent.unique_id}, for resource: {CI.res.name} borrowed by: {other.unique_id}")
+
+    def treat_consent_fulfilment(self, agent, other, CI):
+        """
+        Differently 
+        """
+        # Delete expiration condition, it was created solely for the consent, it is not epistemic.
+        exp_atoms = [atom for key, atom in self.model.state.atoms.items() if "EXP" in atom.name and atom.agent_id==other.unique_id and atom.resource_id==CI.res.name]
+        for exp_atom in exp_atoms[:]:
+            self.model.state.atoms.pop(exp_atom.name)
+        # Remove the consent from living consents list.
+        agent.model.living_consents.remove(CI)
+        # Remove the consent from given/received lists of the two agents.
+        agent.consents_given.remove(CI)
+        other.consents_received.remove(CI)
+        print(f"Consent fulfilment treated by consent giver: {agent.unique_id}, for resource: {CI.res.name} borrowed by: {other.unique_id}")
 
     def norm_activation_update(self):
         """

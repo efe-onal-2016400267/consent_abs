@@ -22,8 +22,8 @@ class NoConsentModel(mesa.Model):
                 height=50,
                 initial_population=100,
                 seed = None,
-                goal_per_agent = 2,
-                resource_per_agent = 2,
+                goal_per_agent = 3,
+                resource_per_agent = 3,
                 resources = []
                 ):
         super().__init__(seed=seed)
@@ -144,7 +144,7 @@ class NoConsentModel(mesa.Model):
                 sovereigned_resources = self.resources_of_agents
             )
 
-"""
+
 model = NoConsentModel(seed=42)
 
 step_count = 0
@@ -160,4 +160,3 @@ while 1:
 
     if fin or step_count >= MAX_STEP_COUNT:
         break
-"""

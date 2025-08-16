@@ -16,8 +16,8 @@ class ConsentModel(NoConsentModel):
                 height=50,
                 initial_population=100,
                 seed = None,
-                goal_per_agent = 2,
-                resource_per_agent = 2,
+                goal_per_agent = 3,
+                resource_per_agent = 3,
                 resources = [],
                 ):
         
