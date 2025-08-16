@@ -285,7 +285,7 @@ class BaseChefAgent(CellAgent):
         print(f"Agent: {self.unique_id}, coords: {self.cell.coordinate}")
         print(f"Agent: {self.unique_id}, resources: {self.sovereigned_resources}, goals: {self.remaining_goals}")
 
-    def negotiate(self):
+    def negotiate(self, other=None, res=None, g_R=None, p=None, au_exp_step=None, co_exp_step=None):
         pass
 
     def request_consent(self, other:"BaseChefAgent", res):

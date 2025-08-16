@@ -6,7 +6,7 @@ class Atom:
     Atom naming convention:
     <agent_id>_<resource_id>_<valid_tick_count>
     """
-    def __init__(self, name=None, truth=None, agent_id=None, resource_id=None, valid_from=None, valid_to=None):
+    def __init__(self, name=None, truth=None, agent_id=None, resource_id=None, valid_from:int=None, valid_to:int=None):
         self.name = name
         self.truth = truth
         self.agent_id = agent_id

@@ -129,6 +129,8 @@ class Commitment(Norm):
     How is a CO violated. 
     In the paper its said that if p holds and g_R doesn't, then CO is violated. 
     But shouldn't there be time between when the antecedent turns true and then the consequent turns true.
+
+    We can add time limits to stated goals.
     """
 
 
@@ -155,9 +157,15 @@ class Commitment(Norm):
 
     def is_violated(self):
         """
-        Checks if a CO is violated. That is, atoms in p (t=<p, r>) are become true although the AU is not active.
+        Checks if a CO is violated. If g_R was not performed before the deadline
         """
-        pass
+        exp_step = self.g_R.valid_to
+        done = self.condition_checker([self.g_R])
+        if not done and self.model.steps > exp_step:
+            active = False
+            violated = True
+            return True
+        return False
 
     def is_fulfilled(self):
         """

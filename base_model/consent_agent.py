@@ -19,7 +19,7 @@ class ConsentChefAgent(BaseChefAgent):
 
         # maybe some lists to keep track of the related propositions.
 
-    def negotiate(self, other:"ConsentChefAgent", res, g_R, p, exp_step):
+    def negotiate(self, other:"ConsentChefAgent"=None, res=None, g_R=None, p=None, au_exp_step=None, co_exp_step=None):
         """
         Consent negotiation function.
         Called from self.request_consent.
@@ -39,13 +39,23 @@ class ConsentChefAgent(BaseChefAgent):
             subgoal_name = subgoal_name[2]
             # TODO: implement relative time
             current_step = self.model.steps
-            c_exp = [Atom(name=f"EXP-Agent{self.unique_id}--{subgoal_name}--{current_step}-{exp_step}", agent_id=self.unique_id, truth=True, resource_id=res.name, valid_from=self.model.steps, valid_to=exp_step)]
+            au_c_exp = [Atom(name=f"EXP-Agent{self.unique_id}--{subgoal_name}--{current_step}-{au_exp_step}", agent_id=self.unique_id, truth=True, resource_id=res.name, valid_from=self.model.steps, valid_to=au_exp_step)]
             # Add a copy of the c_exp object to model.state
-            c_exp_to_state = [copy.deepcopy(c_exp[0])]
+            au_c_exp_to_state = [copy.deepcopy(au_c_exp[0])]
             # in the state, it starts as False. After releasing, we turn it to True so it matches the expiration condition.
-            for cond in c_exp_to_state:
+            for cond in au_c_exp_to_state:
                 self.model.state.set_false(cond)
-            AU = Authorization(model=self.model, g=other.unique_id, r=self.unique_id, c=tuple((c_det, c_exp)), t=Action(p=p, r=res))
+
+            """
+            # Now we need to treat CO (g_R) expiration (violation)
+            goal_name = g_R.name.split("-")[1]
+            co_c_exp = [Atom(name=f"EXP-Agent{self.unique_id}-{goal_name}--{current_step}-{co_exp_step}")]
+            co_c_exp_to_state = [copy.deepcopy(co_c_exp[0])]
+            # in the state, it starts as False. After releasing, we turn it to True so it matches the expiration condition.
+            for cond in co_c_exp_to_state:
+                self.model.state.set_false(cond)
+            """
+            AU = Authorization(model=self.model, g=other.unique_id, r=self.unique_id, c=tuple((c_det, au_c_exp)), t=Action(p=p, r=res))
             CO = Commitment(model=self.model, g=other.unique_id, r=self.unique_id, p=p, g_R=g_R)
             return [AU, CO]
         return []
@@ -56,8 +66,10 @@ class ConsentChefAgent(BaseChefAgent):
         CI = <g, r, N, g_R, t>
         t = <p, r>
         """
-         # Create stated goal g_R: the main goal the agent wants to accomplish
-        g_R = Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id, truth=True)
+        # Create stated goal g_R: the main goal the agent wants to accomplish
+        # For now let g_Rs violate after 3 steps
+        
+        g_R = Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id, truth=True, valid_from=self.model.steps, valid_to=self.model.steps + 2)
         # Create action t = <p, r> 
         t = tuple((Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id, truth=True), res))
         p = t[0]
@@ -65,8 +77,7 @@ class ConsentChefAgent(BaseChefAgent):
 
         agreement = False
         # Perform negotiation
-        # Lets give exp_step as current_step + 10
-        N = self.negotiate(other=other, res=res, g_R=g_R, p=p, exp_step=self.model.steps + 1)
+        N = self.negotiate(other=other, res=res, g_R=g_R, p=p, au_exp_step=self.model.steps + 3, co_exp_step=self.model.steps + 2)
         if N:
             agreement = True
             CI.N = N
