@@ -3,8 +3,6 @@ from atom import Atom
 class EnvState:
     """
     The environment state is represented as a set of propositional atoms.
-    The atoms will only exist in name, so the name should be self explanatory with agent ids and resource ids.
-    TODO: Open world vs. Closed world.
     """
     def __init__(self):
         self.atoms = {}

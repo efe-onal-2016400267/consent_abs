@@ -123,17 +123,11 @@ class Authorization(Norm):
 class Commitment(Norm):
     """
     A commitment has a consent giver (g), a consent receiver (r), an antecedent (p), and a consequent stated goal (g_R)
-    g_R is an atom of shape <agent_id>-<goal_name>--
-
-    TODO:
-    How is a CO violated. 
-    In the paper its said that if p holds and g_R doesn't, then CO is violated. 
-    But shouldn't there be time between when the antecedent turns true and then the consequent turns true.
+    g_R is an atom of shape <agent_id>-<goal_name>----
 
     We can add time limits to stated goals.
     """
-
-
+    
     def __init__(self, model, g, r, p, g_R):
         super().__init__(model, g, r)
 

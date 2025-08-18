@@ -4,7 +4,7 @@ class Atom:
     A class definition will be convinient to create various attributes to either.
 
     Atom naming convention:
-    <agent_id>_<resource_id>_<valid_tick_count>
+    <agent_id>-<main_goal_name>-<subgoal_name>-<resource_id>-<valid_from>-<valid_to>
     """
     def __init__(self, name=None, truth=None, agent_id=None, resource_id=None, valid_from:int=None, valid_to:int=None):
         self.name = name

@@ -10,7 +10,7 @@ class ConsentInstance:
         g_R: Stated goal that becomes true after CO is fulfilled. So the main goal of the agent
         t: The action for which the consent is given
     """
-    def __init__(self, g, r, N: "Norm", g_R, t:"Action", res):
+    def __init__(self, g, r, N, g_R, t:"Action", res):
         self.g = g
         self.r = r
         self.N = N
