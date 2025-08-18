@@ -43,7 +43,7 @@ If they do not own the ingredient they need, they have to take it from another a
 
 
 class BaseChefAgent(CellAgent):
-    """An agent that needs to cook certain dishes and owns some resources. """
+    """Base agent agent that needs to cook certain dishes and owns some resources. """
 
     def __init__(self, 
                  model,
