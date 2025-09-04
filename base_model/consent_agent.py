@@ -64,26 +64,36 @@ class ConsentChefAgent(BaseChefAgent):
         # Create action t = <p, r> 
         t = tuple((Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id, truth=True), res))
         p = t[0]
-        CI = ConsentInstance(g=other, r=self, N=None, g_R=g_R, t=t, res=res)
+        self.model.consent_count += 1
+        # Create consent id. Which is the instance count of the model.
+        consent_id = self.model.consent_count
+        # 1 instance for the G, 1 for R, 1 for the model.
+        # Because what if both agents are wrong about the state of the consent instance. 
+        CI_g = ConsentInstance(g=other, r=self, N=None, g_R=g_R, t=t, res=res, id=consent_id, owner=other)
+        CI_r = ConsentInstance(g=other, r=self, N=None, g_R=g_R, t=t, res=res, id=consent_id, owner=self)
+        CI_m = ConsentInstance(g=other, r=self, N=None, g_R=g_R, t=t, res=res, id=consent_id, owner=None)
 
         agreement = False
         # Perform negotiation
         N = self.negotiate(other=other, res=res, g_R=g_R, p=p, au_exp_step=self.model.steps + 2, co_exp_step=self.model.steps + 1)
+        instances = [CI_g, CI_r, CI_m]
         if N:
             agreement = True
-            CI.N = N
-            CI.state = "ACTIVE"
+            for CI in instances:
+                CI.N = N
+                CI.state = "ACTIVE"
         else:
-            agreemet = False
-            CI.state = "DEFERRED"
+            agreement = False
+            for CI in instances:
+                CI.state = "DEFERRED"
        
-        self.consents_received.append(CI)
-        other.consents_given.append(CI)
-        self.last_consent_received = CI
-        self.model.living_consents.append(CI)
-        self.model.consent_history.append(CI)
+        self.consents_received.append(CI_r)
+        other.consents_given.append(CI_g)
+        self.last_consent_received = CI_r
+        self.model.living_consents.append(CI_m)
+        self.model.consent_history.append(CI_m) # might need a 4th instance fr this.
 
-        return CI
+        return agreement
 
     def check_given_consents(self):
         """
@@ -93,21 +103,24 @@ class ConsentChefAgent(BaseChefAgent):
         After accomplishing a goal, they should update the states of the received consents.
         """
         for CI in self.consents_given[:]:
-            # Call consent functions
-            CI.update_norm_activations() # First lets see states of the norms
-            violated = CI.is_violated()
-            fulfilled = CI.is_fulfilled()
-            unrealized = CI.is_unrealized()
-            reneg = CI.is_renegotiate()
-            active = CI.is_active()
+            if CI.state == "ACTIVE":
+                # Call consent functions
+                CI.update_norm_activations() # First lets see states of the norms
+                violated = CI.is_violated()
+                fulfilled = CI.is_fulfilled()
+                unrealized = CI.is_unrealized()
+                reneg = CI.is_renegotiate()
+                active = CI.is_active()
 
-            # If given CI is vioalted, the agent treats the issue
-            if violated:
-                self.treat_consent_violations(agent=self, other=CI.r, CI=CI)
-            # TODO: If fulfilled was never tested!!! I couldnt come up with a usecase because when an agent fulfils a CI (accomplishes a goal) 
-            # it automatically updates received consents.
-            if fulfilled:
-                self.treat_consent_fulfilment(agent=self, other=CI.r, CI=CI)
+                # If given CI is vioalted, the agent treats the issue
+                if violated:
+                    self.treat_consent_violations(agent=self, other=CI.r, CI=CI)
+                # TODO: If fulfilled was never tested!!! I couldnt come up with a usecase because when an agent fulfils a CI (accomplishes a goal) 
+                # it automatically updates received consents.
+                if fulfilled:
+                    self.treat_consent_fulfilment(agent=self, other=CI.r, CI=CI)
+        
+        return
 
     def check_received_consents(self):
         """
@@ -115,20 +128,23 @@ class ConsentChefAgent(BaseChefAgent):
         Called after goal accomplishment in BaseChefAgent.interpret_goals.
         """
         for CI in self.consents_received[:]:
-            # Call consent functions
-            CI.update_norm_activations() # First lets see states of the norms
-            violated = CI.is_violated()
-            fulfilled = CI.is_fulfilled()
-            unrealized = CI.is_unrealized()
-            reneg = CI.is_renegotiate()
-            active = CI.is_active()
+            if CI.state == "ACTIVE":
+                # Call consent functions
+                CI.update_norm_activations() # First lets see states of the norms
+                violated = CI.is_violated()
+                fulfilled = CI.is_fulfilled()
+                unrealized = CI.is_unrealized()
+                reneg = CI.is_renegotiate()
+                active = CI.is_active()
 
-            # If received CI is violated agent treats the issue
-            # TODO: If violated was never tested!!! I couldnt come up with a usecase.
-            if violated:
-                self.treat_consent_violations(agent=CI.g, other=self, CI=CI)
-            if fulfilled:
-                self.treat_consent_fulfilment(agent=CI.g, other=self, CI=CI)
+                # If received CI is violated agent treats the issue
+                # TODO: If violated was never tested!!! I couldnt come up with a usecase.
+                if violated:
+                    self.treat_consent_violations(agent=CI.g, other=self, CI=CI)
+                if fulfilled:
+                    self.treat_consent_fulfilment(agent=CI.g, other=self, CI=CI)
+        
+        return
 
 
     def treat_consent_violations(self, agent, other, CI):
@@ -155,10 +171,13 @@ class ConsentChefAgent(BaseChefAgent):
         for exp_atom in exp_atoms[:]:
             self.model.state.atoms.pop(exp_atom.name)
         # Remove the consent from living consents list.
-        agent.model.living_consents.remove(CI)
+        # agent.model.living_consents.remove(CI)
+        # agent.remove_CI_by_id(agent.model.living_consents, CI.id)
         # Remove the consent from given/received lists of the two agents.
-        agent.consents_given.remove(CI)
-        other.consents_received.remove(CI)
+        # Do we really need to remove from these two lists?
+        # We could just keep them with terminal states.
+        # agent.consents_given.remove(CI)
+        # other.consents_received.remove(CI)
         print(f"Consent violation treated by consent giver: {agent.unique_id}, for resource: {CI.res.name} borrowed by: {other.unique_id}")
 
     def treat_consent_fulfilment(self, agent, other, CI):
@@ -170,10 +189,11 @@ class ConsentChefAgent(BaseChefAgent):
         for exp_atom in exp_atoms[:]:
             self.model.state.atoms.pop(exp_atom.name)
         # Remove the consent from living consents list.
-        agent.model.living_consents.remove(CI)
+        # agent.model.living_consents.remove(CI)
+        # agent.remove_CI_by_id(agent.model.living_consents, CI.id)
         # Remove the consent from given/received lists of the two agents.
-        agent.consents_given.remove(CI)
-        other.consents_received.remove(CI)
+        # agent.consents_given.remove(CI)
+        # other.consents_received.remove(CI)
         print(f"Consent fulfilment treated by consent giver: {agent.unique_id}, for resource: {CI.res.name} borrowed by: {other.unique_id}")
 
     def norm_activation_update(self):
@@ -226,3 +246,13 @@ class ConsentChefAgent(BaseChefAgent):
 
 
         return exp_atom_list, ep_atom_list
+    
+    def remove_CI_by_id(self, consent_list, id):
+        """
+        DEPRICATED
+        Removes a CI from a list. Since we have different object instances for the same consent instance,
+        we can't just remove the object. For example, while removing from model.living_consents, we need the id.
+        Called from self.treat_consent_fulfillment, self.treat_consent_violation.
+        """
+        consent_list[:] = [CI for CI in consent_list if CI.id != id]
+

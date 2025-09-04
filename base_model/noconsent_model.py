@@ -144,7 +144,7 @@ class NoConsentModel(mesa.Model):
                 sovereigned_resources = self.resources_of_agents
             )
 
-
+"""
 model = NoConsentModel(seed=42)
 
 step_count = 0
@@ -160,3 +160,4 @@ while 1:
 
     if fin or step_count >= MAX_STEP_COUNT:
         break
+"""

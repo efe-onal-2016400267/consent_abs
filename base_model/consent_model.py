@@ -19,12 +19,14 @@ class ConsentModel(NoConsentModel):
                 goal_per_agent = 3,
                 resource_per_agent = 3,
                 resources = [],
+                consent_count = 0, # Will be used as the id.
                 ):
         
         super().__init__(width, height, initial_population, seed, goal_per_agent, resource_per_agent, resources)
         # To hold a history of all the ConsentInstances, will be used to count the number of fulfillments, violations, etc.
         self.consent_history = []
         self.living_consents = []
+        self.consent_count = consent_count
 
     def create_agents_from_model(self, n):
         """
@@ -41,6 +43,21 @@ class ConsentModel(NoConsentModel):
                 sovereigned_resources = self.resources_of_agents
             )
         
+    def check_consent_state(self):
+        """
+        Checks and updates the states of the CIs in self.living_consents.
+        Each agent holds their version of the CIs, but the model holds them as the ground truth.
+        """
+        for CI in self.living_consents:
+            if CI.state == "ACTIVE":
+                # Call consent functions
+                CI.update_norm_activations() # First lets see states of the norms
+                violated = CI.is_violated()
+                fulfilled = CI.is_fulfilled()
+                unrealized = CI.is_unrealized()
+                reneg = CI.is_renegotiate()
+                active = CI.is_active()
+        
     def step(self):
         # Agents update the states of the norms of the consents they have given and received.
         # This could be done by the model as well?
@@ -50,6 +67,8 @@ class ConsentModel(NoConsentModel):
         # Agents check the states of the consents they have given or received.
         # TODO: They should change behavour based on current consent state.
         self.agents.do("check_given_consents")
+        # The model should check its own Consent instances too
+        self.check_consent_state()
         # The actual step function that runs the agent, interpret_goals.
         self.agents.do("interpret_goals")   
 
@@ -67,4 +86,6 @@ while 1:
             fin = 0
 
     if fin or step_count >= MAX_STEP_COUNT:
+        agent_vars = model.datacollector.get_agent_vars_dataframe()
+        agent_vars.head()
         break

@@ -64,6 +64,8 @@ class BaseChefAgent(CellAgent):
         self.accomplished_goals = []
         self.cell = cell
         self.all_required_future_resources = self.initialize_required_future_resources()
+        self.num_remaining_goals = len(self.goals) # to be reported
+        self.num_accomplished_goals = len(self.accomplished_goals) # to be reported
 
 
     def interpret_goals(self):
@@ -347,5 +349,13 @@ class BaseChefAgent(CellAgent):
         """
         Returns the exp atom list concerning the agent along with the related epistemic atoms.
         Called from self.update_exp_cond function.
+        """
+        pass
+
+    def remove_CI_by_id(self, consent_list, id):
+        """
+        Removes a CI from a list. Since we have different object instances for the same consent instance,
+        we can't just remove the object. For example, while removing from model.living_consents, we need the id.
+        Called from ConsentChefAgent.treat_consent_fulfillment, self.treat_consent_violation.
         """
         pass

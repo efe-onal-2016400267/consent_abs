@@ -10,7 +10,7 @@ class ConsentInstance:
         g_R: Stated goal that becomes true after CO is fulfilled. So the main goal of the agent
         t: The action for which the consent is given
     """
-    def __init__(self, g, r, N, g_R, t:"Action", res):
+    def __init__(self, g, r, N, g_R, t:"Action", res, id, owner):
         self.g = g
         self.r = r
         self.N = N
@@ -18,6 +18,11 @@ class ConsentInstance:
         self.t = t
         self.res = res
         self.state = "NEGOTIATING" # TODO: unsolicited consent
+        # We'll be creating 2 instances for 1 negotiation.
+        # The owner can be G or R. They will be the owners of their own instances.
+        # And we use an id two bind the two instances of consent.
+        self.id = id
+        self.owner = owner # The owner is who holds and checks the consent instance.
 
     def is_violated(self):
         """
@@ -28,7 +33,7 @@ class ConsentInstance:
             return True
         
         # If ConsentInstance hasnt already completed its life
-        if self.state not in ("FULFILLED", "UNREALIZED", "DEFERRED"): # Icould just check ACTIVE
+        if self.state not in ("FULFILLED", "UNREALIZED", "DEFERRED"): # I could just check ACTIVE
             violated = False
             for n in self.N:
                 if n.is_violated():
