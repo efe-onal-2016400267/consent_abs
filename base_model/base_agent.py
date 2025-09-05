@@ -64,7 +64,7 @@ class BaseChefAgent(CellAgent):
         self.accomplished_goals = []
         self.cell = cell
         self.all_required_future_resources = self.initialize_required_future_resources()
-        self.num_remaining_goals = len(self.goals) # to be reported
+        self.num_remaining_goals = len(self.remaining_goals) # to be reported
         self.num_accomplished_goals = len(self.accomplished_goals) # to be reported
 
 
@@ -91,12 +91,16 @@ class BaseChefAgent(CellAgent):
                 self.accomplished_goals.append(self.current_goal)
                 # Remove the goal from remanining goals, update resources that will be needed in the future, update model state.
                 self.remaining_goals.remove(self.current_goal)
+                # After the goal lists are updated, we call the goal count update function for reporting
+                self.goal_count_update()
+                print(f"Number of remaning goals for agent {self.unique_id}: {self.num_remaining_goals}")
+                print(f"Number of accomplished goals for agent {self.unique_id}: {self.num_accomplished_goals}")
                 # We dont feed res.name here because the atom is a main goal atom.
                 self.model.state.set_true(Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id))
                 # After accomplishing a goal, an agent should update the states of the CI's it has received
                 self.check_received_consents()
                 self.current_goal = None
-                self.model.state.print_state()
+                #self.model.state.print_state()
                 self.all_required_future_resources = self.initialize_required_future_resources()
                 # If the resource wont be needed again, release it.
                 for res in self.all_resources_self_use[:]:
@@ -107,7 +111,7 @@ class BaseChefAgent(CellAgent):
 
                         # Make related subgoal atoms False
                         self.model.state.set_false(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id))
-                        self.model.state.print_state()
+                        #self.model.state.print_state()
                         
                         # other is the owner of the resource.
                         other = self.model._all_agents[res.owner - 1]
@@ -186,7 +190,7 @@ class BaseChefAgent(CellAgent):
                 self.all_resources_self_use.append(res)
                 # Update the state with the subgoal
                 self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id, resource_id=res.name))
-                self.model.state.print_state()
+                #self.model.state.print_state()
                 return
             
         # Get the closest available resource of this type
@@ -208,7 +212,7 @@ class BaseChefAgent(CellAgent):
                     self.current_borrowed_resources.append(res)
                     self.all_resources_self_use.append(res)
                     self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id, resource_id=res.name))
-                    self.model.state.print_state()
+                    #self.model.state.print_state()
                     return
         print(f"Agent: {self.unique_id}, tried to acquire resource: {res_type}, but could not find any available.")
             
@@ -359,3 +363,11 @@ class BaseChefAgent(CellAgent):
         Called from ConsentChefAgent.treat_consent_fulfillment, self.treat_consent_violation.
         """
         pass
+
+    def goal_count_update(self):
+        """
+        Update accomplished and remaining goal counts to be reported.
+        """
+
+        self.num_accomplished_goals = len(self.accomplished_goals)
+        self.num_remaining_goals = len(self.remaining_goals)

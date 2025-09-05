@@ -8,8 +8,8 @@ from base_agent import BaseChefAgent
 from resource import Resource
 from mesa.experimental.cell_space import OrthogonalVonNeumannGrid
 #from mesa.experimental.cell_space.property_layer import PropertyLayer
-
 import yaml
+from model_level_collectors import model_level_remaining_goals, model_level_accomplished_goals
 
 
 class NoConsentModel(mesa.Model):
@@ -65,6 +65,7 @@ class NoConsentModel(mesa.Model):
                         resource_instances = []
                     self.resources_of_agents.append(resource_instances)
 
+                # By feeding persona numbers to this function, I can create different types of agents in a single simulation.
                 self.create_agents_from_model(n=len(test_case_data))
                 """
                 BaseChefAgent.create_agents(
@@ -114,6 +115,11 @@ class NoConsentModel(mesa.Model):
                 self.resources_of_agents.append(resource_instances)
 
             self.create_agents_from_model(n=self.initial_population)
+
+            self.datacollector = mesa.DataCollector(
+                    agent_reporters={"Accomplished Goals": "num_accomplished_goals", "Remaining Goals": "num_remaining_goals"},
+                    model_reporters={"Total Accomplished Goals": model_level_accomplished_goals, "Total Remaining Goals": model_level_remaining_goals}
+                    )
 
             """
             BaseChefAgent.create_agents(

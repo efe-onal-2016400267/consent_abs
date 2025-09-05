@@ -70,7 +70,8 @@ class ConsentModel(NoConsentModel):
         # The model should check its own Consent instances too
         self.check_consent_state()
         # The actual step function that runs the agent, interpret_goals.
-        self.agents.do("interpret_goals")   
+        self.agents.do("interpret_goals")  
+        self.datacollector.collect(self) 
 
 model = ConsentModel(seed=42)
 
@@ -87,5 +88,6 @@ while 1:
 
     if fin or step_count >= MAX_STEP_COUNT:
         agent_vars = model.datacollector.get_agent_vars_dataframe()
+        model_vars = model.datacollector.get_model_vars_dataframe()
         agent_vars.head()
         break
