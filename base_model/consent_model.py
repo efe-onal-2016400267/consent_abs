@@ -1,6 +1,5 @@
 from noconsent_model import NoConsentModel
 from config import GOAL_FILE_PATH, TEST_CASE_PATH, TEST, MAX_STEP_COUNT
-
 from consent_agent import ConsentChefAgent
 
 
@@ -51,12 +50,13 @@ class ConsentModel(NoConsentModel):
         for CI in self.living_consents:
             if CI.state == "ACTIVE":
                 # Call consent functions
-                CI.update_norm_activations() # First lets see states of the norms
-                violated = CI.is_violated()
-                fulfilled = CI.is_fulfilled()
-                unrealized = CI.is_unrealized()
-                reneg = CI.is_renegotiate()
-                active = CI.is_active()
+                # Always count for the giver (g) so that we dont count twice.
+                CI.update_norm_activations(agent=CI.g, counter=True) # First lets see states of the norms
+                violated = CI.is_violated(agent=CI.g, counter=True)
+                fulfilled = CI.is_fulfilled(agent=CI.g, counter=True)
+                unrealized = CI.is_unrealized(agent=CI.g, counter=True)
+                reneg = CI.is_renegotiate(agent=CI.g, counter=True)
+                active = CI.is_active(agent=CI.g, counter=True)
         
     def step(self):
         # Agents update the states of the norms of the consents they have given and received.
@@ -70,7 +70,7 @@ class ConsentModel(NoConsentModel):
         # The model should check its own Consent instances too
         self.check_consent_state()
         # The actual step function that runs the agent, interpret_goals.
-        self.agents.do("interpret_goals")  
+        self.agents.do("interpret_goals")
         self.datacollector.collect(self) 
 
 model = ConsentModel(seed=42)

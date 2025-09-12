@@ -100,7 +100,7 @@ class BaseChefAgent(CellAgent):
                 # After accomplishing a goal, an agent should update the states of the CI's it has received
                 self.check_received_consents()
                 self.current_goal = None
-                #self.model.state.print_state()
+                self.model.state.print_state()
                 self.all_required_future_resources = self.initialize_required_future_resources()
                 # If the resource wont be needed again, release it.
                 for res in self.all_resources_self_use[:]:

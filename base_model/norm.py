@@ -19,21 +19,21 @@ class Norm:
         self.ever_active = False
         self.fulfilled = False
 
-    def is_fulfilled(self):
+    def is_fulfilled(self, agent=None, counter=False):
         """
         Function to check if the norm is fulfilled.
         Will be overriden in each child class.
         """
         pass
 
-    def is_violated(self):
+    def is_violated(self, agent=None, counter=False):
         """
         Function to check if the norm is violated.
         Will be overriden in each child class.
         """
         pass
 
-    def activation_update(self):
+    def activation_update(self, agent=None, counter=False):
         """
         This function should run at each step for all inactive norms
         So that if the activation conditions are met (c_det for AU, p for CO) we can activate the norm
@@ -41,7 +41,7 @@ class Norm:
         """
         pass
 
-    def condition_checker(self, cond_list):
+    def condition_checker(self, cond_list, agent=None, counter=False):
         """
         Function that checks if a list of conditions match the environment state
         """
@@ -50,6 +50,14 @@ class Norm:
             if self.model.state.is_true(cond.name) != cond.truth:
                 all_match = False
         return all_match
+    
+    def clone(self, agent=None, counter=False):
+        """
+        Returns a new instance of the norm object.
+        To be implemented in AU and CO child classes.
+        Called from ConsentChefAgent.request_consent.
+        """
+        pass
 
 
 class Authorization(Norm):
@@ -65,7 +73,7 @@ class Authorization(Norm):
         self.c_det = self.c[0]
         self.c_exp = self.c[1]
 
-    def activation_update(self):
+    def activation_update(self, agent=None, counter=False):
         """
         For each condition, check if their required values are the same as their values in model state
         A condition is an Atom instance with a truth value T or F
@@ -76,9 +84,11 @@ class Authorization(Norm):
         # For now, we implemented sub_goals as the post conditions of an action 
         # And an AU is activated immediately
         det = self.condition_checker(self.c_det)
-        if det and not (self.active or self.violated):
+        if det and not (self.active or self.violated or self.fulfilled):
             self.active = True
             self.ever_active = True
+            if agent and counter:
+                agent.norm_state_counter["AU"]["ever_active"] = agent.norm_state_counter["AU"]["ever_active"] + 1
 
         # Did it expire:
         exp = self.condition_checker(self.c_exp)
@@ -89,19 +99,26 @@ class Authorization(Norm):
             self.violated = True
             self.fulfilled = False
 
-    def is_violated(self):
+            if agent and counter:
+                agent.norm_state_counter["AU"]["expired"] = agent.norm_state_counter["AU"]["expired"] + 1
+
+    def is_violated(self, agent=None, counter=False):
         """
         Checks if an AU is violated. That is, atoms in p (t=<p, r>) become true although the AU is not active.
         """
         done = self.condition_checker([self.t.p])
-        if (done and not self.active) or (done and self.fulfilled and self.expired):
+        if (done and not self.active and not self.fulfilled) or (done and self.fulfilled and self.expired):
             self.violated = True
             self.active = False
             self.fulfilled = False
+
+            if agent and counter:
+                agent.norm_state_counter["AU"]["violated"] = agent.norm_state_counter["AU"]["violated"] + 1
+
             return True
         return False
 
-    def is_fulfilled(self):
+    def is_fulfilled(self, agent=None, counter=False):
         """
         Checks if an AU was ever fulfilled (if post condition p of action t was true when the AU was active)
         Even if an AU is fulfilled it can still be violated because p is true until g_R is true.
@@ -114,10 +131,27 @@ class Authorization(Norm):
             return True
         elif done and self.active:
             self.fulfilled = True
-            # self.active = False
+            self.active = False
+            if agent and counter:
+                agent.norm_state_counter["AU"]["fulfilled"] = agent.norm_state_counter["AU"]["fulfilled"] + 1
             return True
         else:
             return False
+        
+    def clone(self, agent=None, counter=False):
+        """
+        Returns a new instance of the norm object.
+        To be implemented in AU and CO child classes.
+        Called from ConsentChefAgent.request_consent.
+        """
+        # We don't need to clone the atoms (c) since atoms are global.
+        # We don't need to clone the actions (t) since it contains an atom and a resource. The atom is global and the resource will never change.
+        AU_clone = Authorization(model=self.model,
+                                 g=self.g,
+                                 r=self.r,
+                                 c=self.c,
+                                 t=self.t)
+        return AU_clone
 
 
 class Commitment(Norm):
@@ -135,7 +169,7 @@ class Commitment(Norm):
         self.g_R = g_R
         self.type = "CO"
 
-    def activation_update(self):
+    def activation_update(self, agent=None, counter=False):
         """
         A commitment should be active once the antecedent turns true.
         Called from ConsentChefAgent.norm_state_update
@@ -146,10 +180,12 @@ class Commitment(Norm):
         if det and not self.active:
             self.active = True
             self.ever_active = True
+            if agent and counter:
+                agent.norm_state_counter["CO"]["ever_active"] = agent.norm_state_counter["CO"]["ever_active"] + 1
 
         # TODO: Do we need expiration? No?
 
-    def is_violated(self):
+    def is_violated(self, agent=None, counter=False):
         """
         Checks if a CO is violated. If g_R was not performed before the deadline
         """
@@ -158,10 +194,14 @@ class Commitment(Norm):
         if not done and self.model.steps > exp_step:
             self.active = False
             self.violated = True
+
+            if agent and counter:
+                agent.norm_state_counter["CO"]["violated"] = agent.norm_state_counter["CO"]["violated"] + 1
+
             return True
         return False
 
-    def is_fulfilled(self):
+    def is_fulfilled(self, agent=None, counter=False):
         """
         Checks if a CO was ever fulfilled (if g_R was ever True)
         If an CO is fulfilled, it cannot be violated again
@@ -178,5 +218,23 @@ class Commitment(Norm):
         if done and self.active and not self.violated and not due_passed:
             self.fulfilled = True
             self.active = False
+
+            if agent and counter:
+                agent.norm_state_counter["CO"]["fulfilled"] = agent.norm_state_counter["CO"]["fulfilled"] + 1
+
             return True
         return False
+    
+    def clone(self, agent=None, counter=False):
+        """
+        Returns a new instance of the norm object.
+        To be implemented in AU and CO child classes.
+        Called from ConsentChefAgent.request_consent.
+        """
+        # We don't need to copy p and g_R since they are atoms and atoms are global.
+        clone_CO = Commitment(model=self.model,
+                              g=self.g,
+                              r=self.r,
+                              p=self.p,
+                              g_R=self.g_R)
+        return clone_CO

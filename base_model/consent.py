@@ -24,7 +24,7 @@ class ConsentInstance:
         self.id = id
         self.owner = owner # The owner is who holds and checks the consent instance.
 
-    def is_violated(self):
+    def is_violated(self, agent=None, counter=False):
         """
         If any norms in N are violated, then ConsentInstance is also violated.
         """
@@ -36,14 +36,14 @@ class ConsentInstance:
         if self.state not in ("FULFILLED", "UNREALIZED", "DEFERRED"): # I could just check ACTIVE
             violated = False
             for n in self.N:
-                if n.is_violated():
+                if n.is_violated(agent=agent, counter=counter):
                     violated = True
                     self.state = "VIOLATED"
             return violated
         else:
             return False
 
-    def is_fulfilled(self):
+    def is_fulfilled(self, agent=None, counter=False):
         """
         If all of the norms in N are fulfilled, then ConsentInstance is also fulfilled.
         """
@@ -58,14 +58,14 @@ class ConsentInstance:
         
         # If any of the norms is not fulfilled, ConsentInstance is not fulfilled either.
         for n in self.N:
-            if not n.is_fulfilled() or n.is_violated():
+            if not n.is_fulfilled(agent=agent, counter=counter) or n.is_violated(agent=agent, counter=counter):
                 return False
             
         # Otherwise, ConsentInstance is fulfilled.
         self.state = "FULFILLED"
         return True
 
-    def is_unrealized(self):
+    def is_unrealized(self, agent=None, counter=False):
         """
         If any of the AUs in N expire, then ConsentInstance is unrealized.
         """
@@ -76,17 +76,17 @@ class ConsentInstance:
                     return True
         return False
 
-    def is_renegotiate(self):
+    def is_renegotiate(self, agent=None, counter=False):
         """
         TODO: How can we find a use case for renegotiation?
         """
         pass
 
-    def is_active(self):
+    def is_active(self, agent=None, counter=False):
         return self.state == "ACTIVE"
     
-    def update_norm_activations(self):
+    def update_norm_activations(self, agent, counter=False):
         for n in self.N:
-            n.activation_update()
+            n.activation_update(agent=agent, counter=counter)
 
     

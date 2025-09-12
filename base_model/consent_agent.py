@@ -16,6 +16,19 @@ class ConsentChefAgent(BaseChefAgent):
         self.consents_given = []
         self.consents_received = []
         self.last_consent_received = None
+        self.norm_state_counter = {
+            "AU": {
+                "violated": 0,
+                "expired": 0,
+                "fulfilled": 0,
+                "ever_active": 0
+            },
+            "CO": {
+                "violated":0,
+                "fulfilled": 0,
+                "ever_active": 0
+            }
+        }
 
         # maybe some lists to keep track of the related propositions.
 
@@ -80,7 +93,9 @@ class ConsentChefAgent(BaseChefAgent):
         if N:
             agreement = True
             for CI in instances:
-                CI.N = N
+                # Clone the norms
+                N_clone = [N[0].clone(), N[1].clone()]
+                CI.N = N_clone
                 CI.state = "ACTIVE"
         else:
             agreement = False
@@ -105,12 +120,12 @@ class ConsentChefAgent(BaseChefAgent):
         for CI in self.consents_given[:]:
             if CI.state == "ACTIVE":
                 # Call consent functions
-                CI.update_norm_activations() # First lets see states of the norms
-                violated = CI.is_violated()
-                fulfilled = CI.is_fulfilled()
-                unrealized = CI.is_unrealized()
-                reneg = CI.is_renegotiate()
-                active = CI.is_active()
+                CI.update_norm_activations(agent=self) # First lets see states of the norms
+                violated = CI.is_violated(agent=self)
+                fulfilled = CI.is_fulfilled(agent=self)
+                unrealized = CI.is_unrealized(agent=self)
+                reneg = CI.is_renegotiate(agent=self)
+                active = CI.is_active(agent=self)
 
                 # If given CI is vioalted, the agent treats the issue
                 if violated:
@@ -130,12 +145,12 @@ class ConsentChefAgent(BaseChefAgent):
         for CI in self.consents_received[:]:
             if CI.state == "ACTIVE":
                 # Call consent functions
-                CI.update_norm_activations() # First lets see states of the norms
-                violated = CI.is_violated()
-                fulfilled = CI.is_fulfilled()
-                unrealized = CI.is_unrealized()
-                reneg = CI.is_renegotiate()
-                active = CI.is_active()
+                CI.update_norm_activations(agent=self) # First lets see states of the norms
+                violated = CI.is_violated(agent=self)
+                fulfilled = CI.is_fulfilled(agent=self)
+                unrealized = CI.is_unrealized(agent=self)
+                reneg = CI.is_renegotiate(agent=self)
+                active = CI.is_active(agent=self)
 
                 # If received CI is violated agent treats the issue
                 # TODO: If violated was never tested!!! I couldnt come up with a usecase.
@@ -170,14 +185,7 @@ class ConsentChefAgent(BaseChefAgent):
         exp_atoms = [atom for key, atom in self.model.state.atoms.items() if "EXP" in atom.name and atom.agent_id==other.unique_id and atom.resource_id==CI.res.name]
         for exp_atom in exp_atoms[:]:
             self.model.state.atoms.pop(exp_atom.name)
-        # Remove the consent from living consents list.
-        # agent.model.living_consents.remove(CI)
-        # agent.remove_CI_by_id(agent.model.living_consents, CI.id)
-        # Remove the consent from given/received lists of the two agents.
-        # Do we really need to remove from these two lists?
-        # We could just keep them with terminal states.
-        # agent.consents_given.remove(CI)
-        # other.consents_received.remove(CI)
+
         print(f"Consent violation treated by consent giver: {agent.unique_id}, for resource: {CI.res.name} borrowed by: {other.unique_id}")
 
     def treat_consent_fulfilment(self, agent, other, CI):
@@ -188,12 +196,7 @@ class ConsentChefAgent(BaseChefAgent):
         exp_atoms = [atom for key, atom in self.model.state.atoms.items() if "EXP" in atom.name and atom.agent_id==other.unique_id and atom.resource_id==CI.res.name]
         for exp_atom in exp_atoms[:]:
             self.model.state.atoms.pop(exp_atom.name)
-        # Remove the consent from living consents list.
-        # agent.model.living_consents.remove(CI)
-        # agent.remove_CI_by_id(agent.model.living_consents, CI.id)
-        # Remove the consent from given/received lists of the two agents.
-        # agent.consents_given.remove(CI)
-        # other.consents_received.remove(CI)
+
         print(f"Consent fulfilment treated by consent giver: {agent.unique_id}, for resource: {CI.res.name} borrowed by: {other.unique_id}")
 
     def norm_activation_update(self):
@@ -243,16 +246,5 @@ class ConsentChefAgent(BaseChefAgent):
             if atom.agent_id == self.unique_id and atom.name.split("-", 1)[0] != "EXP":
                 ep_atom_list.append(atom)
         # Return related epistemic atoms
-
-
         return exp_atom_list, ep_atom_list
-    
-    def remove_CI_by_id(self, consent_list, id):
-        """
-        DEPRICATED
-        Removes a CI from a list. Since we have different object instances for the same consent instance,
-        we can't just remove the object. For example, while removing from model.living_consents, we need the id.
-        Called from self.treat_consent_fulfillment, self.treat_consent_violation.
-        """
-        consent_list[:] = [CI for CI in consent_list if CI.id != id]
 

@@ -9,7 +9,21 @@ from resource import Resource
 from mesa.experimental.cell_space import OrthogonalVonNeumannGrid
 #from mesa.experimental.cell_space.property_layer import PropertyLayer
 import yaml
-from model_level_collectors import model_level_remaining_goals, model_level_accomplished_goals
+from model_level_collectors import (model_level_remaining_goals, 
+                                    model_level_accomplished_goals, 
+                                    model_level_active_consents,
+                                    model_level_fulfilled_consents,
+                                    model_level_violated_consents,
+                                    model_level_unrealized_consents,
+                                    model_level_deferred_consents,
+                                    model_level_total_consents, 
+                                    model_level_AU_activations,
+                                    model_level_AU_expirations,
+                                    model_level_AU_fulfilments,
+                                    model_level_AU_vioaltions,
+                                    model_level_CO_activations,
+                                    model_level_CO_fulfilments,
+                                    model_level_CO_violations)
 
 
 class NoConsentModel(mesa.Model):
@@ -116,11 +130,6 @@ class NoConsentModel(mesa.Model):
 
             self.create_agents_from_model(n=self.initial_population)
 
-            self.datacollector = mesa.DataCollector(
-                    agent_reporters={"Accomplished Goals": "num_accomplished_goals", "Remaining Goals": "num_remaining_goals"},
-                    model_reporters={"Total Accomplished Goals": model_level_accomplished_goals, "Total Remaining Goals": model_level_remaining_goals}
-                    )
-
             """
             BaseChefAgent.create_agents(
                 self,
@@ -131,6 +140,24 @@ class NoConsentModel(mesa.Model):
                 sovereigned_resources = self.resources_of_agents
             )
             """
+        self.datacollector = mesa.DataCollector(
+                    agent_reporters={"Accomplished Goals": "num_accomplished_goals", "Remaining Goals": "num_remaining_goals"},
+                    model_reporters={"Total Accomplished Goals": model_level_accomplished_goals,
+                                      "Total Remaining Goals": model_level_remaining_goals,
+                                      "Total Active Consents": model_level_active_consents,
+                                      "Total Fulfilled Consents": model_level_fulfilled_consents,
+                                      "Total Violated Consents": model_level_violated_consents,
+                                      "Total Unrealized Consents": model_level_unrealized_consents,
+                                      "Total Deferred Consents": model_level_deferred_consents,
+                                      "Total Consents": model_level_total_consents,
+                                      "Total AU Activations": model_level_AU_activations,
+                                      "Total AU Expirations": model_level_AU_expirations,
+                                      "Total AU Violations": model_level_AU_vioaltions,
+                                      "Total AU Fulfilments": model_level_AU_fulfilments,
+                                      "Total CO Activations": model_level_CO_activations,
+                                      "Total CO Violations": model_level_CO_violations,
+                                      "Total CO Fulfilments": model_level_CO_fulfilments}
+                    )
 
     def step(self):
         self.agents.do("interpret_goals")

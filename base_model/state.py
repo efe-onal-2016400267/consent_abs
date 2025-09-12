@@ -11,11 +11,9 @@ class EnvState:
         """
         This function sets the atom to True by adding it to the atoms list.
         """
+        # Make the atom true. Doesnt matter if it existed with value False before. Just make it True.
         atom.truth = True
-        if atom.name in self.atoms.keys():
-            print(f"Atom {atom.name} already exists!")
-        else:
-            self.atoms[atom.name] = atom
+        self.atoms[atom.name] = atom
 
     def set_false(self, atom:Atom):
         """
