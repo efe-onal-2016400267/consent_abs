@@ -92,11 +92,11 @@ class Authorization(Norm):
 
         # Did it expire:
         exp = self.condition_checker(self.c_exp)
-        if exp and (self.active or self.fulfilled):
+        if exp and (self.active or self.fulfilled): # A fulfilled AU can expire too. An expired AU cannot be fulfilled any more.
             self.active = False
             self.expired = True
             # For us, an expired AU is also violated
-            self.violated = True
+            self.violated = False
             self.fulfilled = False
 
             if agent and counter:
@@ -107,7 +107,7 @@ class Authorization(Norm):
         Checks if an AU is violated. That is, atoms in p (t=<p, r>) become true although the AU is not active.
         """
         done = self.condition_checker([self.t.p])
-        if (done and not self.active and not self.fulfilled) or (done and self.fulfilled and self.expired):
+        if (done and not self.active and not self.fulfilled and not self.expired) or (done and self.fulfilled and self.expired) or (done and self.expired):
             self.violated = True
             self.active = False
             self.fulfilled = False

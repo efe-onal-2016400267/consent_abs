@@ -70,10 +70,17 @@ class ConsentChefAgent(BaseChefAgent):
         CI = <g, r, N, g_R, t>
         t = <p, r>
         """
+        # First check if R or G still has an active consent instance for the resource
+        r_active_consent_check = self.check_active_consent_for_resource(self.consents_received, res)
+        g_active_consent_check = self.check_active_consent_for_resource(other.consents_given, res)
+
+        if r_active_consent_check or g_active_consent_check:
+            return
+
         # Create stated goal g_R: the main goal the agent wants to accomplish
         # For now let g_Rs violate after 3 steps
         
-        g_R = Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id, truth=True, valid_from=self.model.steps, valid_to=self.model.steps + 1)
+        g_R = Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id, truth=True, valid_from=self.model.steps, valid_to=self.model.steps + 4)
         # Create action t = <p, r> 
         t = tuple((Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id, truth=True), res))
         p = t[0]
@@ -88,7 +95,7 @@ class ConsentChefAgent(BaseChefAgent):
 
         agreement = False
         # Perform negotiation
-        N = self.negotiate(other=other, res=res, g_R=g_R, p=p, au_exp_step=self.model.steps + 2, co_exp_step=self.model.steps + 1)
+        N = self.negotiate(other=other, res=res, g_R=g_R, p=p, au_exp_step=self.model.steps + 1, co_exp_step=self.model.steps + 1)
         instances = [CI_g, CI_r, CI_m]
         if N:
             agreement = True
@@ -175,9 +182,12 @@ class ConsentChefAgent(BaseChefAgent):
         """
         # Treat the resource lists.
         agent.sovereigned_resources_available.append(CI.res)
-        other.current_borrowed_resources.remove(CI.res)
-        other.all_resources_self_use.remove(CI.res)
-        agent.lent_away_resources.remove(CI.res)
+        if CI.res in other.current_borrowed_resources:
+            other.current_borrowed_resources.remove(CI.res)
+        if CI.res in other.all_resources_self_use:
+            other.all_resources_self_use.remove(CI.res)
+        if CI.res in agent.lent_away_resources:
+            agent.lent_away_resources.remove(CI.res)
         # Update model.state.
         agent.model.state.set_false(Atom(name=f"Agent{other.unique_id}--use_{CI.res.type}--", agent_id=other.unique_id))
         agent.model.state.print_state()
@@ -235,6 +245,7 @@ class ConsentChefAgent(BaseChefAgent):
         """
         Returns the exp atom list concerning the agent along with the related epistemic atoms.
         Called from self.update_exp_cond function.
+        Called from self.expiry_check function.
         """
 
         # Return exp atoms
@@ -247,4 +258,107 @@ class ConsentChefAgent(BaseChefAgent):
                 ep_atom_list.append(atom)
         # Return related epistemic atoms
         return exp_atom_list, ep_atom_list
+    
+    def unrealization_check(self):
+        """
+        At the end of the step the agent should check if there are any unrealized consents.
+        TODO: do we need this one?
+        """
+        c_exp = None
+        for CI in self.consents_received:
+            unrealized = False
+            if CI.state == "ACTIVE":
+                unrealized = CI.is_unrealized(agent=self)
+            if unrealized:
+                c_exp = CI.N[0].c[1]
+
+        return
+
+
+    def expiry_check(self):
+        """
+        Checks if any AUs will expire in the next step. If so, release such resources.
+        This will execute at the end of the step for the agent.
+        We will make this specific for one of the personas.
+        Its implemented now to be able to test AU expiry and AU violation.
+        If the agent releases the resource we should delete the expiry atom.
+        Called from self.treat_future_AU_expiry().
+        """
+        # Get the expiration atoms
+        exp_atoms, ep_atoms = self.get_exp_atoms()
+
+        # Get the atoms where the agent is the R and expiration step is the next step
+        current_step = self.model.steps
+        expiry_detections = []
+        eps_of_agent = []
+        for exp in exp_atoms:
+            if exp.agent_id == self.unique_id and exp.valid_to == current_step:
+                expiry_detections.append(exp)
+
+        for ep in ep_atoms:
+            if ep.agent_id == self.unique_id:
+                eps_of_agent.append(ep)
+
+        return expiry_detections, eps_of_agent
+    
+    def treat_future_AU_expiry(self):
+        """
+        This function will be different for different personas.
+        Some agents dont care if AU expires.
+        Some return the resource if the realize AU will expire in the next step.
+        For now, lets just return it.
+        """
+        res = None
+        owner = None
+        ep_of_interest = None
+        expiry_detections, ep_atoms = self.expiry_check()
+        for exp in expiry_detections:
+            res_id = exp.resource_id
+            # Get the ep atom for that resource
+            for ep in ep_atoms:
+                if res_id == ep.resource_id:
+                    ep_of_interest = ep # This will be turned false. exp will be deleted
+                    break
+            # 1. make ep atom false
+            # 2. release the resource
+                # 2.1. remove the resource from self.currently_borrowed_resources
+                # 2.2. put the resource to the available resources of the owner
+            # 3. remove the exp atom
+            # 4. The consent instance will stay active if the agent releases but the agent cannot fulfill 
+                # the consent since it cannot achieve the stated goal any more.
+
+            # Get the resource object so that we have the owner as an agent object too.
+            for res_s in self.current_borrowed_resources:
+                if res_s.name == res_id:
+                    res = res_s
+                    owner = self.model._all_agents[res.owner - 1]
+                    break
+            
+            # We set the epistemic atom to False since the agent has released the resource
+            # Now the atom is False, if c_exp becomes true, we should move to the UNREALIZED state for the consent.
+            # And this should work for R, G, and the model.
+            # So we must keep the expiry atom
+            if ep_of_interest:
+                self.model.state.set_false(ep_of_interest)
+            if res in self.current_borrowed_resources:
+                self.current_borrowed_resources.remove(res)
+            if owner and res in owner.lent_away_resources:
+                owner.lent_away_resources.remove(res)
+            if owner and res not in owner.sovereigned_resources_available:
+                owner.sovereigned_resources_available.append(res)
+            # del self.model.state.atoms[exp.name]
+
+        return
+    
+    def check_active_consent_for_resource(self, consent_list, res):
+        """
+        Once the agent releases a resource due to future expiry, it shouldn't be able to create a
+            new consent instance for the same resource, if R or G still has an active CI for that resource.
+        So, this function returns active CIs given a CI list and resource.
+        """
+        for CI in consent_list:
+            if CI.res == res and CI.state == "ACTIVE":
+                return True
+        return False
+
 

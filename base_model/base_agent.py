@@ -70,6 +70,7 @@ class BaseChefAgent(CellAgent):
 
     def interpret_goals(self):
         """ The agent needs to interpret its goals and needs to use the handler to accomplish that goal. """
+        self.check_received_consents()
         if not self.remaining_goals:
             return
         
@@ -98,40 +99,22 @@ class BaseChefAgent(CellAgent):
                 # We dont feed res.name here because the atom is a main goal atom.
                 self.model.state.set_true(Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id))
                 # After accomplishing a goal, an agent should update the states of the CI's it has received
-                self.check_received_consents()
+                self.check_received_consents() # Will do this even if there is no goal accomplishment, after this block
                 self.current_goal = None
                 self.model.state.print_state()
-                self.all_required_future_resources = self.initialize_required_future_resources()
-                # If the resource wont be needed again, release it.
-                for res in self.all_resources_self_use[:]:
-                    if res.type not in self.all_required_future_resources:
-                        print(f"Agent: {self.unique_id} has released resource: {res.name}, owned by: {res.owner}")
-                        res.in_use_by = None
-                        self.all_resources_self_use.remove(res)
 
-                        # Make related subgoal atoms False
-                        self.model.state.set_false(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id))
-                        #self.model.state.print_state()
-                        
-                        # other is the owner of the resource.
-                        other = self.model._all_agents[res.owner - 1]
-                        # If its your resource, make it available.
-                        if other == self:
-                            self.sovereigned_resources_available.append(res)
-                            self.sovereigned_resources_self_use.remove(res)
-                        # If its other's resource, make it available.
-                        else:
-                            self.current_borrowed_resources.remove(res)
-                            other.sovereigned_resources_available.append(res)
-                            other.lent_away_resources.remove(res)
-                            # If the agent has released another agent's resource, then it should update the expiration conditions.
-                            # self.update_exp_cond(res)
+                # Resource release was here, moved it to resource release function
                 
                 # Once all resources are released, update norm states again, if self is a ConsentChefAgent
                 self.norm_activation_update()
+                self.treat_future_AU_expiry()
             else:
                 print(f"Agent: {self.unique_id} could not accomplish the goal: {self.current_goal[0]}")
-
+                self.treat_future_AU_expiry()
+                # Before the step ends for the agent, check for AU expiry.
+                # This will be based on personas
+                self.check_received_consents()
+            
 
             # TODO: Before releasing I can do extensive tests by using assesrt statements.
             # Check if the agent has obtained all the resources needed for the goal.
@@ -371,3 +354,70 @@ class BaseChefAgent(CellAgent):
 
         self.num_accomplished_goals = len(self.accomplished_goals)
         self.num_remaining_goals = len(self.remaining_goals)
+
+    def expiry_check(self):
+        """
+        Checks if any AUs will expire in the next step. If so, release such resources.
+        This will execute at the end of the step for the agent.
+        We will make this specific for one of the personas.
+        Its implemented now to be able to test AU expiry and AU violation.
+        """
+        pass
+
+    def treat_future_AU_expiry(self):
+        """
+        This function will be different for different personas.
+        Some agents dont care if AU expires.
+        Some return the resource if the realize AU will expire in the next step.
+        For now, lets just return it.
+        """
+        pass
+
+    def unrealization_check(self):
+        """
+        At the end of the step the agent should check if there are any unrealized consents.
+        """
+        pass
+
+    def check_active_consent_for_resource(self, consent_list, res):
+        """
+        Once the agent releases a resource due to future expiry, it shouldn't be able to create a
+            new consent instance for the same resource, if R or G still has an active CI for that resource.
+        So, this function returns active CIs given a CI list and resource.
+        """
+        pass
+
+    def release_resources(self):
+        """
+        We are going to have 2 phases:
+        1. Goal accomplishing phase
+        2. Resource releasing phase
+        We had to do this so that the atoms are updated at the same time for R, G, and the model.
+        Called after all agents interpret their goals.
+        """
+
+        self.all_required_future_resources = self.initialize_required_future_resources()
+        # If the resource wont be needed again, release it.
+        for res in self.all_resources_self_use[:]:
+            if res.type not in self.all_required_future_resources:
+                print(f"Agent: {self.unique_id} has released resource: {res.name}, owned by: {res.owner}")
+                res.in_use_by = None
+                self.all_resources_self_use.remove(res)
+
+                # Make related subgoal atoms False
+                self.model.state.set_false(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id))
+                #self.model.state.print_state()
+                        
+                # other is the owner of the resource.
+                other = self.model._all_agents[res.owner - 1]
+                # If its your resource, make it available.
+                if other == self:
+                    self.sovereigned_resources_available.append(res)
+                    self.sovereigned_resources_self_use.remove(res)
+                # If its other's resource, make it available.
+                else:
+                    self.current_borrowed_resources.remove(res)
+                    other.sovereigned_resources_available.append(res)
+                    other.lent_away_resources.remove(res)
+                    # If the agent has released another agent's resource, then it should update the expiration conditions.
+                    # self.update_exp_cond(res)

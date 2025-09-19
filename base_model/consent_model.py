@@ -57,6 +57,8 @@ class ConsentModel(NoConsentModel):
                 unrealized = CI.is_unrealized(agent=CI.g, counter=True)
                 reneg = CI.is_renegotiate(agent=CI.g, counter=True)
                 active = CI.is_active(agent=CI.g, counter=True)
+
+        return
         
     def step(self):
         # Agents update the states of the norms of the consents they have given and received.
@@ -71,6 +73,10 @@ class ConsentModel(NoConsentModel):
         self.check_consent_state()
         # The actual step function that runs the agent, interpret_goals.
         self.agents.do("interpret_goals")
+        self.agents.do("check_given_consents")
+        # The model should check its own Consent instances too
+        self.check_consent_state()
+        self.agents.do("release_resources")
         self.datacollector.collect(self) 
 
 model = ConsentModel(seed=42)
