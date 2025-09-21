@@ -32,5 +32,17 @@ goals:
     - name: use_stove
     - name: use_rice
     - name: use_butter
+  #- name: musakka
+  #- name: hamburger
+  #- name: apple_souce
+  #- name: spinach
+  #- name: fufu
+  #- name: pancakes
+  #- name: tacos
+  #- name: focacia
+  #- name: macaroni
+  #- name: toast
+  #- name: dumplings
+  #- name: rice_sheet_rolls
   
   

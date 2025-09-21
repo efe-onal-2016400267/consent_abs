@@ -168,7 +168,8 @@ class BaseChefAgent(CellAgent):
             if res.type == res_type:
                 print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
                 res.in_use_by = self
-                self.sovereigned_resources_available.remove(res)
+                if res in self.sovereigned_resources_available:
+                    self.sovereigned_resources_available.remove(res)
                 self.sovereigned_resources_self_use.append(res)
                 self.all_resources_self_use.append(res)
                 # Update the state with the subgoal
@@ -190,7 +191,8 @@ class BaseChefAgent(CellAgent):
                 if has_consent:
                     print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
                     res.in_use_by = self
-                    agent.sovereigned_resources_available.remove(res)
+                    if res in agent.sovereigned_resources_available:
+                        agent.sovereigned_resources_available.remove(res)
                     agent.lent_away_resources.append(res)
                     self.current_borrowed_resources.append(res)
                     self.all_resources_self_use.append(res)
@@ -402,7 +404,8 @@ class BaseChefAgent(CellAgent):
             if res.type not in self.all_required_future_resources:
                 print(f"Agent: {self.unique_id} has released resource: {res.name}, owned by: {res.owner}")
                 res.in_use_by = None
-                self.all_resources_self_use.remove(res)
+                if res in self.all_resources_self_use:
+                    self.all_resources_self_use.remove(res)
 
                 # Make related subgoal atoms False
                 self.model.state.set_false(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id))
@@ -413,11 +416,14 @@ class BaseChefAgent(CellAgent):
                 # If its your resource, make it available.
                 if other == self:
                     self.sovereigned_resources_available.append(res)
-                    self.sovereigned_resources_self_use.remove(res)
+                    if res in self.sovereigned_resources_self_use:
+                        self.sovereigned_resources_self_use.remove(res)
                 # If its other's resource, make it available.
                 else:
-                    self.current_borrowed_resources.remove(res)
+                    if res in self.current_borrowed_resources:
+                        self.current_borrowed_resources.remove(res)
                     other.sovereigned_resources_available.append(res)
-                    other.lent_away_resources.remove(res)
+                    if res in other.lent_away_resources:
+                        other.lent_away_resources.remove(res)
                     # If the agent has released another agent's resource, then it should update the expiration conditions.
                     # self.update_exp_cond(res)
