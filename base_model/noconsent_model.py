@@ -38,7 +38,11 @@ class NoConsentModel(mesa.Model):
                 seed = None,
                 goal_per_agent = 3,
                 resource_per_agent = 3,
-                resources = []
+                resources = [],
+                GOAL_FILE_PATH = GOAL_FILE_PATH, 
+                TEST_CASE_PATH = TEST_CASE_PATH,
+                TEST = TEST,
+                MAX_STEP_COUNT = MAX_STEP_COUNT
                 ):
         super().__init__(seed=seed)
         self.state = EnvState()
@@ -50,13 +54,17 @@ class NoConsentModel(mesa.Model):
         self.resource_per_agent = resource_per_agent
         self.initial_population = initial_population
         self.resources = resources
+        self.GOAL_FILE_PATH = GOAL_FILE_PATH
+        self.TEST_CASE_PATH = TEST_CASE_PATH
+        self.TEST = TEST
+        self.MAX_STEP_COUNT = MAX_STEP_COUNT
         self.running = True
         self.grid = OrthogonalVonNeumannGrid(
             (self.width, self.height), torus=False, random=self.random
         )   
 
-        if TEST:
-            with open(TEST_CASE_PATH, 'r') as f:
+        if self.TEST:
+            with open(self.TEST_CASE_PATH, 'r') as f:
                 test_case_data = yaml.safe_load(f)["agents"]
                 self.goals_of_agents = []
                 self.resources_of_agents = []
@@ -81,19 +89,9 @@ class NoConsentModel(mesa.Model):
 
                 # By feeding persona numbers to this function, I can create different types of agents in a single simulation.
                 self.create_agents_from_model(n=len(test_case_data))
-                """
-                BaseChefAgent.create_agents(
-                    self,
-                    len(test_case_data),
-                    cell=self.random.choices(self.grid.all_cells.cells, k=len(test_case_data)),
-                    # Now I need to feed goals and sovereign resources at random.
-                    goals = self.goals_of_agents,
-                    sovereigned_resources = self.resources_of_agents
-                )
-                """
         else:
             # Read the yaml file first to get the goals
-            with open(GOAL_FILE_PATH, 'r') as f:
+            with open(self.GOAL_FILE_PATH, 'r') as f:
                 self.all_goals = yaml.safe_load(f)["goals"]
 
             # in resources we hold different resource types extractd from distinct subgoals.
@@ -130,16 +128,6 @@ class NoConsentModel(mesa.Model):
 
             self.create_agents_from_model(n=self.initial_population)
 
-            """
-            BaseChefAgent.create_agents(
-                self,
-                self.initial_population,
-                cell=self.random.choices(self.grid.all_cells.cells, k=self.initial_population),
-                # Now I need to feed goals and sovereign resources at random.
-                goals = self.goals_of_agents,
-                sovereigned_resources = self.resources_of_agents
-            )
-            """
         self.datacollector = mesa.DataCollector(
                     agent_reporters={"Accomplished Goals": "num_accomplished_goals", "Remaining Goals": "num_remaining_goals"},
                     model_reporters={"Total Accomplished Goals": model_level_accomplished_goals,
@@ -158,9 +146,14 @@ class NoConsentModel(mesa.Model):
                                       "Total CO Violations": model_level_CO_violations,
                                       "Total CO Fulfilments": model_level_CO_fulfilments}
                     )
+        # Collect initial state (before any agent actions)
+        self.collect_initial_state()
 
     def step(self):
         self.agents.do("interpret_goals")
+        
+        # Call parent step method for common data collection logic
+        super().step()
 
     def create_agents_from_model(self, n):
         """
@@ -176,21 +169,3 @@ class NoConsentModel(mesa.Model):
                 goals = self.goals_of_agents,
                 sovereigned_resources = self.resources_of_agents
             )
-
-"""
-model = NoConsentModel(seed=42)
-
-step_count = 0
-while 1:
-    print(f"-----------STEP: {step_count}--------------")
-    model.step()
-    step_count += 1
-    fin = 1
-    for agent in model._all_agents:
-        print(f"Agent: {agent.unique_id}, remaining goal count: {len(agent.remaining_goals)}")
-        if len(agent.remaining_goals) > 0:
-            fin = 0
-
-    if fin or step_count >= MAX_STEP_COUNT:
-        break
-"""

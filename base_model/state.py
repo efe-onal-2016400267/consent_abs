@@ -22,7 +22,8 @@ class EnvState:
         """
         atom.truth = False
         if atom.name not in self.atoms.keys():
-            print(f"Atom {atom.name} does not exist! But you want to make it false, I will let you, but be careful!")
+            #print(f"Atom {atom.name} does not exist! But you want to make it false, I will let you, but be careful!")
+            pass
         self.atoms[atom.name] = atom
 
     def is_true(self, atom_name):

@@ -4,7 +4,7 @@ def model_level_accomplished_goals(model):
     Returns the total number of accomplished goals in the simulation.
     Used in NoConsentModel's data collector, inherited by ConsentModel as well.
     """
-    accomplished_goals = [agent.num_accomplished_goals for agent in model.agents]
+    accomplished_goals = [len(agent.accomplished_goals) for agent in model.agents]
     return sum(accomplished_goals)
 
 
@@ -13,8 +13,19 @@ def model_level_remaining_goals(model):
     Returns the total number of remaining goals in the simulation.
     Used in NoConsentModel's data collector, inherited by ConsentModel as well.
     """
-    remaining_goals = [agent.num_remaining_goals for agent in model.agents]
+    remaining_goals = [len(agent.remaining_goals) for agent in model.agents]
     return sum(remaining_goals)
+
+
+def model_level_resource_conflicts(model):
+    """
+    Returns the total number of resource conflicts in the simulation.
+    A resource conflict occurs when an agent cannot accomplish their goal 
+    due to another agent holding a resource that the first agent owns (is sovereign over)
+    AND the related consent instance is in VIOLATED state.
+    """
+    resource_conflicts = [agent.num_resource_conflicts for agent in model.agents]
+    return sum(resource_conflicts)
 
 # Collector functions for norm states, model level
 def model_level_AU_activations(model):

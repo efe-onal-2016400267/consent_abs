@@ -79,7 +79,10 @@ class ConsentModel(NoConsentModel):
         self.agents.do("release_resources")
         self.datacollector.collect(self) 
 
-model = ConsentModel(seed=42)
+model = ConsentModel(seed=42, GOAL_FILE_PATH = GOAL_FILE_PATH, 
+    TEST_CASE_PATH = TEST_CASE_PATH, TEST = TEST, 
+    MAX_STEP_COUNT = MAX_STEP_COUNT, goal_per_agent = 3, 
+    resource_per_agent = 3, width = 50, height = 50, initial_population = 100)
 
 step_count = 1
 while 1:
@@ -92,7 +95,7 @@ while 1:
         if len(agent.remaining_goals) > 0:
             fin = 0
 
-    if fin or step_count >= MAX_STEP_COUNT:
+    if fin or step_count >= model.MAX_STEP_COUNT:
         agent_vars = model.datacollector.get_agent_vars_dataframe()
         model_vars = model.datacollector.get_model_vars_dataframe()
         agent_vars.head()

@@ -1,0 +1,51 @@
+# test case for consent violation vs unrealization.
+# So we need 1 unrealized AU, 1 violated AU in the same simulation.
+# UNREALIZED: AU expires
+# VIOLATED: If the action is taken before detachment or after expiration.
+# We should check if it is collected properly as well.
+
+# Check if agent4 can wait for the egg to be released in 2 steps by Agent2
+# If Agent1's consents, AUs, COs, get violated/expired
+# If Agent4's consents, AUs, COs, get fulfilled.
+# Use this one with default expiry step = 2
+agents:
+  - id: 1
+    persona: ConsentFirstAgent
+    goals:
+      - name: make_ratatouille
+        sub_goals: ["use_oven", "use_tomato", "use_zucchini", "use_garlic", "use_onion", "use_oliveoil"]
+      - name: make_cake
+        sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
+    resources:
+      - name: oven_1
+        type: oven
+
+  - id: 2
+    persona: GoalFirstAgent
+    goals:
+      - name: make_cake
+        sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
+    resources:
+      - name: tomato_2
+        type: tomato
+      - name: zucchini_2
+        type: zucchini
+      - name: garlic_2
+        type: garlic
+      - name: onion_2
+        type: onion
+      - name: flour_2
+        type: flour
+      - name: sugar_2
+        type: sugar
+      - name: oven_2
+        type: oven
+      - name: egg_2
+        type: egg
+
+  - id: 3
+    persona: GoalFirstAgent
+    goals: 
+      - name: make_egg
+        sub_goals: ["use_egg"]
+    resources:

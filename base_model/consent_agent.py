@@ -74,8 +74,12 @@ class ConsentChefAgent(BaseChefAgent):
         r_active_consent_check = self.check_active_consent_for_resource(self.consents_received, res)
         g_active_consent_check = self.check_active_consent_for_resource(other.consents_given, res)
 
-        if r_active_consent_check or g_active_consent_check:
-            return
+        if other.agent_persona in ["ConsentFirstAgent", "GoalFirstAgent", "FiftyFiftyAgent"]:
+            if r_active_consent_check: # or g_active_consent_check:
+                return
+        else:
+            if r_active_consent_check or g_active_consent_check:
+                return
 
         # Create stated goal g_R: the main goal the agent wants to accomplish
         # For now let g_Rs violate after 3 steps
@@ -125,7 +129,7 @@ class ConsentChefAgent(BaseChefAgent):
         After accomplishing a goal, they should update the states of the received consents.
         """
         for CI in self.consents_given[:]:
-            if CI.state == "ACTIVE":
+            if CI.state in ("ACTIVE", "FULFILLED"):
                 # Call consent functions
                 CI.update_norm_activations(agent=self) # First lets see states of the norms
                 violated = CI.is_violated(agent=self)
@@ -190,13 +194,13 @@ class ConsentChefAgent(BaseChefAgent):
             agent.lent_away_resources.remove(CI.res)
         # Update model.state.
         agent.model.state.set_false(Atom(name=f"Agent{other.unique_id}--use_{CI.res.type}--", agent_id=other.unique_id))
-        agent.model.state.print_state()
+        #agent.model.state.print_state()
         # Delete expiration condition, it was created solely for the consent, it is not epistemic.
         exp_atoms = [atom for key, atom in self.model.state.atoms.items() if "EXP" in atom.name and atom.agent_id==other.unique_id and atom.resource_id==CI.res.name]
         for exp_atom in exp_atoms[:]:
             self.model.state.atoms.pop(exp_atom.name)
 
-        print(f"Consent violation treated by consent giver: {agent.unique_id}, for resource: {CI.res.name} borrowed by: {other.unique_id}")
+        #print(f"Consent violation treated by consent giver: {agent.unique_id}, for resource: {CI.res.name} borrowed by: {other.unique_id}")
 
     def treat_consent_fulfilment(self, agent, other, CI):
         """
@@ -207,7 +211,7 @@ class ConsentChefAgent(BaseChefAgent):
         for exp_atom in exp_atoms[:]:
             self.model.state.atoms.pop(exp_atom.name)
 
-        print(f"Consent fulfilment treated by consent giver: {agent.unique_id}, for resource: {CI.res.name} borrowed by: {other.unique_id}")
+        #print(f"Consent fulfilment treated by consent giver: {agent.unique_id}, for resource: {CI.res.name} borrowed by: {other.unique_id}")
 
     def norm_activation_update(self):
         """

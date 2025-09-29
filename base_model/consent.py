@@ -33,7 +33,7 @@ class ConsentInstance:
             return True
         
         # If ConsentInstance hasnt already completed its life
-        if self.state not in ("FULFILLED", "UNREALIZED", "DEFERRED"): # I could just check ACTIVE
+        if self.state not in ("UNREALIZED", "DEFERRED"): # I could just check ACTIVE
             violated = False
             for n in self.N:
                 if n.is_violated(agent=agent, counter=counter):

@@ -2,12 +2,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run Model",
+            "name": "Debug Model",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/base_model/models/model.py",
-            "cwd": "${workspaceFolder}/base_model",
-            "justMyCode": true
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "python": "/Users/efeonal/py_envs/MESA_thesis/venv/bin/python",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
         }
     ]
 }

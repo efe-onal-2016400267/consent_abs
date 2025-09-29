@@ -22,6 +22,8 @@ class GoalFirstAgent(ConsentChefAgent):
     def __init__(self, model, cell, goals=..., sovereigned_resources=...):
         super().__init__(model, cell, goals, sovereigned_resources)
 
+        self.agent_persona = "GoalFirstAgent"
+
     def check_received_consents(self):
         """
         It doesn't do anything when received consent is violated.
@@ -30,6 +32,17 @@ class GoalFirstAgent(ConsentChefAgent):
 
     def check_given_consents(self):
         """
-        It doesn't do anything when given consent is violated.
+        Function that checks and updated consent state given by the agent.
+        Update is handled in the functions of ConsentInstance.
+        Agents check for the violations of the consents they have given.
+        After accomplishing a goal, they should update the states of the received consents.
         """
-        return
+        for CI in self.consents_given[:]:
+            if CI.state in ("ACTIVE", "FULFILLED"):
+                # Call consent functions
+                CI.update_norm_activations(agent=self) # First lets see states of the norms
+                violated = CI.is_violated(agent=self)
+                fulfilled = CI.is_fulfilled(agent=self)
+                unrealized = CI.is_unrealized(agent=self)
+                reneg = CI.is_renegotiate(agent=self)
+                active = CI.is_active(agent=self)

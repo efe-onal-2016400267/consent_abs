@@ -107,7 +107,8 @@ class Authorization(Norm):
         Checks if an AU is violated. That is, atoms in p (t=<p, r>) become true although the AU is not active.
         """
         done = self.condition_checker([self.t.p])
-        if (done and not self.active and not self.fulfilled and not self.expired) or (done and self.fulfilled and self.expired) or (done and self.expired):
+        exp = self.condition_checker(self.c_exp)
+        if (done and not self.active and not self.fulfilled and not self.expired) or (done and self.fulfilled and self.expired) or (done and self.expired) or (done and exp):
             self.violated = True
             self.active = False
             self.fulfilled = False
