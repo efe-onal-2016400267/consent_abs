@@ -21,18 +21,20 @@ class ConsentChefAgent(BaseChefAgent):
                 "violated": 0,
                 "expired": 0,
                 "fulfilled": 0,
-                "ever_active": 0
+                "ever_active": 0,
+                "active": 0
             },
             "CO": {
                 "violated":0,
                 "fulfilled": 0,
-                "ever_active": 0
+                "ever_active": 0,
+                "active": 0
             }
         }
 
         # maybe some lists to keep track of the related propositions.
 
-    def negotiate(self, other:"ConsentChefAgent"=None, res=None, g_R=None, p=None, au_exp_step=None, co_exp_step=None):
+    def negotiate(self, other:"ConsentChefAgent"=None, res=None, g_R=None, p=None, au_exp_step=None):
         """
         Consent negotiation function.
         Called from self.request_consent.
@@ -84,7 +86,7 @@ class ConsentChefAgent(BaseChefAgent):
         # Create stated goal g_R: the main goal the agent wants to accomplish
         # For now let g_Rs violate after 3 steps
         
-        g_R = Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id, truth=True, valid_from=self.model.steps, valid_to=self.model.steps + 4)
+        g_R = Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id, truth=True, valid_from=self.model.steps, valid_to=self.model.steps + self.model.CO_exp_step)
         # Create action t = <p, r> 
         t = tuple((Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id, truth=True), res))
         p = t[0]
@@ -99,7 +101,7 @@ class ConsentChefAgent(BaseChefAgent):
 
         agreement = False
         # Perform negotiation
-        N = self.negotiate(other=other, res=res, g_R=g_R, p=p, au_exp_step=self.model.steps + 1, co_exp_step=self.model.steps + 1)
+        N = self.negotiate(other=other, res=res, g_R=g_R, p=p, au_exp_step=self.model.steps + self.model.AU_exp_step)
         instances = [CI_g, CI_r, CI_m]
         if N:
             agreement = True
@@ -196,9 +198,8 @@ class ConsentChefAgent(BaseChefAgent):
         agent.model.state.set_false(Atom(name=f"Agent{other.unique_id}--use_{CI.res.type}--", agent_id=other.unique_id))
         #agent.model.state.print_state()
         # Delete expiration condition, it was created solely for the consent, it is not epistemic.
-        exp_atoms = [atom for key, atom in self.model.state.atoms.items() if "EXP" in atom.name and atom.agent_id==other.unique_id and atom.resource_id==CI.res.name]
-        for exp_atom in exp_atoms[:]:
-            self.model.state.atoms.pop(exp_atom.name)
+        # EXP atom should be popped once the agent releases the resource.
+        # So we moved this to the release_resources function in BaseChefAgent.
 
         #print(f"Consent violation treated by consent giver: {agent.unique_id}, for resource: {CI.res.name} borrowed by: {other.unique_id}")
 
@@ -207,9 +208,10 @@ class ConsentChefAgent(BaseChefAgent):
         Differently 
         """
         # Delete expiration condition, it was created solely for the consent, it is not epistemic.
-        exp_atoms = [atom for key, atom in self.model.state.atoms.items() if "EXP" in atom.name and atom.agent_id==other.unique_id and atom.resource_id==CI.res.name]
-        for exp_atom in exp_atoms[:]:
-            self.model.state.atoms.pop(exp_atom.name)
+        # Delete expiration condition, it was created solely for the consent, it is not epistemic.
+        # EXP atom should be popped once the agent releases the resource.
+        # So we moved this to the release_resources function in BaseChefAgent.
+        pass
 
         #print(f"Consent fulfilment treated by consent giver: {agent.unique_id}, for resource: {CI.res.name} borrowed by: {other.unique_id}")
 
@@ -279,7 +281,7 @@ class ConsentChefAgent(BaseChefAgent):
         return
 
 
-    def expiry_check(self):
+    def AU_expiry_check(self):
         """
         Checks if any AUs will expire in the next step. If so, release such resources.
         This will execute at the end of the step for the agent.
@@ -304,6 +306,37 @@ class ConsentChefAgent(BaseChefAgent):
                 eps_of_agent.append(ep)
 
         return expiry_detections, eps_of_agent
+
+    def CO_expiry_check(self):
+        """
+        Checks if any COs will expire in the next step. If so, release such resources.
+        This will execute at the end of the step for the agent.
+        Called from self.treat_future_CO_expiry().
+        """
+        _, ep_atoms = self.get_exp_atoms()
+
+        # Then we need a list of COs that will expire in the next step
+        expiry_detections_g_R = []
+        eps_of_agent = []
+        current_step = self.model.steps
+        for CI in self.consents_received:
+            if CI.state == "ACTIVE":
+                if CI.N[1].g_R.valid_to == current_step:
+                    expiry_detections_g_R.append(CI.N[1].g_R)
+        for ep in ep_atoms:
+            if ep.agent_id == self.unique_id:
+                eps_of_agent.append(ep)
+
+        return expiry_detections_g_R, eps_of_agent
+
+    def treat_future_CO_expiry(self):
+        """
+        This function will be different for different personas.
+        Some agents dont care if CO expires.
+        Some return the resource if the realize CO will expire in the next step.
+        For now, lets just return it.
+        """
+        pass
     
     def treat_future_AU_expiry(self):
         """
@@ -312,47 +345,7 @@ class ConsentChefAgent(BaseChefAgent):
         Some return the resource if the realize AU will expire in the next step.
         For now, lets just return it.
         """
-        res = None
-        owner = None
-        ep_of_interest = None
-        expiry_detections, ep_atoms = self.expiry_check()
-        for exp in expiry_detections:
-            res_id = exp.resource_id
-            # Get the ep atom for that resource
-            for ep in ep_atoms:
-                if res_id == ep.resource_id:
-                    ep_of_interest = ep # This will be turned false. exp will be deleted
-                    break
-            # 1. make ep atom false
-            # 2. release the resource
-                # 2.1. remove the resource from self.currently_borrowed_resources
-                # 2.2. put the resource to the available resources of the owner
-            # 3. remove the exp atom
-            # 4. The consent instance will stay active if the agent releases but the agent cannot fulfill 
-                # the consent since it cannot achieve the stated goal any more.
-
-            # Get the resource object so that we have the owner as an agent object too.
-            for res_s in self.current_borrowed_resources:
-                if res_s.name == res_id:
-                    res = res_s
-                    owner = self.model._all_agents[res.owner - 1]
-                    break
-            
-            # We set the epistemic atom to False since the agent has released the resource
-            # Now the atom is False, if c_exp becomes true, we should move to the UNREALIZED state for the consent.
-            # And this should work for R, G, and the model.
-            # So we must keep the expiry atom
-            if ep_of_interest:
-                self.model.state.set_false(ep_of_interest)
-            if res in self.current_borrowed_resources:
-                self.current_borrowed_resources.remove(res)
-            if owner and res in owner.lent_away_resources:
-                owner.lent_away_resources.remove(res)
-            if owner and res not in owner.sovereigned_resources_available:
-                owner.sovereigned_resources_available.append(res)
-            # del self.model.state.atoms[exp.name]
-
-        return
+        pass
     
     def check_active_consent_for_resource(self, consent_list, res):
         """

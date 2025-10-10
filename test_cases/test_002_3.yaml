@@ -4,6 +4,7 @@
 # Use this one with default expiry step = 2
 agents:
   - id: 1
+    persona: GoalFirstAgent
     goals:
       - name: make_ratatouille
         sub_goals: ["use_oven", "use_tomato", "use_zucchini", "use_garlic", "use_onion", "use_oliveoil"]
@@ -14,6 +15,7 @@ agents:
         type: oven
 
   - id: 2
+    persona: GoalFirstAgent
     goals:
       - name: make_cake
         sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
@@ -34,6 +36,7 @@ agents:
         type: sugar
 
   - id: 3
+    persona: GoalFirstAgent
     goals:
     resources:
       - name: oven_3
@@ -42,6 +45,7 @@ agents:
         type: egg
 
   - id: 4
+    persona: GoalFirstAgent
     goals: 
       - name: make_egg
         sub_goals: ["use_egg"]

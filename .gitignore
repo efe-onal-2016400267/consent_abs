@@ -6,6 +6,8 @@ simulation_results/
 .python-version
 .vscode/launch.json
 
+simulation_analysis.png
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

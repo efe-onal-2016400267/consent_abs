@@ -1,6 +1,6 @@
 agents:
   - id: 1
-    persona: GoalFirstAgent
+    persona: MonitoringAgent
     goals:
       - name: make_ratatouille
         sub_goals: ["use_oven", "use_tomato", "use_zucchini", "use_garlic", "use_onion", "use_oliveoil"]
@@ -13,7 +13,7 @@ agents:
         type: egg
 
   - id: 2
-    persona: GoalFirstAgent
+    persona: MonitoringAgent
     goals:
       - name: make_cake
         sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
@@ -28,7 +28,7 @@ agents:
         type: onion
 
   - id: 3
-    persona: GoalFirstAgent
+    persona: MonitoringAgent
     goals:
     resources:
       - name: oven_3

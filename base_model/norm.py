@@ -19,21 +19,21 @@ class Norm:
         self.ever_active = False
         self.fulfilled = False
 
-    def is_fulfilled(self, agent=None, counter=False):
+    def is_fulfilled(self, agent=None, counter=False, caller=None):
         """
         Function to check if the norm is fulfilled.
         Will be overriden in each child class.
         """
         pass
 
-    def is_violated(self, agent=None, counter=False):
+    def is_violated(self, agent=None, counter=False, caller=None):
         """
         Function to check if the norm is violated.
         Will be overriden in each child class.
         """
         pass
 
-    def activation_update(self, agent=None, counter=False):
+    def activation_update(self, agent=None, counter=False, caller=None):
         """
         This function should run at each step for all inactive norms
         So that if the activation conditions are met (c_det for AU, p for CO) we can activate the norm
@@ -41,7 +41,7 @@ class Norm:
         """
         pass
 
-    def condition_checker(self, cond_list, agent=None, counter=False):
+    def condition_checker(self, cond_list, agent=None, counter=False, caller=None):
         """
         Function that checks if a list of conditions match the environment state
         """
@@ -73,7 +73,7 @@ class Authorization(Norm):
         self.c_det = self.c[0]
         self.c_exp = self.c[1]
 
-    def activation_update(self, agent=None, counter=False):
+    def activation_update(self, agent=None, counter=False, caller=None):
         """
         For each condition, check if their required values are the same as their values in model state
         A condition is an Atom instance with a truth value T or F
@@ -89,6 +89,8 @@ class Authorization(Norm):
             self.ever_active = True
             if agent and counter:
                 agent.norm_state_counter["AU"]["ever_active"] = agent.norm_state_counter["AU"]["ever_active"] + 1
+            if caller == "model" and counter:
+                self.model.norm_state_counter["AU"]["ever_active"] = self.model.norm_state_counter["AU"]["ever_active"] + 1
 
         # Did it expire:
         exp = self.condition_checker(self.c_exp)
@@ -101,8 +103,10 @@ class Authorization(Norm):
 
             if agent and counter:
                 agent.norm_state_counter["AU"]["expired"] = agent.norm_state_counter["AU"]["expired"] + 1
+            if caller == "model" and counter:
+                self.model.norm_state_counter["AU"]["expired"] = self.model.norm_state_counter["AU"]["expired"] + 1
 
-    def is_violated(self, agent=None, counter=False):
+    def is_violated(self, agent=None, counter=False, caller=None):
         """
         Checks if an AU is violated. That is, atoms in p (t=<p, r>) become true although the AU is not active.
         """
@@ -115,11 +119,12 @@ class Authorization(Norm):
 
             if agent and counter:
                 agent.norm_state_counter["AU"]["violated"] = agent.norm_state_counter["AU"]["violated"] + 1
-
+            if caller == "model" and counter:
+                self.model.norm_state_counter["AU"]["violated"] = self.model.norm_state_counter["AU"]["violated"] + 1
             return True
         return False
 
-    def is_fulfilled(self, agent=None, counter=False):
+    def is_fulfilled(self, agent=None, counter=False, caller=None):
         """
         Checks if an AU was ever fulfilled (if post condition p of action t was true when the AU was active)
         Even if an AU is fulfilled it can still be violated because p is true until g_R is true.
@@ -135,6 +140,8 @@ class Authorization(Norm):
             self.active = False
             if agent and counter:
                 agent.norm_state_counter["AU"]["fulfilled"] = agent.norm_state_counter["AU"]["fulfilled"] + 1
+            if caller == "model" and counter:
+                self.model.norm_state_counter["AU"]["fulfilled"] = self.model.norm_state_counter["AU"]["fulfilled"] + 1
             return True
         else:
             return False
@@ -170,7 +177,7 @@ class Commitment(Norm):
         self.g_R = g_R
         self.type = "CO"
 
-    def activation_update(self, agent=None, counter=False):
+    def activation_update(self, agent=None, counter=False, caller=None):
         """
         A commitment should be active once the antecedent turns true.
         Called from ConsentChefAgent.norm_state_update
@@ -183,10 +190,11 @@ class Commitment(Norm):
             self.ever_active = True
             if agent and counter:
                 agent.norm_state_counter["CO"]["ever_active"] = agent.norm_state_counter["CO"]["ever_active"] + 1
-
+            if caller == "model" and counter:
+                self.model.norm_state_counter["CO"]["ever_active"] = self.model.norm_state_counter["CO"]["ever_active"] + 1
         # TODO: Do we need expiration? No?
 
-    def is_violated(self, agent=None, counter=False):
+    def is_violated(self, agent=None, counter=False, caller=None):
         """
         Checks if a CO is violated. If g_R was not performed before the deadline
         """
@@ -198,11 +206,12 @@ class Commitment(Norm):
 
             if agent and counter:
                 agent.norm_state_counter["CO"]["violated"] = agent.norm_state_counter["CO"]["violated"] + 1
-
+            if caller == "model" and counter:
+                self.model.norm_state_counter["CO"]["violated"] = self.model.norm_state_counter["CO"]["violated"] + 1
             return True
         return False
 
-    def is_fulfilled(self, agent=None, counter=False):
+    def is_fulfilled(self, agent=None, counter=False, caller=None):
         """
         Checks if a CO was ever fulfilled (if g_R was ever True)
         If an CO is fulfilled, it cannot be violated again
@@ -222,7 +231,8 @@ class Commitment(Norm):
 
             if agent and counter:
                 agent.norm_state_counter["CO"]["fulfilled"] = agent.norm_state_counter["CO"]["fulfilled"] + 1
-
+            if caller == "model" and counter:
+                self.model.norm_state_counter["CO"]["fulfilled"] = self.model.norm_state_counter["CO"]["fulfilled"] + 1
             return True
         return False
     

@@ -93,7 +93,7 @@ class BaseChefAgent(CellAgent):
 
             # TODO: check goal accomplishment.
             if self.check_goal_accomplisment():
-                #print(f"Agent: {self.unique_id} accomplished goal: {self.current_goal[0]}.")
+                print(f"Agent: {self.unique_id} accomplished goal: {self.current_goal[0]}.")
                 # If the agent has acquired all the resources, it should complete the goal
                 self.accomplished_goals.append(self.current_goal)
                 # Remove the goal from remanining goals, update resources that will be needed in the future, update model state.
@@ -113,13 +113,16 @@ class BaseChefAgent(CellAgent):
                 
                 # Once all resources are released, update norm states again, if self is a ConsentChefAgent
                 self.norm_activation_update()
-                #self.treat_future_AU_expiry()
+                self.treat_future_AU_expiry()
+                # We decided not to have CO expiry for now, for monitoring agents.
+                #self.treat_future_CO_expiry()
             else:
-                #print(f"Agent: {self.unique_id} could not accomplish the goal: {self.current_goal[0]}")
+                print(f"Agent: {self.unique_id} could not accomplish the goal: {self.current_goal[0]}")
                 # Track resource conflicts when goal cannot be accomplished
                 if resource_conflict_this_goal:
                     self.num_resource_conflicts += 1
-                #self.treat_future_AU_expiry()
+                self.treat_future_AU_expiry()
+                #self.treat_future_CO_expiry()
                 # Before the step ends for the agent, check for AU expiry.
                 # This will be based on personas
                 # self.check_received_consents()
@@ -131,7 +134,6 @@ class BaseChefAgent(CellAgent):
             # Check if the agent has obtained all the resources needed for the goal.
             # Check if the lists are correctly updated at self side, owner side, etc.
             # I'll need to create the test cases myself for this, probably.
-            
             break # treat only 1 goal at each tick
 
 
@@ -171,19 +173,19 @@ class BaseChefAgent(CellAgent):
         # Borrowed from other agents and not yet released.
         for res in self.current_borrowed_resources:
             if res.type == res_type:
-                #print(f"Agent: {self.unique_id}, has already borrowed {res.name}, owned by {res.owner}")
+                print(f"Agent: {self.unique_id}, has already borrowed {res.name}, owned by {res.owner}")
                 return True, None
         
         # Owned by the agent, currently in use by the agent.
         for res in self.sovereigned_resources_self_use:
             if res.type == res_type:
-                #print(f"Agent: {self.unique_id}, has already acquired its own resource: {res.name}, owned by: {res.owner}")
+                print(f"Agent: {self.unique_id}, has already acquired its own resource: {res.name}, owned by: {res.owner}")
                 return True, None
             
         # Owned by the agent, currently used by nobody
         for res in self.sovereigned_resources_available[:]:
             if res.type == res_type:
-                #print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
+                print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
                 res.in_use_by = self
                 if res in self.sovereigned_resources_available:
                     self.sovereigned_resources_available.remove(res)
@@ -212,14 +214,14 @@ class BaseChefAgent(CellAgent):
         # Get a list of all the agents with distances.
         agent_distances = self.get_agent_distances()
         # Sort in ascending order by distance
-        sorted_agents = sorted(agent_distances, key=lambda x: x[1])
+        sorted_agents = sorted(agent_distances, key=lambda x: (x[1], x[0].unique_id))
         for agent, dist in sorted_agents:
             # 2. If the resource is not in use, request for a consent, if you get it, acquire the resource.
             res = self.check_available_resource_of_agent(res_type=res_type, agent=agent)
             if res:
                 has_consent = self.request_consent(other=agent, res=res)
                 if has_consent:
-                    #print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
+                    print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
                     res.in_use_by = self
                     if res in agent.sovereigned_resources_available:
                         agent.sovereigned_resources_available.remove(res)
@@ -231,7 +233,7 @@ class BaseChefAgent(CellAgent):
                     return True, None
         
         # If we reach here, no resource of the required type was found anywhere
-        #print(f"Agent: {self.unique_id}, tried to acquire resource: {res_type}, but could not find any available.")
+        print(f"Agent: {self.unique_id}, tried to acquire resource: {res_type}, but could not find any available.")
         return False, 'no_resource'
             
         
@@ -461,6 +463,11 @@ class BaseChefAgent(CellAgent):
 
                 # Make related subgoal atoms False
                 self.model.state.set_false(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id))
+                # But also, we should make the EXP atom pop once the resource is released.
+                # This should return only 1 atom.
+                exp_atoms = [atom for key, atom in self.model.state.atoms.items() if "EXP" in atom.name and atom.agent_id==self.unique_id and atom.resource_id==res.name]
+                for exp_atom in exp_atoms:
+                    self.model.state.atoms.pop(exp_atom.name)
                 #self.model.state.print_state()
                         
                 # other is the owner of the resource.
@@ -479,3 +486,21 @@ class BaseChefAgent(CellAgent):
                         other.lent_away_resources.remove(res)
                     # If the agent has released another agent's resource, then it should update the expiration conditions.
                     # self.update_exp_cond(res)
+
+
+    def CO_expiry_check(self):
+        """
+        Checks if any COs will expire in the next step. If so, release such resources.
+        This will execute at the end of the step for the agent.
+        Called from self.treat_future_CO_expiry().
+        """
+        pass
+
+    def treat_future_CO_expiry(self):
+        """
+        This function will be different for different personas.
+        Some agents dont care if CO expires.
+        Some return the resource if the realize CO will expire in the next step.
+        For now, lets just return it.
+        """
+        pass

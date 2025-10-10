@@ -7,7 +7,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 
-from config import GOAL_FILE_PATH, TEST_CASE_PATH, TEST, MAX_STEP_COUNT, ConsentFirstAgent_COUNT, FiftyFiftyAgent_COUNT, GoalFirstAgent_COUNT
+from config import GOAL_FILE_PATH, TEST_CASE_PATH, TEST, MAX_STEP_COUNT, ConsentFirstAgent_COUNT, FiftyFiftyAgent_COUNT, GoalFirstAgent_COUNT, CO_exp_step, AU_exp_step, MonitoringAgent_COUNT
 from state import EnvState
 from pathlib import Path
 import mesa
@@ -18,6 +18,7 @@ import yaml
 from agent_personas.consent_first_agent import ConsentFirstAgent
 from agent_personas.fifty_fifty_consent_and_goal_agent import FiftyFiftyAgent
 from agent_personas.goal_first_agent import GoalFirstAgent
+from agent_personas.monitoring_agent import MonitoringAgent
 from model_level_collectors import (model_level_remaining_goals, 
                                     model_level_accomplished_goals, 
                                     model_level_active_consents,
@@ -25,12 +26,14 @@ from model_level_collectors import (model_level_remaining_goals,
                                     model_level_violated_consents,
                                     model_level_unrealized_consents,
                                     model_level_deferred_consents,
-                                    model_level_total_consents, 
-                                    model_level_AU_activations,
+                                    model_level_total_consents_activations_hist, 
+                                    model_level_AU_activations_hist,
+                                    model_level_active_AU,
                                     model_level_AU_expirations,
                                     model_level_AU_fulfilments,
                                     model_level_AU_vioaltions,
-                                    model_level_CO_activations,
+                                    model_level_CO_activations_hist,
+                                    model_level_active_CO,
                                     model_level_CO_fulfilments,
                                     model_level_CO_violations,
                                     model_level_resource_conflicts)
@@ -54,17 +57,19 @@ class BaseModel(mesa.Model):
             model_reporters={"Total Accomplished Goals": model_level_accomplished_goals,
                               "Total Remaining Goals": model_level_remaining_goals,
                               "Total Resource Conflicts": model_level_resource_conflicts,
-                              "Total Active Consents": model_level_active_consents,
+                              "Total Current Active Consents": model_level_active_consents,
                               "Total Fulfilled Consents": model_level_fulfilled_consents,
                               "Total Violated Consents": model_level_violated_consents,
                               "Total Unrealized Consents": model_level_unrealized_consents,
                               "Total Deferred Consents": model_level_deferred_consents,
-                              "Total Consents": model_level_total_consents,
-                              "Total AU Activations": model_level_AU_activations,
+                              "Total Consent Activations": model_level_total_consents_activations_hist,
+                              "Total AU Activations": model_level_AU_activations_hist,
+                              "Total Current Active AU": model_level_active_AU,
                               "Total AU Expirations": model_level_AU_expirations,
                               "Total AU Violations": model_level_AU_vioaltions,
                               "Total AU Fulfilments": model_level_AU_fulfilments,
-                              "Total CO Activations": model_level_CO_activations,
+                              "Total CO Activations": model_level_CO_activations_hist,
+                              "Total Current Active CO": model_level_active_CO,
                               "Total CO Violations": model_level_CO_violations,
                               "Total CO Fulfilments": model_level_CO_fulfilments}
         )
@@ -106,9 +111,20 @@ class ConsentModel(BaseModel):
                 ConsentFirstAgent_COUNT = ConsentFirstAgent_COUNT,
                 GoalFirstAgent_COUNT = GoalFirstAgent_COUNT,
                 FiftyFiftyAgent_COUNT = FiftyFiftyAgent_COUNT,
-                initial_population=ConsentFirstAgent_COUNT + GoalFirstAgent_COUNT + FiftyFiftyAgent_COUNT,
+                MonitoringAgent_COUNT = MonitoringAgent_COUNT,
+                initial_population=ConsentFirstAgent_COUNT + GoalFirstAgent_COUNT + FiftyFiftyAgent_COUNT + MonitoringAgent_COUNT,
                 ):
         super().__init__(seed=seed)
+        
+        # Ensure deterministic behavior by synchronizing all random number generators
+        if seed is not None:
+            import numpy as np
+            import random
+            np.random.seed(seed)
+            random.seed(seed)
+            # Explicitly set Mesa's random seed
+            self.random.seed(seed)
+        
         self.state = EnvState()
 
          # initiate width and height of the grid
@@ -126,7 +142,10 @@ class ConsentModel(BaseModel):
         self.ConsentFirstAgent_COUNT = ConsentFirstAgent_COUNT
         self.GoalFirstAgent_COUNT = GoalFirstAgent_COUNT
         self.FiftyFiftyAgent_COUNT = FiftyFiftyAgent_COUNT
-        self.initial_population = self.ConsentFirstAgent_COUNT + self.GoalFirstAgent_COUNT + self.FiftyFiftyAgent_COUNT
+        self.MonitoringAgent_COUNT = MonitoringAgent_COUNT
+        self.initial_population = self.ConsentFirstAgent_COUNT + self.GoalFirstAgent_COUNT + self.FiftyFiftyAgent_COUNT + self.MonitoringAgent_COUNT
+        self.CO_exp_step = CO_exp_step
+        self.AU_exp_step = AU_exp_step
         self.grid = OrthogonalVonNeumannGrid(
             (self.width, self.height), torus=False, random=self.random
         )
@@ -134,6 +153,22 @@ class ConsentModel(BaseModel):
         self.consent_history = []
         self.living_consents = []
         self.consent_count = consent_count
+
+        self.norm_state_counter = {
+            "AU": {
+                "violated": 0,
+                "expired": 0,
+                "fulfilled": 0,
+                "ever_active": 0,
+                "active": 0
+            },
+            "CO": {
+                "violated":0,
+                "fulfilled": 0,
+                "ever_active": 0,
+                "active": 0
+            }
+        }
 
         if self.TEST:
             with open(self.TEST_CASE_PATH, 'r') as f:
@@ -178,8 +213,9 @@ class ConsentModel(BaseModel):
                 for sub in subgoals:
                     self.resources.add(sub.split("_")[1])
 
-            self.goals = list(self.goals)
-            self.resources = list(self.resources)
+            # Keep these lists sorted to ensure deterministic behavior
+            self.goals = sorted(list(self.goals))
+            self.resources = sorted(list(self.resources))
 
             # now for each agent, we'll create a different set of goals and resources. Let each agent have 2 goals and 2 resources.
             # TODO: Make sure all resources exist in the model, that is all goals are achievable.
@@ -206,11 +242,14 @@ class ConsentModel(BaseModel):
 
 
     def create_agents_separately(self, agent_persona, goals, resources):
+        # Ensure deterministic cell selection by sorting cells first
+        sorted_cells = sorted(self.grid.all_cells.cells, key=lambda cell: (cell.coordinate[0], cell.coordinate[1]))
+        
         if agent_persona == "ConsentFirstAgent":
                         ConsentFirstAgent.create_agents(
                             self,
                             1,
-                            cell=self.random.choices(self.grid.all_cells.cells, k=1),
+                            cell=self.random.choices(sorted_cells, k=1),
                             # Now I need to feed goals and sovereign resources at random.
                             goals = goals,
                             sovereigned_resources = resources
@@ -219,7 +258,7 @@ class ConsentModel(BaseModel):
                         GoalFirstAgent.create_agents(
                             self,
                             1,
-                            cell=self.random.choices(self.grid.all_cells.cells, k=1),
+                            cell=self.random.choices(sorted_cells, k=1),
                             # Now I need to feed goals and sovereign resources at random.
                             goals = goals,
                             sovereigned_resources = resources
@@ -228,7 +267,16 @@ class ConsentModel(BaseModel):
                         FiftyFiftyAgent.create_agents(
                             self,
                             1,
-                            cell=self.random.choices(self.grid.all_cells.cells, k=1),
+                            cell=self.random.choices(sorted_cells, k=1),
+                            # Now I need to feed goals and sovereign resources at random.
+                            goals = goals,
+                            sovereigned_resources = resources
+                        )
+        elif agent_persona == "MonitoringAgent":
+                        MonitoringAgent.create_agents(
+                            self,
+                            1,
+                            cell=self.random.choices(sorted_cells, k=1),
                             # Now I need to feed goals and sovereign resources at random.
                             goals = goals,
                             sovereigned_resources = resources
@@ -240,10 +288,12 @@ class ConsentModel(BaseModel):
         Called from __init__ function.
         This way, I dont have to override the whole __init__ in ConsentChefAgent class.
         """
+        # Ensure deterministic cell selection by sorting cells first
+        sorted_cells = sorted(self.grid.all_cells.cells, key=lambda cell: (cell.coordinate[0], cell.coordinate[1]))
         ConsentFirstAgent.create_agents(
                 self,
                 self.ConsentFirstAgent_COUNT,
-                cell=self.random.choices(self.grid.all_cells.cells, k=self.ConsentFirstAgent_COUNT),
+                cell=self.random.choices(sorted_cells, k=self.ConsentFirstAgent_COUNT),
                 # Now I need to feed goals and sovereign resources at random.
                 goals = self.goals_of_agents[:self.ConsentFirstAgent_COUNT],
                 sovereigned_resources = self.resources_of_agents[:self.ConsentFirstAgent_COUNT]
@@ -252,7 +302,7 @@ class ConsentModel(BaseModel):
         GoalFirstAgent.create_agents(
                 self,
                 self.GoalFirstAgent_COUNT,
-                cell=self.random.choices(self.grid.all_cells.cells, k=self.GoalFirstAgent_COUNT),
+                cell=self.random.choices(sorted_cells, k=self.GoalFirstAgent_COUNT),
                 # Now I need to feed goals and sovereign resources at random.
                 goals = self.goals_of_agents[self.ConsentFirstAgent_COUNT:self.ConsentFirstAgent_COUNT + self.GoalFirstAgent_COUNT],
                 sovereigned_resources = self.resources_of_agents[self.ConsentFirstAgent_COUNT:self.ConsentFirstAgent_COUNT + self.GoalFirstAgent_COUNT]
@@ -261,10 +311,19 @@ class ConsentModel(BaseModel):
         FiftyFiftyAgent.create_agents(
                 self,
                 self.FiftyFiftyAgent_COUNT,
-                cell=self.random.choices(self.grid.all_cells.cells, k=self.FiftyFiftyAgent_COUNT),
+                cell=self.random.choices(sorted_cells, k=self.FiftyFiftyAgent_COUNT),
                 # Now I need to feed goals and sovereign resources at random.
                 goals = self.goals_of_agents[self.ConsentFirstAgent_COUNT + self.GoalFirstAgent_COUNT:],
                 sovereigned_resources = self.resources_of_agents[self.ConsentFirstAgent_COUNT + self.GoalFirstAgent_COUNT:]
+            )
+
+        MonitoringAgent.create_agents(
+                self,
+                self.MonitoringAgent_COUNT,
+                cell=self.random.choices(sorted_cells, k=self.MonitoringAgent_COUNT),
+                # Now I need to feed goals and sovereign resources at random.
+                goals = self.goals_of_agents[self.ConsentFirstAgent_COUNT + self.GoalFirstAgent_COUNT + self.FiftyFiftyAgent_COUNT:],
+                sovereigned_resources = self.resources_of_agents[self.ConsentFirstAgent_COUNT + self.GoalFirstAgent_COUNT + self.FiftyFiftyAgent_COUNT:]
             )
         
     def check_consent_state(self):
@@ -273,15 +332,15 @@ class ConsentModel(BaseModel):
         Each agent holds their version of the CIs, but the model holds them as the ground truth.
         """
         for CI in self.living_consents:
-            if CI.state == "ACTIVE":
+            if CI.state in ["ACTIVE", "FULFILLED"]:
                 # Call consent functions
                 # Always count for the giver (g) so that we dont count twice.
-                CI.update_norm_activations(agent=CI.g, counter=True) # First lets see states of the norms
-                violated = CI.is_violated(agent=CI.g, counter=True)
-                fulfilled = CI.is_fulfilled(agent=CI.g, counter=True)
-                unrealized = CI.is_unrealized(agent=CI.g, counter=True)
-                reneg = CI.is_renegotiate(agent=CI.g, counter=True)
-                active = CI.is_active(agent=CI.g, counter=True)
+                CI.update_norm_activations(agent=CI.g, counter=True, caller="model") # First lets see states of the norms
+                violated = CI.is_violated(agent=CI.g, counter=True, caller="model")
+                fulfilled = CI.is_fulfilled(agent=CI.g, counter=True, caller="model")
+                unrealized = CI.is_unrealized(agent=CI.g, counter=True, caller="model")
+                reneg = CI.is_renegotiate(agent=CI.g, counter=True, caller="model")
+                active = CI.is_active(agent=CI.g, counter=True, caller="model")
 
         return
     
@@ -301,12 +360,13 @@ class ConsentModel(BaseModel):
         # The model should check its own Consent instances too
         self.check_consent_state()
         self.agents.do("release_resources")
+        print(self.state.atoms )
         # Call parent step method for common data collection logic
         super().step()
 
 
 if __name__ == "__main__":
-    model = ConsentModel(seed=42, GOAL_FILE_PATH = GOAL_FILE_PATH, TEST_CASE_PATH = TEST_CASE_PATH, TEST = TEST, MAX_STEP_COUNT = MAX_STEP_COUNT, ConsentFirstAgent_COUNT = ConsentFirstAgent_COUNT, GoalFirstAgent_COUNT = GoalFirstAgent_COUNT, FiftyFiftyAgent_COUNT = FiftyFiftyAgent_COUNT)
+    model = ConsentModel(seed=42, GOAL_FILE_PATH = GOAL_FILE_PATH, TEST_CASE_PATH = TEST_CASE_PATH, TEST = TEST, MAX_STEP_COUNT = MAX_STEP_COUNT, ConsentFirstAgent_COUNT = ConsentFirstAgent_COUNT, GoalFirstAgent_COUNT = GoalFirstAgent_COUNT, FiftyFiftyAgent_COUNT = FiftyFiftyAgent_COUNT, MonitoringAgent_COUNT = MonitoringAgent_COUNT)
     step_count = 1
     while 1:
         print(f"-----------STEP: {step_count}--------------")

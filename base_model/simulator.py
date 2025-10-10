@@ -60,17 +60,38 @@ class Simulator:
         
         # Run simulation
         step_count = 0
+        early_stop_steps = config.get('early_stop_steps', -1)
+        unchanged_steps = 0 # We'll keep the number of consecutive steps where no new goals were accomplished.
+        last_goal_count = -1
         while step_count < config.get('max_steps', MAX_STEP_COUNT):
             step_count += 1
             model.step()
             
-            # Check if simulation should end
+            # Check for early stopping
+            # If no additional goals were accomplished in the last N steps,
+            # Stop the simulation.
             if config.get('early_stop', True):
                 # Check if all agents have no remaining goals
                 all_goals_done = all(len(agent.remaining_goals) == 0 for agent in model.agents)
                 if all_goals_done:
                     print(f"  All goals completed at step {step_count}")
                     break
+                
+                # Early stopping.
+                model_vars = model.datacollector.get_model_vars_dataframe()
+                goal_count = model_vars['Total Remaining Goals'].iloc[-1]
+                if last_goal_count == goal_count:
+                    unchanged_steps += 1
+                else:
+                    unchanged_steps = 0
+                if unchanged_steps >= early_stop_steps:
+                    print(f"  No new goals accomplished in the last {early_stop_steps} steps. Stopping at step {step_count}")
+                    break
+
+                last_goal_count = goal_count
+
+                if step_count % 25 == 0:
+                    print(f"  Step {step_count} of {config.get('max_steps', MAX_STEP_COUNT)}")
         
         # Collect results
         agent_vars = model.datacollector.get_agent_vars_dataframe()
@@ -155,96 +176,192 @@ class Simulator:
             results['files'] = file_paths
             experiment_results.append(results)
         
-        # Save experiment summary
+        # Save experiment summary (without DataFrames for JSON serialization)
         experiment_summary = {
             'experiment_name': experiment_config['name'],
             'model_type': experiment_config.get('model_type', 'ConsentModel'),
             'timestamp': datetime.now().isoformat(),
             'configurations': len(experiment_config['configurations']),
-            'results': experiment_results
+            'results': [
+                {
+                    'config': result['config'],
+                    'model_type': result['model_type'],
+                    'summary': result['summary'],
+                    'files': result.get('files', {})
+                }
+                for result in experiment_results
+            ]
         }
         
         summary_file = self.results_dir / "logs" / f"experiment_{experiment_config['name'].replace(' ', '_').lower()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(summary_file, 'w') as f:
-            json.dump(experiment_summary, f, indent=2)
-        
-        print(f"\n✅ Experiment completed! Summary saved to: {summary_file}")
+        if experiment_summary:
+            with open(summary_file, 'w') as f:
+                json.dump(experiment_summary, f, indent=2)
+            
+            print(f"\n✅ Experiment completed! Summary saved to: {summary_file}")
         return experiment_results
+    
+    def run_multi_seed_experiment(self, base_experiment_config, seeds):
+        """
+        Run the same experiment for multiple seeds.
+        
+        Args:
+            base_experiment_config (dict): Base experiment configuration (without specific seeds)
+            seeds (list): List of seeds to run experiments for
+            
+        Returns:
+            list: List of experiment results for all seeds
+        """
+        print(f"Running Multi-Seed Experiment: {base_experiment_config['name']}")
+        print(f"Seeds: {seeds}")
+        print("=" * 60)
+        
+        all_seed_results = []
+        
+        for seed in seeds:
+            print(f"\n🔢 Running for seed: {seed}")
+            print("-" * 40)
+            
+            # Create seed-specific experiment config
+            seed_experiment_config = self._create_seed_experiment_config(base_experiment_config, seed)
+            
+            # Run experiment for this seed
+            seed_results = self.run_experiment(seed_experiment_config)
+            all_seed_results.extend(seed_results)
+        
+        # Save multi-seed summary (without DataFrames for JSON serialization)
+        multi_seed_summary = {
+            'experiment_name': f"{base_experiment_config['name']} (Multi-Seed)",
+            'model_type': base_experiment_config.get('model_type', 'ConsentModel'),
+            'seeds_used': seeds,
+            'total_configurations': len(all_seed_results),
+            'timestamp': datetime.now().isoformat(),
+            'seed_results': [
+                {
+                    'config': result['config'],
+                    'model_type': result['model_type'],
+                    'summary': result['summary'],
+                    'files': result.get('files', {})
+                }
+                for result in all_seed_results
+            ]
+        }
+        
+        summary_file = self.results_dir / "logs" / f"multi_seed_{base_experiment_config['name'].replace(' ', '_').lower()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(summary_file, 'w') as f:
+            json.dump(multi_seed_summary, f, indent=2)
+        
+        print(f"\n🎯 Multi-seed experiment completed! Summary saved to: {summary_file}")
+        return all_seed_results
+    
+    def _create_seed_experiment_config(self, base_config, seed):
+        """
+        Create a seed-specific experiment configuration by updating all parameter seeds.
+        
+        Args:
+            base_config (dict): Base experiment configuration
+            seed (int): Seed value to use
+            
+        Returns:
+            dict: Seed-specific experiment configuration
+        """
+        import copy
+        seed_config = copy.deepcopy(base_config)
+        seed_config['name'] = f"{base_config['name']} (Seed {seed})"
+        
+        # Update all configurations to use the specified seed
+        for config in seed_config['configurations']:
+            config['parameters']['seed'] = seed
+            # Update config name to include seed
+            config['name'] = f"Seed {seed}: {config['name']}"
+        
+        return seed_config
 
 def create_sample_experiments():
     """
     Create sample experiment configurations.
     """
     experiments = {
-        'consent_or_goal_sensitivity_seed_42': {
+        'consent_or_goal_sensitivity': {
             'name': 'Consent or Goal Sensitivity Analysis',
             'model_type': 'ConsentModel',
             'configurations': [
                 {
-                    'name': 'Seed 42: 1000-0-0',
-                    'parameters': {'seed': 42, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 1000, 'GoalFirstAgent_COUNT': 0, 'FiftyFiftyAgent_COUNT': 0},
+                    'name': '1000-0-0',
+                    'parameters': {'seed': None, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 1000, 'GoalFirstAgent_COUNT': 0, 'FiftyFiftyAgent_COUNT': 0},
                     'max_steps': 1000,
-                    'early_stop': True
+                    'early_stop': True,
+                    'early_stop_steps': 50,
                 },
                 {
-                    'name': 'Seed 42: 900-100-0',
-                    'parameters': {'seed': 42, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 900, 'GoalFirstAgent_COUNT': 100, 'FiftyFiftyAgent_COUNT': 0},
+                    'name': '900-100-0',
+                    'parameters': {'seed': None, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 900, 'GoalFirstAgent_COUNT': 100, 'FiftyFiftyAgent_COUNT': 0},
                     'max_steps': 1000,
-                    'early_stop': True
+                    'early_stop': True,
+                    'early_stop_steps': 50,
                 },
                 {
-                    'name': 'Seed 42: 800-200-0',
-                    'parameters': {'seed': 42, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 800, 'GoalFirstAgent_COUNT': 200, 'FiftyFiftyAgent_COUNT': 0},
+                    'name': '800-200-0',
+                    'parameters': {'seed': None, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 800, 'GoalFirstAgent_COUNT': 200, 'FiftyFiftyAgent_COUNT': 0},
                     'max_steps': 1000,
-                    'early_stop': True
+                    'early_stop': True,
+                    'early_stop_steps': 50,
                 },
                 {
-                    'name': 'Seed 42: 700-300-0',
-                    'parameters': {'seed': 42, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 700, 'GoalFirstAgent_COUNT': 300, 'FiftyFiftyAgent_COUNT': 0},
+                    'name': '700-300-0',
+                    'parameters': {'seed': None, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 700, 'GoalFirstAgent_COUNT': 300, 'FiftyFiftyAgent_COUNT': 0},
                     'max_steps': 1000,
-                    'early_stop': True
+                    'early_stop': True,
+                    'early_stop_steps': 50,
                 },
                 {
-                    'name': 'Seed 42: 600-400-0',
-                    'parameters': {'seed': 42, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 600, 'GoalFirstAgent_COUNT': 400, 'FiftyFiftyAgent_COUNT': 0},
+                    'name': '600-400-0',
+                    'parameters': {'seed': None, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 600, 'GoalFirstAgent_COUNT': 400, 'FiftyFiftyAgent_COUNT': 0},
                     'max_steps': 1000,
-                    'early_stop': True
+                    'early_stop': True,
+                    'early_stop_steps': 50,
                 },
                 {
-                    'name': 'Seed 42: 500-500-0',
-                    'parameters': {'seed': 42, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 500, 'GoalFirstAgent_COUNT': 500, 'FiftyFiftyAgent_COUNT': 0},
+                    'name': '500-500-0',
+                    'parameters': {'seed': None, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 500, 'GoalFirstAgent_COUNT': 500, 'FiftyFiftyAgent_COUNT': 0},
                     'max_steps': 1000,
-                    'early_stop': True
+                    'early_stop': True,
+                    'early_stop_steps': 50,
                 },
                 {
-                    'name': 'Seed 42: 400-600-0',
-                    'parameters': {'seed': 42, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 400, 'GoalFirstAgent_COUNT': 600, 'FiftyFiftyAgent_COUNT': 0},
+                    'name': '400-600-0',
+                    'parameters': {'seed': None, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 400, 'GoalFirstAgent_COUNT': 600, 'FiftyFiftyAgent_COUNT': 0},
                     'max_steps': 1000,
-                    'early_stop': True
+                    'early_stop': True,
+                    'early_stop_steps': 50,
                 },
                 {
-                    'name': 'Seed 42: 300-700-0',
-                    'parameters': {'seed': 42, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 300, 'GoalFirstAgent_COUNT': 700, 'FiftyFiftyAgent_COUNT': 0},
+                    'name': '300-700-0',
+                    'parameters': {'seed': None, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 300, 'GoalFirstAgent_COUNT': 700, 'FiftyFiftyAgent_COUNT': 0},
                     'max_steps': 1000,
-                    'early_stop': True
+                    'early_stop': True,
+                    'early_stop_steps': 50,
                 },
                 {
-                    'name': 'Seed 42: 200-800-0',
-                    'parameters': {'seed': 42, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 200, 'GoalFirstAgent_COUNT': 800, 'FiftyFiftyAgent_COUNT': 0},
+                    'name': '200-800-0',
+                    'parameters': {'seed': None, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 200, 'GoalFirstAgent_COUNT': 800, 'FiftyFiftyAgent_COUNT': 0},
                     'max_steps': 1000,
-                    'early_stop': True
+                    'early_stop': True,
+                    'early_stop_steps': 50,
                 },
                 {
-                    'name': 'Seed 42: 100-900-0',
-                    'parameters': {'seed': 42, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 100, 'GoalFirstAgent_COUNT': 900, 'FiftyFiftyAgent_COUNT': 0},
+                    'name': '100-900-0',
+                    'parameters': {'seed': None, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 100, 'GoalFirstAgent_COUNT': 900, 'FiftyFiftyAgent_COUNT': 0},
                     'max_steps': 1000,
-                    'early_stop': True
+                    'early_stop': True,
+                    'early_stop_steps': 50,
                 },
                 {
-                    'name': 'Seed 42: 0-1000-0',
-                    'parameters': {'seed': 42, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 0, 'GoalFirstAgent_COUNT': 1000, 'FiftyFiftyAgent_COUNT': 0},
+                    'name': '0-1000-0',
+                    'parameters': {'seed': None, 'GOAL_FILE_PATH': GOAL_FILE_PATH, 'TEST_CASE_PATH': TEST_CASE_PATH, 'TEST': False, 'MAX_STEP_COUNT': 1000, 'ConsentFirstAgent_COUNT': 0, 'GoalFirstAgent_COUNT': 1000, 'FiftyFiftyAgent_COUNT': 0},
                     'max_steps': 1000,
-                    'early_stop': True
+                    'early_stop': True,
+                    'early_stop_steps': 50,
                 }
             ]
         }
@@ -269,13 +386,17 @@ def main():
     for i, (key, exp) in enumerate(experiments.items(), 1):
         print(f"  {i}. {exp['name']} ({len(exp['configurations'])} configurations)")
     
-    # For now, run all experiments
-    # In a real scenario, you might want to add user input to select specific experiments
+    # Define seeds to run experiments for
+    seeds = [42, 123, 456, 789, 999]
+    
+    print(f"\n🌱 Running experiments for seeds: {seeds}")
+    
+    # Run multi-seed experiments
     for exp_key, exp_config in experiments.items():
         print(f"\n{'='*60}")
-        simulator.run_experiment(exp_config)
+        simulator.run_multi_seed_experiment(exp_config, seeds)
     
-    print(f"\n🎉 All simulations completed! Results saved in: {simulator.results_dir}")
+    print(f"\n🎉 All multi-seed simulations completed! Results saved in: {simulator.results_dir}")
 
 if __name__ == "__main__":
     main()
