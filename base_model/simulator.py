@@ -387,7 +387,7 @@ def main():
         print(f"  {i}. {exp['name']} ({len(exp['configurations'])} configurations)")
     
     # Define seeds to run experiments for
-    seeds = [42, 123, 456, 789, 999]
+    seeds = [2, 13, 24, 35, 42, 123, 413, 456, 789, 999]
     
     print(f"\n🌱 Running experiments for seeds: {seeds}")
     

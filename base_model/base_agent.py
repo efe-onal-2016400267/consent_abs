@@ -1,5 +1,5 @@
 from atom import Atom
-
+from resource_conflict import ResourceConflict, ResourceConflictGoal
 import mesa
 import seaborn as sns
 import numpy as np
@@ -81,7 +81,7 @@ class BaseChefAgent(CellAgent):
             for subgoal in goal[1]:
                 res_type = subgoal.split("_")[1]
                 # try obtaining required resources for the goal
-                resource_found, conflict_type = self.resource_finder(res_type)
+                resource_found, conflict_type, res = self.resource_finder(res_type)
                 if not resource_found and conflict_type == 'sovereign_conflict':
                     # Only count as conflict if agent owns the resource but cannot access it
                     resource_conflict_this_goal = True
@@ -91,9 +91,9 @@ class BaseChefAgent(CellAgent):
             # Done here because norms will find their actual states after the resources were acquired and related atoms were reflected into model.state.
             self.norm_activation_update()
 
-            # TODO: check goal accomplishment.
-            if self.check_goal_accomplisment():
-                print(f"Agent: {self.unique_id} accomplished goal: {self.current_goal[0]}.")
+            goal_accomplished, conflicting_res_for_G = self.check_goal_accomplisment()
+            if goal_accomplished:
+                #print(f"Agent: {self.unique_id} accomplished goal: {self.current_goal[0]}.")
                 # If the agent has acquired all the resources, it should complete the goal
                 self.accomplished_goals.append(self.current_goal)
                 # Remove the goal from remanining goals, update resources that will be needed in the future, update model state.
@@ -104,6 +104,16 @@ class BaseChefAgent(CellAgent):
                 #print(f"Number of accomplished goals for agent {self.unique_id}: {self.num_accomplished_goals}")
                 # We dont feed res.name here because the atom is a main goal atom.
                 self.model.state.set_true(Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id))
+                # Once the goal is accomplished, we need to increment the R_accomplished_goal_list of the conflict, 
+                # if the agent used any resources causing a conflict.
+                for res in self.all_resources_self_use:
+                    if res.owner != self.unique_id: # If the resource is not owned by the agent, it might be causing a conflict.
+                        for conflict in self.model.model_level_resource_conflict_list:
+                            if conflict.activity and conflict.res == res:
+                                conflict.R_accomplished_goal_list.append(ResourceConflictGoal(goal=self.current_goal[0], goal_owner=self.unique_id, accomplish_step=self.model.steps))
+                                self.model.model_level_accomplished_counter_goal_list.append(ResourceConflictGoal(goal=self.current_goal[0], goal_owner=self.unique_id, accomplish_step=self.model.steps))
+
+
                 # After accomplishing a goal, an agent should update the states of the CI's it has received
                 self.check_received_consents() # Will do this even if there is no goal accomplishment, after this block
                 self.current_goal = None
@@ -117,10 +127,31 @@ class BaseChefAgent(CellAgent):
                 # We decided not to have CO expiry for now, for monitoring agents.
                 #self.treat_future_CO_expiry()
             else:
-                print(f"Agent: {self.unique_id} could not accomplish the goal: {self.current_goal[0]}")
+                #print(f"Agent: {self.unique_id} could not accomplish the goal: {self.current_goal[0]}")
                 # Track resource conflicts when goal cannot be accomplished
                 if resource_conflict_this_goal:
                     self.num_resource_conflicts += 1
+                    # We should also add this conflict to a model level list.
+                    # At the end of the step, the model will check this list, look at all the NEW conflicts
+                    # A conflict will have
+                    #   1. Resource, res
+                    #   2. owner
+                    #   3. receiver
+                    #   4. Activity
+                    #   5. R Goal list: List of goals R has accomplished using res during the conflict. This will help us count properly, without recounting any goals.
+                    # Since we increment the conflict count if G does not recieve the resource in the following steps too, 
+                    #       We need to check every time R completes a goal while the conflict is still active.
+                    # Of course, in this case model class needs to have 1 list for resource conflicts and one list for goal accomplishments.
+                    # These goals only the main goals. Not the subgoals.
+                    conflict_found = False
+                    conflict = ResourceConflict(res=conflicting_res_for_G, owner=self.unique_id, receiver=conflicting_res_for_G.in_use_by.unique_id, activity=True, R_accomplished_goal_list=[], birth_step=self.model.steps)
+                    for c in self.model.model_level_resource_conflict_list:
+                        if c.res == conflicting_res_for_G:
+                            conflict_found = True
+                            c.conflict_count += 1
+                    if not conflict_found:
+                        self.model.model_level_resource_conflict_list.append(conflict)
+  
                 self.treat_future_AU_expiry()
                 #self.treat_future_CO_expiry()
                 # Before the step ends for the agent, check for AU expiry.
@@ -173,19 +204,19 @@ class BaseChefAgent(CellAgent):
         # Borrowed from other agents and not yet released.
         for res in self.current_borrowed_resources:
             if res.type == res_type:
-                print(f"Agent: {self.unique_id}, has already borrowed {res.name}, owned by {res.owner}")
-                return True, None
+                #print(f"Agent: {self.unique_id}, has already borrowed {res.name}, owned by {res.owner}")
+                return True, None, res
         
         # Owned by the agent, currently in use by the agent.
         for res in self.sovereigned_resources_self_use:
             if res.type == res_type:
-                print(f"Agent: {self.unique_id}, has already acquired its own resource: {res.name}, owned by: {res.owner}")
-                return True, None
+                #print(f"Agent: {self.unique_id}, has already acquired its own resource: {res.name}, owned by: {res.owner}")
+                return True, None, res
             
         # Owned by the agent, currently used by nobody
         for res in self.sovereigned_resources_available[:]:
             if res.type == res_type:
-                print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
+                #print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
                 res.in_use_by = self
                 if res in self.sovereigned_resources_available:
                     self.sovereigned_resources_available.remove(res)
@@ -194,20 +225,7 @@ class BaseChefAgent(CellAgent):
                 # Update the state with the subgoal
                 self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id, resource_id=res.name))
                 #self.model.state.print_state()
-                return True, None
-            
-        # Check if agent owns any resource of this type but it's being used by someone else
-        for res in self.lent_away_resources:
-            if res.type == res_type:
-                # Agent owns this resource but it's being used by someone else
-                # Check if there's a VIOLATED consent instance for this resource
-                if self.has_violated_consent_for_resource(res):
-                    #print(f"Agent: {self.unique_id}, owns resource {res.name} but it's being used by {res.in_use_by.unique_id} and consent is VIOLATED")
-                    return False, 'sovereign_conflict'
-                else:
-                    # Resource is lent but consent is not violated - this is not a conflict
-                    #print(f"Agent: {self.unique_id}, owns resource {res.name} but it's being used by {res.in_use_by.unique_id} but consent is not violated")
-                    return False, 'no_resource'
+                return True, None, res
             
         # Get the closest available resource of this type
         # 1. Get a list of all the agents, that hold one of the required type of resource, which is also non-acquired
@@ -221,7 +239,7 @@ class BaseChefAgent(CellAgent):
             if res:
                 has_consent = self.request_consent(other=agent, res=res)
                 if has_consent:
-                    print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
+                    #print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
                     res.in_use_by = self
                     if res in agent.sovereigned_resources_available:
                         agent.sovereigned_resources_available.remove(res)
@@ -230,11 +248,24 @@ class BaseChefAgent(CellAgent):
                     self.all_resources_self_use.append(res)
                     self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id, resource_id=res.name))
                     #self.model.state.print_state()
-                    return True, None
+                    return True, None, res
+
+        # Check if agent owns any resource of this type but it's being used by someone else
+        for res in self.lent_away_resources:
+            if res.type == res_type:
+                # Agent owns this resource but it's being used by someone else
+                # Check if there's a VIOLATED consent instance for this resource
+                if self.has_violated_consent_for_resource(res):
+                    #print(f"Agent: {self.unique_id}, owns resource {res.name} but it's being used by {res.in_use_by.unique_id} and consent is VIOLATED")
+                    return False, 'sovereign_conflict', res
+                else:
+                    # Resource is lent but consent is not violated - this is not a conflict
+                    #print(f"Agent: {self.unique_id}, owns resource {res.name} but it's being used by {res.in_use_by.unique_id} but consent is not violated")
+                    return False, 'no_resource', res
         
         # If we reach here, no resource of the required type was found anywhere
-        print(f"Agent: {self.unique_id}, tried to acquire resource: {res_type}, but could not find any available.")
-        return False, 'no_resource'
+        #print(f"Agent: {self.unique_id}, tried to acquire resource: {res_type}, but could not find any available.")
+        return False, 'no_resource', None
             
         
     def check_available_resource_of_agent(self, res_type, agent: "BaseChefAgent"):
@@ -290,8 +321,13 @@ class BaseChefAgent(CellAgent):
 
         for subgoal in self.current_goal[1]:
             if subgoal.split("_")[1] not in all_resource_types_used:
-                return False
-        return True
+                res_type = subgoal.split("_")[1]
+                # Check if res_type was lent away, return res, otherwise return None
+                for res in self.lent_away_resources:
+                    if res.type == res_type:
+                        return False, res
+                return False, None
+        return True, None
 
     def get_distance(self, cell_1, cell_2):
         """
@@ -486,6 +522,12 @@ class BaseChefAgent(CellAgent):
                         other.lent_away_resources.remove(res)
                     # If the agent has released another agent's resource, then it should update the expiration conditions.
                     # self.update_exp_cond(res)
+                
+                # Once the resource is released, if the resource was causing a conflict, we need to make the conflict inactive.
+                for conflict in self.model.model_level_resource_conflict_list:
+                    if conflict.res == res:
+                        conflict.activity = False
+                        break # One resource can cause only one active conflict at any time.
 
 
     def CO_expiry_check(self):

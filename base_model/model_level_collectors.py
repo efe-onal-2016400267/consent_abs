@@ -24,8 +24,16 @@ def model_level_resource_conflicts(model):
     due to another agent holding a resource that the first agent owns (is sovereign over)
     AND the related consent instance is in VIOLATED state.
     """
-    resource_conflicts = [agent.num_resource_conflicts for agent in model.agents]
-    return sum(resource_conflicts)
+
+    return sum(conflict.conflict_count for conflict in model.model_level_resource_conflict_list)
+
+def model_level_resource_conflict_accomplished_counter_goals(model):
+    """
+    Returns the total number of counter goals accomplished during resource conflicts in the simulation.
+    E.g. Agent1 lends egg1 to Agent2. Agent2 does not relase the resource so Agent1 cannot accomplish a goal using egg1. 
+        Every goal Agent2 accomplishes after the conflict was activated will be counted as a "counter goal".
+    """
+    return len(model.model_level_accomplished_counter_goal_list)
 
 # Collector functions for norm states, model level
 def model_level_AU_activations_hist(model):

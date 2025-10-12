@@ -1,8 +1,7 @@
 import sys
 from pathlib import Path
 
-# Go two levels up: from base_model/models/model.py → base_model/
-project_root = Path(__file__).resolve().parents[1]  # <-- now correct
+project_root = Path(__file__).resolve().parents[1] 
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
@@ -36,7 +35,8 @@ from model_level_collectors import (model_level_remaining_goals,
                                     model_level_active_CO,
                                     model_level_CO_fulfilments,
                                     model_level_CO_violations,
-                                    model_level_resource_conflicts)
+                                    model_level_resource_conflicts,
+                                    model_level_resource_conflict_accomplished_counter_goals)
 
 
 class BaseModel(mesa.Model):
@@ -57,6 +57,7 @@ class BaseModel(mesa.Model):
             model_reporters={"Total Accomplished Goals": model_level_accomplished_goals,
                               "Total Remaining Goals": model_level_remaining_goals,
                               "Total Resource Conflicts": model_level_resource_conflicts,
+                              "Total Resource Conflict Accomplished Counter Goals": model_level_resource_conflict_accomplished_counter_goals,
                               "Total Current Active Consents": model_level_active_consents,
                               "Total Fulfilled Consents": model_level_fulfilled_consents,
                               "Total Violated Consents": model_level_violated_consents,
@@ -153,6 +154,12 @@ class ConsentModel(BaseModel):
         self.consent_history = []
         self.living_consents = []
         self.consent_count = consent_count
+
+        # For resource conflict counts
+        # This will hold conflict objects.
+        self.model_level_resource_conflict_list = []
+        # Again, for resource conflict counts, we need to track of the goals accomplished by R during the conflict.
+        self.model_level_accomplished_counter_goal_list = []
 
         self.norm_state_counter = {
             "AU": {
@@ -360,7 +367,7 @@ class ConsentModel(BaseModel):
         # The model should check its own Consent instances too
         self.check_consent_state()
         self.agents.do("release_resources")
-        print(self.state.atoms )
+        #print(self.state.atoms )
         # Call parent step method for common data collection logic
         super().step()
 
