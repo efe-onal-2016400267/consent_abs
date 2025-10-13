@@ -19,7 +19,7 @@ agents:
     goals:
       - name: make_cake
         sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
-      - name: make_cake
+      - name: make_my_cake
         sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
     resources:
       - name: tomato_2

@@ -6,7 +6,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 
-from config import GOAL_FILE_PATH, TEST_CASE_PATH, TEST, MAX_STEP_COUNT, ConsentFirstAgent_COUNT, FiftyFiftyAgent_COUNT, GoalFirstAgent_COUNT, CO_exp_step, AU_exp_step, MonitoringAgent_COUNT
+from config import GOAL_FILE_PATH, TEST_CASE_PATH, TEST, MAX_STEP_COUNT, ConsentFirstAgent_COUNT, FiftyFiftyAgent_COUNT, GoalFirstAgent_COUNT, CO_exp_step, AU_exp_step, MonitoringAgent_COUNT, random_exp_times, max_random_AU_exp_step, min_random_AU_exp_step, max_random_CO_exp_step, min_random_CO_exp_step
 from state import EnvState
 from pathlib import Path
 import mesa
@@ -147,6 +147,11 @@ class ConsentModel(BaseModel):
         self.initial_population = self.ConsentFirstAgent_COUNT + self.GoalFirstAgent_COUNT + self.FiftyFiftyAgent_COUNT + self.MonitoringAgent_COUNT
         self.CO_exp_step = CO_exp_step
         self.AU_exp_step = AU_exp_step
+        self.random_exp_times = random_exp_times
+        self.max_random_AU_exp_step = max_random_AU_exp_step
+        self.min_random_AU_exp_step = min_random_AU_exp_step
+        self.max_random_CO_exp_step = max_random_CO_exp_step
+        self.min_random_CO_exp_step = min_random_CO_exp_step
         self.grid = OrthogonalVonNeumannGrid(
             (self.width, self.height), torus=False, random=self.random
         )

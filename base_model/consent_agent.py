@@ -84,9 +84,14 @@ class ConsentChefAgent(BaseChefAgent):
                 return
 
         # Create stated goal g_R: the main goal the agent wants to accomplish
-        # For now let g_Rs violate after 3 steps
-        
-        g_R = Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id, truth=True, valid_from=self.model.steps, valid_to=self.model.steps + self.model.CO_exp_step)
+        # Randomized or user defined expiration steps for CO and AU.
+        if self.model.random_exp_times:
+            CO_exp_step = self.model.random.randint(self.model.min_random_CO_exp_step, self.model.max_random_CO_exp_step)
+            AU_exp_step = self.model.random.randint(self.model.min_random_AU_exp_step, self.model.max_random_AU_exp_step)
+        else:
+            CO_exp_step = self.model.CO_exp_step
+            AU_exp_step = self.model.AU_exp_step
+        g_R = Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id, truth=True, valid_from=self.model.steps, valid_to=self.model.steps + CO_exp_step)
         # Create action t = <p, r> 
         t = tuple((Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id, truth=True), res))
         p = t[0]
@@ -101,7 +106,7 @@ class ConsentChefAgent(BaseChefAgent):
 
         agreement = False
         # Perform negotiation
-        N = self.negotiate(other=other, res=res, g_R=g_R, p=p, au_exp_step=self.model.steps + self.model.AU_exp_step)
+        N = self.negotiate(other=other, res=res, g_R=g_R, p=p, au_exp_step=self.model.steps + AU_exp_step)
         instances = [CI_g, CI_r, CI_m]
         if N:
             agreement = True

@@ -6,6 +6,7 @@
 
 agents:
   - id: 1
+    persona: GoalFirstAgent
     goals:
       - name: make_cake
         sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
@@ -18,6 +19,7 @@ agents:
         type: egg
 
   - id: 2
+    persona: GoalFirstAgent
     goals:
       - name: make_cake
         sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
