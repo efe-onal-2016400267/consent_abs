@@ -6,7 +6,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 
-from config import GOAL_FILE_PATH, TEST_CASE_PATH, TEST, MAX_STEP_COUNT, ConsentFirstAgent_COUNT, FiftyFiftyAgent_COUNT, GoalFirstAgent_COUNT, CO_exp_step, AU_exp_step, MonitoringAgent_COUNT, random_exp_times, max_random_AU_exp_step, min_random_AU_exp_step, max_random_CO_exp_step, min_random_CO_exp_step
+from config import GOAL_FILE_PATH, TEST_CASE_PATH, TEST, MAX_STEP_COUNT, ConsentFirstAgent_COUNT, FiftyFiftyAgent_COUNT, GoalFirstAgent_COUNT, CO_exp_step, AU_exp_step, MonitoringAgent_COUNT, random_exp_times, max_random_AU_exp_step, min_random_AU_exp_step, max_random_CO_exp_step, min_random_CO_exp_step, print_state, print_execution
 from state import EnvState
 from pathlib import Path
 import mesa
@@ -165,6 +165,9 @@ class ConsentModel(BaseModel):
         self.model_level_resource_conflict_list = []
         # Again, for resource conflict counts, we need to track of the goals accomplished by R during the conflict.
         self.model_level_accomplished_counter_goal_list = []
+
+        self.print_state = print_state
+        self.print_execution = print_execution
 
         self.norm_state_counter = {
             "AU": {

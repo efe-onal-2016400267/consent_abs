@@ -110,15 +110,17 @@ class Simulator:
 
         return results
     
-    def save_results(self, results, filename_prefix="simulation"):
+    def save_results(self, results, filename_prefix="simulation", timestamp=None):
         """
         Save simulation results to files.
         
         Args:
             results (dict): Results from run_single_simulation
             filename_prefix (str): Prefix for output files
+            timestamp (str, optional): Timestamp string to use for filenames. If None, generates a new one.
         """
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        if timestamp is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         config_name = results['config']['name'].replace(' ', '_').lower()
         
         # Save dataframes
@@ -161,6 +163,9 @@ class Simulator:
         print(f"🧪 Running Experiment: {experiment_config['name']}")
         print("=" * 60)
         
+        # Generate a single timestamp for all files in this experiment
+        experiment_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
         experiment_results = []
         
         for config in experiment_config['configurations']:
@@ -169,8 +174,8 @@ class Simulator:
             # Run simulation
             results = self.run_single_simulation(config, experiment_config.get('model_type', 'ConsentModel'))
             
-            # Save results
-            file_paths = self.save_results(results, experiment_config['name'].replace(' ', '_').lower())
+            # Save results with the shared experiment timestamp
+            file_paths = self.save_results(results, experiment_config['name'].replace(' ', '_').lower(), timestamp=experiment_timestamp)
             
             # Add file paths to results
             results['files'] = file_paths
@@ -193,7 +198,7 @@ class Simulator:
             ]
         }
         
-        summary_file = self.results_dir / "logs" / f"experiment_{experiment_config['name'].replace(' ', '_').lower()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        summary_file = self.results_dir / "logs" / f"experiment_{experiment_config['name'].replace(' ', '_').lower()}_{experiment_timestamp}.json"
         if experiment_summary:
             with open(summary_file, 'w') as f:
                 json.dump(experiment_summary, f, indent=2)
@@ -216,6 +221,9 @@ class Simulator:
         print(f"Seeds: {seeds}")
         print("=" * 60)
         
+        # Generate timestamp for the multi-seed experiment
+        multi_seed_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
         all_seed_results = []
         
         for seed in seeds:
@@ -225,7 +233,7 @@ class Simulator:
             # Create seed-specific experiment config
             seed_experiment_config = self._create_seed_experiment_config(base_experiment_config, seed)
             
-            # Run experiment for this seed
+            # Run experiment for this seed (each seed experiment gets its own timestamp)
             seed_results = self.run_experiment(seed_experiment_config)
             all_seed_results.extend(seed_results)
         
@@ -247,7 +255,7 @@ class Simulator:
             ]
         }
         
-        summary_file = self.results_dir / "logs" / f"multi_seed_{base_experiment_config['name'].replace(' ', '_').lower()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        summary_file = self.results_dir / "logs" / f"multi_seed_{base_experiment_config['name'].replace(' ', '_').lower()}_{multi_seed_timestamp}.json"
         with open(summary_file, 'w') as f:
             json.dump(multi_seed_summary, f, indent=2)
         
