@@ -93,15 +93,17 @@ class BaseChefAgent(CellAgent):
 
             goal_accomplished, conflicting_res_for_G = self.check_goal_accomplisment()
             if goal_accomplished:
-                #print(f"Agent: {self.unique_id} accomplished goal: {self.current_goal[0]}.")
+                if self.model.print_execution:
+                    print(f"Agent: {self.unique_id} accomplished goal: {self.current_goal[0]}.")
                 # If the agent has acquired all the resources, it should complete the goal
                 self.accomplished_goals.append(self.current_goal)
                 # Remove the goal from remanining goals, update resources that will be needed in the future, update model state.
                 self.remaining_goals.remove(self.current_goal)
                 # After the goal lists are updated, we call the goal count update function for reporting
                 self.goal_count_update()
-                #print(f"Number of remaning goals for agent {self.unique_id}: {self.num_remaining_goals}")
-                #print(f"Number of accomplished goals for agent {self.unique_id}: {self.num_accomplished_goals}")
+                if self.model.print_execution:
+                    print(f"Number of remaning goals for agent {self.unique_id}: {self.num_remaining_goals}")
+                    print(f"Number of accomplished goals for agent {self.unique_id}: {self.num_accomplished_goals}")
                 # We dont feed res.name here because the atom is a main goal atom.
                 self.model.state.set_true(Atom(name=f"Agent{self.unique_id}-{self.current_goal[0]}---", agent_id=self.unique_id))
                 # Once the goal is accomplished, we need to increment the R_accomplished_goal_list of the conflict, 
@@ -117,7 +119,8 @@ class BaseChefAgent(CellAgent):
                 # After accomplishing a goal, an agent should update the states of the CI's it has received
                 self.check_received_consents() # Will do this even if there is no goal accomplishment, after this block
                 self.current_goal = None
-                #self.model.state.print_state()
+                if self.model.print_state:
+                    self.model.state.print_state()
 
                 # Resource release was here, moved it to resource release function
                 
@@ -127,7 +130,8 @@ class BaseChefAgent(CellAgent):
                 # We decided not to have CO expiry for now, for monitoring agents.
                 #self.treat_future_CO_expiry()
             else:
-                #print(f"Agent: {self.unique_id} could not accomplish the goal: {self.current_goal[0]}")
+                if self.model.print_execution:
+                    print(f"Agent: {self.unique_id} could not accomplish the goal: {self.current_goal[0]}")
                 # Track resource conflicts when goal cannot be accomplished
                 if resource_conflict_this_goal:
                     self.num_resource_conflicts += 1
@@ -205,19 +209,22 @@ class BaseChefAgent(CellAgent):
         # Borrowed from other agents and not yet released.
         for res in self.current_borrowed_resources:
             if res.type == res_type:
-                #print(f"Agent: {self.unique_id}, has already borrowed {res.name}, owned by {res.owner}")
+                if self.model.print_execution:
+                    print(f"Agent: {self.unique_id}, has already borrowed {res.name}, owned by {res.owner}")
                 return True, None, res
         
         # Owned by the agent, currently in use by the agent.
         for res in self.sovereigned_resources_self_use:
             if res.type == res_type:
-                #print(f"Agent: {self.unique_id}, has already acquired its own resource: {res.name}, owned by: {res.owner}")
+                if self.model.print_execution:
+                    print(f"Agent: {self.unique_id}, has already acquired its own resource: {res.name}, owned by: {res.owner}")
                 return True, None, res
             
         # Owned by the agent, currently used by nobody
         for res in self.sovereigned_resources_available[:]:
             if res.type == res_type:
-                #print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
+                if self.model.print_execution:
+                    print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
                 res.in_use_by = self
                 if res in self.sovereigned_resources_available:
                     self.sovereigned_resources_available.remove(res)
@@ -225,7 +232,8 @@ class BaseChefAgent(CellAgent):
                 self.all_resources_self_use.append(res)
                 # Update the state with the subgoal
                 self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id, resource_id=res.name))
-                #self.model.state.print_state()
+                if self.model.print_state:
+                    self.model.state.print_state()
                 return True, None, res
 
         # Check if agent owns any resource of this type but it's being used by someone else
@@ -234,11 +242,13 @@ class BaseChefAgent(CellAgent):
                 # Agent owns this resource but it's being used by someone else
                 # Check if there's a VIOLATED consent instance for this resource
                 if self.has_violated_consent_for_resource(res):
-                    #print(f"Agent: {self.unique_id}, owns resource {res.name} but it's being used by {res.in_use_by.unique_id} and consent is VIOLATED")
+                    if self.model.print_execution:
+                        print(f"Agent: {self.unique_id}, owns resource {res.name} but it's being used by {res.in_use_by.unique_id} and consent is VIOLATED")
                     return False, 'sovereign_conflict', res
                 else:
                     # Resource is lent but consent is not violated - this is not a conflict
-                    #print(f"Agent: {self.unique_id}, owns resource {res.name} but it's being used by {res.in_use_by.unique_id} but consent is not violated")
+                    if self.model.print_execution:
+                        print(f"Agent: {self.unique_id}, owns resource {res.name} but it's being used by {res.in_use_by.unique_id} but consent is not violated")
                     return False, 'no_resource', res
             
         # Get the closest available resource of this type
@@ -253,7 +263,8 @@ class BaseChefAgent(CellAgent):
             if res:
                 has_consent = self.request_consent(other=agent, res=res)
                 if has_consent:
-                    #print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
+                    if self.model.print_execution:
+                        print(f"Agent: {self.unique_id}, has just acquired resource: {res.name}, owned by: {res.owner}")
                     res.in_use_by = self
                     if res in agent.sovereigned_resources_available:
                         agent.sovereigned_resources_available.remove(res)
@@ -261,11 +272,13 @@ class BaseChefAgent(CellAgent):
                     self.current_borrowed_resources.append(res)
                     self.all_resources_self_use.append(res)
                     self.model.state.set_true(Atom(name=f"Agent{self.unique_id}--use_{res.type}--", agent_id=self.unique_id, resource_id=res.name))
-                    #self.model.state.print_state()
+                    if self.model.print_state:
+                        self.model.state.print_state()
                     return True, None, res
         
         # If we reach here, no resource of the required type was found anywhere
-        #print(f"Agent: {self.unique_id}, tried to acquire resource: {res_type}, but could not find any available.")
+        if self.model.print_execution:
+            print(f"Agent: {self.unique_id}, tried to acquire resource: {res_type}, but could not find any available.")
         return False, 'no_resource', None
             
         
@@ -493,7 +506,8 @@ class BaseChefAgent(CellAgent):
         # If the resource wont be needed again, release it.
         for res in self.all_resources_self_use[:]:
             if res.type not in self.all_required_future_resources:
-                #print(f"Agent: {self.unique_id} has released resource: {res.name}, owned by: {res.owner}")
+                if self.model.print_execution:
+                    print(f"Agent: {self.unique_id} has released resource: {res.name}, owned by: {res.owner}")
                 res.in_use_by = None
                 if res in self.all_resources_self_use:
                     self.all_resources_self_use.remove(res)
@@ -505,7 +519,8 @@ class BaseChefAgent(CellAgent):
                 exp_atoms = [atom for key, atom in self.model.state.atoms.items() if "EXP" in atom.name and atom.agent_id==self.unique_id and atom.resource_id==res.name]
                 for exp_atom in exp_atoms:
                     self.model.state.atoms.pop(exp_atom.name)
-                #self.model.state.print_state()
+                if self.model.print_state:
+                    self.model.state.print_state()
                         
                 # other is the owner of the resource.
                 other = self.model._all_agents[res.owner - 1]
