@@ -1,5 +1,5 @@
 GOAL_FILE_PATH = "/Users/efeonal/py_envs/MESA_thesis/consent_abs/goals/goal_tree.yaml"
-TEST_CASE_PATH = "/Users/efeonal/py_envs/MESA_thesis/consent_abs/test_cases/test_009_01_monitoring_agent.yaml"
+TEST_CASE_PATH = "/Users/efeonal/py_envs/MESA_thesis/consent_abs/test_cases/test_007_01_CONSENT_BASED_AU_fulfilment_viol_expiry_activation.yaml"
 TEST = True
 MAX_STEP_COUNT = 20
 ConsentFirstAgent_COUNT = 5

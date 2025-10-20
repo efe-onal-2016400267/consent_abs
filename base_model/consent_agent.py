@@ -1,3 +1,4 @@
+from mesa import Agent
 from base_agent import BaseChefAgent
 from atom import Atom
 from norm import Authorization, Commitment
@@ -31,8 +32,18 @@ class ConsentChefAgent(BaseChefAgent):
                 "active": 0
             }
         }
-
-        # maybe some lists to keep track of the related propositions.
+        self.distinct_agents_interacted_as_G = set()
+        self.num_distinct_agents_interacted_as_G = len(self.distinct_agents_interacted_as_G)
+        self.distinct_agents_interacted_as_R = set()
+        self.num_distinct_agents_interacted_as_R = len(self.distinct_agents_interacted_as_R)
+        self.num_consents_as_R = 0
+        self.num_consents_as_R_fulfilled = 0
+        self.num_consents_as_R_violated = 0
+        self.num_consents_as_R_unrealized = 0
+        self.num_consents_as_G = 0
+        self.num_consents_as_G_fulfilled = 0
+        self.num_consents_as_G_violated = 0
+        self.num_consents_as_G_unrealized = 0
 
     def negotiate(self, other:"ConsentChefAgent"=None, res=None, g_R=None, p=None, au_exp_step=None):
         """
@@ -63,6 +74,14 @@ class ConsentChefAgent(BaseChefAgent):
 
             AU = Authorization(model=self.model, g=other.unique_id, r=self.unique_id, c=tuple((c_det, au_c_exp)), t=Action(p=p, r=res))
             CO = Commitment(model=self.model, g=other.unique_id, r=self.unique_id, p=p, g_R=g_R)
+            self.distinct_agents_interacted_as_R.add(other)
+            other.distinct_agents_interacted_as_G.add(self)
+            self.num_distinct_agents_interacted_as_G = len(self.distinct_agents_interacted_as_G)
+            self.num_distinct_agents_interacted_as_R = len(self.distinct_agents_interacted_as_R)
+            other.num_distinct_agents_interacted_as_G = len(other.distinct_agents_interacted_as_G)
+            other.num_distinct_agents_interacted_as_R = len(other.distinct_agents_interacted_as_R)
+            self.num_consents_as_R += 1
+            other.num_consents_as_G += 1
             return [AU, CO]
         return []
     
@@ -136,6 +155,7 @@ class ConsentChefAgent(BaseChefAgent):
         After accomplishing a goal, they should update the states of the received consents.
         """
         for CI in self.consents_given[:]:
+            initial_state = CI.state
             if CI.state in ("ACTIVE", "FULFILLED"):
                 # Call consent functions
                 CI.update_norm_activations(agent=self) # First lets see states of the norms
@@ -145,10 +165,20 @@ class ConsentChefAgent(BaseChefAgent):
                 reneg = CI.is_renegotiate(agent=self)
                 active = CI.is_active(agent=self)
 
+                if initial_state != CI.state:
+                    if violated:
+                        self.num_consents_as_G_violated += 1
+                        if initial_state == "FULFILLED":
+                            self.num_consents_as_G_fulfilled -= 1
+                    if fulfilled:
+                        self.num_consents_as_G_fulfilled += 1
+                    if unrealized:
+                        self.num_consents_as_G_unrealized += 1
+                        if initial_state == "FULFILLED":
+                            self.num_consents_as_G_fulfilled -= 1
                 # If given CI is vioalted, the agent treats the issue
                 if violated:
                     self.treat_consent_violations(agent=self, other=CI.r, CI=CI)
-                # TODO: If fulfilled was never tested!!! I couldnt come up with a usecase because when an agent fulfils a CI (accomplishes a goal) 
                 # it automatically updates received consents.
                 if fulfilled:
                     self.treat_consent_fulfilment(agent=self, other=CI.r, CI=CI)
@@ -161,6 +191,7 @@ class ConsentChefAgent(BaseChefAgent):
         Called after goal accomplishment in BaseChefAgent.interpret_goals.
         """
         for CI in self.consents_received[:]:
+            initial_state = CI.state
             if CI.state == "ACTIVE":
                 # Call consent functions
                 CI.update_norm_activations(agent=self) # First lets see states of the norms
@@ -170,8 +201,19 @@ class ConsentChefAgent(BaseChefAgent):
                 reneg = CI.is_renegotiate(agent=self)
                 active = CI.is_active(agent=self)
 
+                if initial_state != CI.state:
+                    if violated:
+                        self.num_consents_as_R_violated += 1
+                        if initial_state == "FULFILLED":
+                            self.num_consents_as_R_fulfilled -= 1
+                    if fulfilled:
+                        self.num_consents_as_R_fulfilled += 1
+                    if unrealized:
+                        self.num_consents_as_R_unrealized += 1
+                        if initial_state == "FULFILLED":
+                            self.num_consents_as_R_fulfilled -= 1
+
                 # If received CI is violated agent treats the issue
-                # TODO: If violated was never tested!!! I couldnt come up with a usecase.
                 if violated:
                     self.treat_consent_violations(agent=CI.g, other=self, CI=CI)
                 if fulfilled:

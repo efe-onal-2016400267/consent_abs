@@ -32,6 +32,7 @@ class ConsentFirstAgent(ConsentChefAgent):
         After accomplishing a goal, they should update the states of the received consents.
         """
         for CI in self.consents_given[:]:
+            initial_state = CI.state
             if CI.state in ("ACTIVE", "FULFILLED"):
                 # Call consent functions
                 CI.update_norm_activations(agent=self) # First lets see states of the norms
@@ -40,6 +41,17 @@ class ConsentFirstAgent(ConsentChefAgent):
                 unrealized = CI.is_unrealized(agent=self)
                 reneg = CI.is_renegotiate(agent=self)
                 active = CI.is_active(agent=self)
+                if initial_state != CI.state:
+                    if violated:
+                        self.num_consents_as_G_violated += 1
+                        if initial_state == "FULFILLED":
+                            self.num_consents_as_G_fulfilled -= 1
+                    if fulfilled:
+                        self.num_consents_as_G_fulfilled += 1
+                    if unrealized:
+                        self.num_consents_as_G_unrealized += 1
+                        if initial_state == "FULFILLED":
+                            self.num_consents_as_G_fulfilled -= 1
 
     def check_received_consents(self):
         """

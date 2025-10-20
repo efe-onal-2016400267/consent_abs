@@ -88,8 +88,6 @@ agents:
         type: oven
       - name: flour_1
         type: flour
-      - name: sugar_1
-        type: sugar
 
   - id: 2
     persona: MonitoringAgent

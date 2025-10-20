@@ -59,6 +59,9 @@ class MonitoringAgent(ConsentChefAgent):
                     owner.sovereigned_resources_available.append(res)
                 # del self.model.state.atoms[exp.name]
 
+                if self.model.print_execution:
+                    print(f"Agent: {self.unique_id} has released resource: {res.name}, owned by: {res.owner}")
+
             return
 
     def treat_future_CO_expiry(self):

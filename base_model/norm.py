@@ -99,12 +99,17 @@ class Authorization(Norm):
             self.expired = True
             # For us, an expired AU is also violated
             self.violated = False
-            self.fulfilled = False
+            
 
             if agent and counter:
                 agent.norm_state_counter["AU"]["expired"] = agent.norm_state_counter["AU"]["expired"] + 1
+                #if self.fulfilled:
+                #    agent.norm_state_counter["AU"]["fulfilled"] = agent.norm_state_counter["AU"]["fulfilled"] - 1
             if caller == "model" and counter:
                 self.model.norm_state_counter["AU"]["expired"] = self.model.norm_state_counter["AU"]["expired"] + 1
+                #if self.fulfilled:
+                #    self.model.norm_state_counter["AU"]["fulfilled"] = self.model.norm_state_counter["AU"]["fulfilled"] - 1
+            self.fulfilled = False
 
     def is_violated(self, agent=None, counter=False, caller=None):
         """

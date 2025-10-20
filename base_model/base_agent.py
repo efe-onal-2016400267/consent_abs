@@ -67,6 +67,10 @@ class BaseChefAgent(CellAgent):
         self.num_remaining_goals = len(self.remaining_goals) # to be reported
         self.num_accomplished_goals = len(self.accomplished_goals) # to be reported
         self.num_resource_conflicts = 0 # to be reported - when agent cannot accomplish goal due to another agent holding a resource that this agent owns AND the related consent is VIOLATED
+        self.counter_conflict_goal_accomplishments = 0 # to be reported - when agent accomplishes a goal countering a resource conflict
+        self.finished_step = -1 # to be reported - when agent finishes all of its goals
+        self.longest_idle_time = 0 # to be reported - when agent is idle for the longest time
+        self.current_idle_length = 0 # to be reported - when agent is idle for the last time
 
 
     def interpret_goals(self):
@@ -99,6 +103,9 @@ class BaseChefAgent(CellAgent):
                 self.accomplished_goals.append(self.current_goal)
                 # Remove the goal from remanining goals, update resources that will be needed in the future, update model state.
                 self.remaining_goals.remove(self.current_goal)
+                if len(self.remaining_goals) == 0:
+                    self.finished_step = self.model.steps
+                self.current_idle_length = 0
                 # After the goal lists are updated, we call the goal count update function for reporting
                 self.goal_count_update()
                 if self.model.print_execution:
@@ -114,6 +121,7 @@ class BaseChefAgent(CellAgent):
                             if conflict.activity and conflict.res == res:
                                 conflict.R_accomplished_goal_list.append(ResourceConflictGoal(goal=self.current_goal[0], goal_owner=self.unique_id, accomplish_step=self.model.steps))
                                 self.model.model_level_accomplished_counter_goal_list.append(ResourceConflictGoal(goal=self.current_goal[0], goal_owner=self.unique_id, accomplish_step=self.model.steps))
+                                self.counter_conflict_goal_accomplishments += 1
 
 
                 # After accomplishing a goal, an agent should update the states of the CI's it has received
@@ -132,6 +140,9 @@ class BaseChefAgent(CellAgent):
             else:
                 if self.model.print_execution:
                     print(f"Agent: {self.unique_id} could not accomplish the goal: {self.current_goal[0]}")
+                self.current_idle_length += 1
+                if self.current_idle_length > self.longest_idle_time and len(self.remaining_goals) > 0:
+                    self.longest_idle_time = self.current_idle_length
                 # Track resource conflicts when goal cannot be accomplished
                 if resource_conflict_this_goal:
                     self.num_resource_conflicts += 1

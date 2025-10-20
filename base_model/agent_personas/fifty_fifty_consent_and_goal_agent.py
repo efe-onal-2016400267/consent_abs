@@ -30,6 +30,25 @@ class FiftyFiftyAgent(ConsentChefAgent):
         # Get a random number between 0-1 using the model's seeded random generator
         chance = self.model.random.randint(0,1)
         if chance == 0:
+            for CI in self.consents_received[:]:
+                initial_state = CI.state
+                if CI.state in ("ACTIVE", "FULFILLED"):
+                    # Call consent functions
+                    CI.update_norm_activations(agent=self) # First lets see states of the norms
+                    violated = CI.is_violated(agent=self)
+                    fulfilled = CI.is_fulfilled(agent=self)
+                    unrealized = CI.is_unrealized(agent=self)
+                    reneg = CI.is_renegotiate(agent=self)
+                    active = CI.is_active(agent=self)
+                    if initial_state != CI.state:
+                        if violated:
+                            self.num_consents_as_R_violated += 1
+                        if fulfilled:
+                            self.num_consents_as_R_fulfilled += 1
+                        if unrealized:
+                            self.num_consents_as_R_unrealized += 1
+                        if initial_state == "FULFILLED":
+                            self.num_consents_as_R_fulfilled -= 1
             return
         else:
             super().check_received_consents()
@@ -42,6 +61,7 @@ class FiftyFiftyAgent(ConsentChefAgent):
         After accomplishing a goal, they should update the states of the received consents.
         """
         for CI in self.consents_given[:]:
+            initial_state = CI.state
             if CI.state in ("ACTIVE", "FULFILLED"):
                 # Call consent functions
                 CI.update_norm_activations(agent=self) # First lets see states of the norms
@@ -50,3 +70,15 @@ class FiftyFiftyAgent(ConsentChefAgent):
                 unrealized = CI.is_unrealized(agent=self)
                 reneg = CI.is_renegotiate(agent=self)
                 active = CI.is_active(agent=self)
+
+                if initial_state != CI.state:
+                    if violated:
+                        self.num_consents_as_G_violated += 1
+                        if initial_state == "FULFILLED":
+                            self.num_consents_as_G_fulfilled -= 1
+                    if fulfilled:
+                        self.num_consents_as_G_fulfilled += 1
+                    if unrealized:
+                        self.num_consents_as_G_unrealized += 1
+                        if initial_state == "FULFILLED":
+                            self.num_consents_as_G_fulfilled -= 1
