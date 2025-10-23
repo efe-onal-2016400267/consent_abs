@@ -23,7 +23,7 @@ from config import GOAL_FILE_PATH, TEST_CASE_PATH, MAX_STEP_COUNT
 
 # Optional: Set this to a JSON/YAML file to load experiments externally
 # Default points to sample_experiment.json next to this script
-EXPERIMENTS_FILE_PATH = (Path(__file__).resolve().parent / "experiment_configs" / "monitoring_vs_goal_based.json")
+EXPERIMENTS_FILE_PATH = (Path(__file__).resolve().parent / "experiment_configs" / "monitoring_vs_consent_based.json")
 
 class Simulator:
     """
