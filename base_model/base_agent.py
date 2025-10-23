@@ -68,7 +68,7 @@ class BaseChefAgent(CellAgent):
         self.num_accomplished_goals = len(self.accomplished_goals) # to be reported
         self.num_resource_conflicts = 0 # to be reported - when agent cannot accomplish goal due to another agent holding a resource that this agent owns AND the related consent is VIOLATED
         self.counter_conflict_goal_accomplishments = 0 # to be reported - when agent accomplishes a goal countering a resource conflict
-        self.finished_step = -1 # to be reported - when agent finishes all of its goals
+        self.finished_step = None # to be reported - when agent finishes all of its goals
         self.longest_idle_time = 0 # to be reported - when agent is idle for the longest time
         self.current_idle_length = 0 # to be reported - when agent is idle for the last time
 

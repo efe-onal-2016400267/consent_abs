@@ -13,11 +13,17 @@ from datetime import datetime
 import json
 import yaml
 
-# Add the base_model directory to the path
-sys.path.insert(0, str(Path(__file__).parent))
+# Ensure the base_model directory is on sys.path (parent of simulation_scripts)
+BASE_MODEL_DIR = Path(__file__).resolve().parent.parent
+if str(BASE_MODEL_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_MODEL_DIR))
 
 from models.model import ConsentModel
 from config import GOAL_FILE_PATH, TEST_CASE_PATH, MAX_STEP_COUNT
+
+# Optional: Set this to a JSON/YAML file to load experiments externally
+# Default points to sample_experiment.json next to this script
+EXPERIMENTS_FILE_PATH = (Path(__file__).resolve().parent / "experiment_configs" / "monitoring_vs_goal_based.json")
 
 class Simulator:
     """
@@ -54,7 +60,14 @@ class Simulator:
         
         # Create model instance
         if model_type == "ConsentModel":
-            model = ConsentModel(**config['parameters'])
+            # Filter parameters to the set accepted by ConsentModel to keep JSON shape minimal
+            allowed_keys = {
+                'seed',
+                'GOAL_FILE_PATH', 'TEST_CASE_PATH', 'TEST', 'MAX_STEP_COUNT',
+                'ConsentFirstAgent_COUNT', 'GoalFirstAgent_COUNT', 'FiftyFiftyAgent_COUNT', 'MonitoringAgent_COUNT'
+            }
+            filtered_params = {k: v for k, v in config.get('parameters', {}).items() if k in allowed_keys}
+            model = ConsentModel(**filtered_params)
         else:
             raise ValueError(f"Unknown model type: {model_type}")
         
@@ -110,7 +123,7 @@ class Simulator:
 
         return results
     
-    def save_results(self, results, filename_prefix="simulation", timestamp=None):
+    def save_results(self, results, filename_prefix="simulation", timestamp=None, output_root=None):
         """
         Save simulation results to files.
         
@@ -122,21 +135,27 @@ class Simulator:
         if timestamp is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         config_name = results['config']['name'].replace(' ', '_').lower()
+        # Decide root output directory
+        root_dir = Path(output_root) if output_root else self.results_dir
+        # Ensure subdirectories exist
+        (root_dir / "data").mkdir(parents=True, exist_ok=True)
+        (root_dir / "configs").mkdir(parents=True, exist_ok=True)
+        (root_dir / "logs").mkdir(parents=True, exist_ok=True)
         
         # Save dataframes
-        agent_file = self.results_dir / "data" / f"{filename_prefix}_{config_name}_{timestamp}_agents.csv"
-        model_file = self.results_dir / "data" / f"{filename_prefix}_{config_name}_{timestamp}_model.csv"
+        agent_file = root_dir / "data" / f"{filename_prefix}_{config_name}_{timestamp}_agents.csv"
+        model_file = root_dir / "data" / f"{filename_prefix}_{config_name}_{timestamp}_model.csv"
         
         results['agent_data'].to_csv(agent_file)
         results['model_data'].to_csv(model_file)
         
         # Save configuration
-        config_file = self.results_dir / "configs" / f"{filename_prefix}_{config_name}_{timestamp}_config.json"
+        config_file = root_dir / "configs" / f"{filename_prefix}_{config_name}_{timestamp}_config.json"
         with open(config_file, 'w') as f:
             json.dump(results['config'], f, indent=2)
         
         # Save summary
-        summary_file = self.results_dir / "logs" / f"{filename_prefix}_{config_name}_{timestamp}_summary.json"
+        summary_file = root_dir / "logs" / f"{filename_prefix}_{config_name}_{timestamp}_summary.json"
         with open(summary_file, 'w') as f:
             json.dump(results['summary'], f, indent=2)
         
@@ -153,7 +172,7 @@ class Simulator:
             'summary_file': str(summary_file)
         }
     
-    def run_experiment(self, experiment_config):
+    def run_experiment(self, experiment_config, experiment_root: Path | None = None, experiment_timestamp: str | None = None):
         """
         Run a full experiment with multiple configurations.
         
@@ -163,19 +182,39 @@ class Simulator:
         print(f"🧪 Running Experiment: {experiment_config['name']}")
         print("=" * 60)
         
-        # Generate a single timestamp for all files in this experiment
-        experiment_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # Generate a single timestamp for all files in this experiment (unless provided)
+        if experiment_timestamp is None:
+            experiment_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # Compute or ensure experiment root folder under simulation_results: <experiment_name>_<date>
+        if experiment_root is None:
+            date_only = datetime.now().strftime("%Y%m%d")
+            experiment_name_safe = experiment_config['name'].replace(' ', '_').lower()
+            experiment_root = self.results_dir / f"{experiment_name_safe}_{date_only}"
+        (Path(experiment_root) / "data").mkdir(parents=True, exist_ok=True)
+        (Path(experiment_root) / "configs").mkdir(parents=True, exist_ok=True)
+        (Path(experiment_root) / "logs").mkdir(parents=True, exist_ok=True)
         
         experiment_results = []
         
         for config in experiment_config['configurations']:
             print(f"\n--- Configuration: {config['name']} ---")
             
+            # Ensure per-config execution settings inherit from experiment-level defaults
+            cfg = dict(config)  # shallow copy is enough for our keys
+            cfg.setdefault('max_steps', experiment_config.get('max_steps', MAX_STEP_COUNT))
+            cfg.setdefault('early_stop', experiment_config.get('early_stop', True))
+            cfg.setdefault('early_stop_steps', experiment_config.get('early_stop_steps', 50))
+
             # Run simulation
-            results = self.run_single_simulation(config, experiment_config.get('model_type', 'ConsentModel'))
+            results = self.run_single_simulation(cfg, experiment_config.get('model_type', 'ConsentModel'))
             
             # Save results with the shared experiment timestamp
-            file_paths = self.save_results(results, experiment_config['name'].replace(' ', '_').lower(), timestamp=experiment_timestamp)
+            file_paths = self.save_results(
+                results,
+                experiment_config['name'].replace(' ', '_').lower(),
+                timestamp=experiment_timestamp,
+                output_root=experiment_root
+            )
             
             # Add file paths to results
             results['files'] = file_paths
@@ -198,7 +237,7 @@ class Simulator:
             ]
         }
         
-        summary_file = self.results_dir / "logs" / f"experiment_{experiment_config['name'].replace(' ', '_').lower()}_{experiment_timestamp}.json"
+        summary_file = Path(experiment_root) / "logs" / f"experiment_{experiment_config['name'].replace(' ', '_').lower()}_{experiment_timestamp}.json"
         if experiment_summary:
             with open(summary_file, 'w') as f:
                 json.dump(experiment_summary, f, indent=2)
@@ -221,8 +260,14 @@ class Simulator:
         print(f"Seeds: {seeds}")
         print("=" * 60)
         
-        # Generate timestamp for the multi-seed experiment
+        # Generate timestamp and shared experiment root for all seeds
         multi_seed_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        date_only = datetime.now().strftime("%Y%m%d")
+        experiment_name_safe = base_experiment_config['name'].replace(' ', '_').lower()
+        shared_experiment_root = self.results_dir / f"{experiment_name_safe}_{date_only}"
+        (shared_experiment_root / "data").mkdir(parents=True, exist_ok=True)
+        (shared_experiment_root / "configs").mkdir(parents=True, exist_ok=True)
+        (shared_experiment_root / "logs").mkdir(parents=True, exist_ok=True)
         
         all_seed_results = []
         
@@ -234,7 +279,11 @@ class Simulator:
             seed_experiment_config = self._create_seed_experiment_config(base_experiment_config, seed)
             
             # Run experiment for this seed (each seed experiment gets its own timestamp)
-            seed_results = self.run_experiment(seed_experiment_config)
+            seed_results = self.run_experiment(
+                seed_experiment_config,
+                experiment_root=shared_experiment_root,
+                experiment_timestamp=multi_seed_timestamp
+            )
             all_seed_results.extend(seed_results)
         
         # Save multi-seed summary (without DataFrames for JSON serialization)
@@ -255,7 +304,7 @@ class Simulator:
             ]
         }
         
-        summary_file = self.results_dir / "logs" / f"multi_seed_{base_experiment_config['name'].replace(' ', '_').lower()}_{multi_seed_timestamp}.json"
+        summary_file = shared_experiment_root / "logs" / f"multi_seed_{base_experiment_config['name'].replace(' ', '_').lower()}_{multi_seed_timestamp}.json"
         with open(summary_file, 'w') as f:
             json.dump(multi_seed_summary, f, indent=2)
         
@@ -377,6 +426,42 @@ def create_sample_experiments():
     
     return experiments
 
+def load_experiments_from_file(path):
+    """Load one or more experiments from a JSON/YAML file.
+    Supports:
+    - A single experiment object with configurations (wrapped into a dict)
+    - A list of experiment objects (converted to a dict keyed by experiment name)
+    - An object with key 'experiments' mapping names to experiment objects
+    """
+    cfg_path = Path(path)
+    if not cfg_path.exists():
+        raise FileNotFoundError(f"Experiments file not found: {cfg_path}")
+    with open(cfg_path, 'r') as f:
+        if cfg_path.suffix.lower() in ['.yaml', '.yml']:
+            data = yaml.safe_load(f)
+        else:
+            data = json.load(f)
+
+    # Single experiment object
+    if isinstance(data, dict) and 'configurations' in data:
+        return {data.get('name', 'external_experiment'): data}
+
+    # Experiments under a root key
+    if isinstance(data, dict) and 'experiments' in data and isinstance(data['experiments'], dict):
+        return data['experiments']
+
+    # List of experiments
+    if isinstance(data, list):
+        result = {}
+        for exp in data:
+            if isinstance(exp, dict) and 'configurations' in exp:
+                name = exp.get('name', f"exp_{len(result)+1}")
+                result[name] = exp
+        if result:
+            return result
+
+    raise ValueError("Unsupported experiments file format. Provide a single experiment object, a list of experiments, or an object with 'experiments'.")
+
 def main():
     """
     Main function to run the simulator.
@@ -387,8 +472,12 @@ def main():
     # Create simulator instance
     simulator = Simulator(results_dir="simulation_results")
     
-    # Get available experiments
-    experiments = create_sample_experiments()
+    # Get experiments: prefer external file if present
+    if EXPERIMENTS_FILE_PATH and EXPERIMENTS_FILE_PATH.exists():
+        print(f"📄 Loading experiments from: {EXPERIMENTS_FILE_PATH}")
+        experiments = load_experiments_from_file(EXPERIMENTS_FILE_PATH)
+    else:
+        experiments = create_sample_experiments()
     
     print("\nAvailable experiments:")
     for i, (key, exp) in enumerate(experiments.items(), 1):

@@ -51,7 +51,9 @@ class BaseModel(mesa.Model):
     def setup_datacollector(self):
         """Setup the data collector with common reporters."""
         self.datacollector = mesa.DataCollector(
-            agent_reporters={"Accomplished Goals": "num_accomplished_goals", 
+            agent_reporters={
+                           "Agent Persona": "agent_persona",
+                           "Accomplished Goals": "num_accomplished_goals", 
                            "Remaining Goals": "num_remaining_goals",
                            "Resource Conflicts": "num_resource_conflicts",
                            "Counter Conflict Goal Accomplishments": "counter_conflict_goal_accomplishments",

@@ -1,0 +1,164 @@
+{
+  "name": "Monitoring_vs_Goal_Based_Analysis",
+  "model_type": "ConsentModel",
+  "max_steps": 1000,
+  "early_stop_steps": 50,
+  "early_stop": true,
+  "seeds": [2, 13, 24, 35, 42, 123, 413, 456, 789, 999],
+  "configurations": [
+    {
+      "name": "0-1000-0-0",
+      "parameters": {
+        "seed": null,
+        "GOAL_FILE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/goals/goal_tree.yaml",
+        "TEST_CASE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/test_cases/test_007_01_CONSENT_BASED_AU_fulfilment_viol_expiry_activation.yaml",
+        "TEST": false,
+        "MAX_STEP_COUNT": 1000,
+        "ConsentFirstAgent_COUNT": 0,
+        "GoalFirstAgent_COUNT": 1000,
+        "FiftyFiftyAgent_COUNT": 0,
+        "MonitoringAgent_COUNT": 0
+      }
+    },
+    {
+      "name": "0-900-0-100",
+      "parameters": {
+        "seed": null,
+        "GOAL_FILE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/goals/goal_tree.yaml",
+        "TEST_CASE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/test_cases/test_007_01_CONSENT_BASED_AU_fulfilment_viol_expiry_activation.yaml",
+        "TEST": false,
+        "MAX_STEP_COUNT": 1000,
+        "ConsentFirstAgent_COUNT": 0,
+        "GoalFirstAgent_COUNT": 900,
+        "FiftyFiftyAgent_COUNT": 0,
+        "MonitoringAgent_COUNT": 100
+      }
+    },
+    {
+      "name": "0-800-0-200",
+      "parameters": {
+        "seed": null,
+        "GOAL_FILE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/goals/goal_tree.yaml",
+        "TEST_CASE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/test_cases/test_007_01_CONSENT_BASED_AU_fulfilment_viol_expiry_activation.yaml",
+        "TEST": false,
+        "MAX_STEP_COUNT": 1000,
+        "ConsentFirstAgent_COUNT": 0,
+        "GoalFirstAgent_COUNT": 800,
+        "FiftyFiftyAgent_COUNT": 0,
+        "MonitoringAgent_COUNT": 200
+      }
+    },
+    {
+      "name": "0-700-0-300",
+      "parameters": {
+        "seed": null,
+        "GOAL_FILE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/goals/goal_tree.yaml",
+        "TEST_CASE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/test_cases/test_007_01_CONSENT_BASED_AU_fulfilment_viol_expiry_activation.yaml",
+        "TEST": false,
+        "MAX_STEP_COUNT": 1000,
+        "ConsentFirstAgent_COUNT": 0,
+        "GoalFirstAgent_COUNT": 700,
+        "FiftyFiftyAgent_COUNT": 0,
+        "MonitoringAgent_COUNT": 300
+      }
+    },
+    {
+      "name": "0-600-0-400",
+      "parameters": {
+        "seed": null,
+        "GOAL_FILE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/goals/goal_tree.yaml",
+        "TEST_CASE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/test_cases/test_007_01_CONSENT_BASED_AU_fulfilment_viol_expiry_activation.yaml",
+        "TEST": false,
+        "MAX_STEP_COUNT": 1000,
+        "ConsentFirstAgent_COUNT": 0,
+        "GoalFirstAgent_COUNT": 600,
+        "FiftyFiftyAgent_COUNT": 0,
+        "MonitoringAgent_COUNT": 400
+      }
+    },
+    {
+      "name": "0-500-0-500",
+      "parameters": {
+        "seed": null,
+        "GOAL_FILE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/goals/goal_tree.yaml",
+        "TEST_CASE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/test_cases/test_007_01_CONSENT_BASED_AU_fulfilment_viol_expiry_activation.yaml",
+        "TEST": false,
+        "MAX_STEP_COUNT": 1000,
+        "ConsentFirstAgent_COUNT": 0,
+        "GoalFirstAgent_COUNT": 500,
+        "FiftyFiftyAgent_COUNT": 0,
+        "MonitoringAgent_COUNT": 500
+      }
+    },
+    {
+      "name": "0-400-0-600",
+      "parameters": {
+        "seed": null,
+        "GOAL_FILE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/goals/goal_tree.yaml",
+        "TEST_CASE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/test_cases/test_007_01_CONSENT_BASED_AU_fulfilment_viol_expiry_activation.yaml",
+        "TEST": false,
+        "MAX_STEP_COUNT": 1000,
+        "ConsentFirstAgent_COUNT": 0,
+        "GoalFirstAgent_COUNT": 400,
+        "FiftyFiftyAgent_COUNT": 0,
+        "MonitoringAgent_COUNT": 600
+      }
+    },
+    {
+      "name": "0-300-0-700",
+      "parameters": {
+        "seed": null,
+        "GOAL_FILE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/goals/goal_tree.yaml",
+        "TEST_CASE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/test_cases/test_007_01_CONSENT_BASED_AU_fulfilment_viol_expiry_activation.yaml",
+        "TEST": false,
+        "MAX_STEP_COUNT": 1000,
+        "ConsentFirstAgent_COUNT": 0,
+        "GoalFirstAgent_COUNT": 300,
+        "FiftyFiftyAgent_COUNT": 0,
+        "MonitoringAgent_COUNT": 700
+      }
+    },
+    {
+      "name": "0-200-0-800",
+      "parameters": {
+        "seed": null,
+        "GOAL_FILE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/goals/goal_tree.yaml",
+        "TEST_CASE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/test_cases/test_007_01_CONSENT_BASED_AU_fulfilment_viol_expiry_activation.yaml",
+        "TEST": false,
+        "MAX_STEP_COUNT": 1000,
+        "ConsentFirstAgent_COUNT": 0,
+        "GoalFirstAgent_COUNT": 200,
+        "FiftyFiftyAgent_COUNT": 0,
+        "MonitoringAgent_COUNT": 800
+      }
+    },
+    {
+      "name": "0-100-0-900",
+      "parameters": {
+        "seed": null,
+        "GOAL_FILE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/goals/goal_tree.yaml",
+        "TEST_CASE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/test_cases/test_007_01_CONSENT_BASED_AU_fulfilment_viol_expiry_activation.yaml",
+        "TEST": false,
+        "MAX_STEP_COUNT": 1000,
+        "ConsentFirstAgent_COUNT": 0,
+        "GoalFirstAgent_COUNT": 100,
+        "FiftyFiftyAgent_COUNT": 0,
+        "MonitoringAgent_COUNT": 900
+      }
+    },
+    {
+      "name": "0-0-0-1000",
+      "parameters": {
+        "seed": null,
+        "GOAL_FILE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/goals/goal_tree.yaml",
+        "TEST_CASE_PATH": "/Users/efeonal/py_envs/MESA_thesis/consent_abs/test_cases/test_007_01_CONSENT_BASED_AU_fulfilment_viol_expiry_activation.yaml",
+        "TEST": false,
+        "MAX_STEP_COUNT": 1000,
+        "ConsentFirstAgent_COUNT": 0,
+        "GoalFirstAgent_COUNT": 0,
+        "FiftyFiftyAgent_COUNT": 0,
+        "MonitoringAgent_COUNT": 1000
+      }
+    }
+  ]
+}
