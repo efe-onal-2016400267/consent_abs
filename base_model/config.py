@@ -13,5 +13,5 @@ max_random_AU_exp_step = 7
 min_random_AU_exp_step = 3
 max_random_CO_exp_step = 7
 min_random_CO_exp_step = 3
-print_state = False
+print_state = True
 print_execution = False

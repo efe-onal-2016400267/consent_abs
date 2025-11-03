@@ -406,17 +406,18 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
     
     # Create the analysis plots
     fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-    exp_name_display = df_summary['experiment_name'].iloc[0].replace('_', ' ').title()
+    #exp_name_display = df_summary['experiment_name'].iloc[0].replace('_', ' ').title()
+    exp_name_display = "Deontic vs Teleological Agents Comparison".title()
     fig.suptitle(f'{exp_name_display}\n(Averaged across {df_summary["num_seeds"].iloc[0]} seeds)', 
                  fontsize=16, fontweight='bold')
     
     # 1. Accomplished Goals vs Agent Ratio
     ax1 = axes[0, 0]
-    ax1.errorbar(df_summary['goal_first_count'], df_summary['accomplished_goals'], 
+    ax1.errorbar(df_summary['goal_first_count'] / 1000, df_summary['accomplished_goals'], 
                  yerr=df_summary['accomplished_goals_sem'], 
                  fmt='o-', linewidth=2, markersize=8, capsize=5,
                  label='Accomplished Goals', color='green')
-    ax1.set_xlabel('Goal-First Agent Count', fontsize=11)
+    ax1.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
     ax1.set_ylabel('Total Accomplished Goals', fontsize=11)
     ax1.set_title('Accomplished Goals vs Agent Ratio', fontsize=12, fontweight='bold')
     ax1.grid(True, alpha=0.3)
@@ -424,11 +425,11 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
     
     # 2. Remaining Goals vs Agent Ratio
     ax2 = axes[0, 1]
-    ax2.errorbar(df_summary['goal_first_count'], df_summary['remaining_goals'], 
+    ax2.errorbar(df_summary['goal_first_count'] / 1000, df_summary['remaining_goals'], 
                  yerr=df_summary['remaining_goals_sem'],
                  fmt='o-', linewidth=2, markersize=8, capsize=5,
                  label='Remaining Goals', color='red')
-    ax2.set_xlabel('Goal-First Agent Count', fontsize=11)
+    ax2.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
     ax2.set_ylabel('Total Remaining Goals', fontsize=11)
     ax2.set_title('Remaining Goals vs Agent Ratio', fontsize=12, fontweight='bold')
     ax2.grid(True, alpha=0.3)
@@ -436,11 +437,11 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
     
     # 3. Consent Violations vs Agent Ratio
     ax3 = axes[1, 0]
-    ax3.errorbar(df_summary['goal_first_count'], df_summary['consent_violation_ratio'], 
+    ax3.errorbar(df_summary['goal_first_count'] / 1000, df_summary['consent_violation_ratio'], 
                  yerr=df_summary['consent_violation_ratio_sem'],
                  fmt='o-', linewidth=2, markersize=8, capsize=5,
                  label='Consent Violation Ratio', color='orange')
-    ax3.set_xlabel('Goal-First Agent Count', fontsize=11)
+    ax3.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
     ax3.set_ylabel('Consent Violation Ratio', fontsize=11)
     ax3.set_title('Consent Violation Ratio vs Agent Ratio', fontsize=12, fontweight='bold')
     ax3.grid(True, alpha=0.3)
@@ -448,11 +449,11 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
     
     # 4. Resource Conflicts vs Agent Ratio
     ax4 = axes[1, 1]
-    ax4.errorbar(df_summary['goal_first_count'], df_summary['resource_conflicts'], 
+    ax4.errorbar(df_summary['goal_first_count'] / 1000, df_summary['resource_conflicts'], 
                  yerr=df_summary['resource_conflicts_sem'],
                  fmt='o-', linewidth=2, markersize=8, capsize=5,
                  label='Resource Conflicts', color='purple')
-    ax4.set_xlabel('Goal-First Agent Count', fontsize=11)
+    ax4.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
     ax4.set_ylabel('Total Resource Conflicts', fontsize=11)
     ax4.set_title('Resource Conflicts vs Agent Ratio', fontsize=12, fontweight='bold')
     ax4.grid(True, alpha=0.3)
@@ -460,11 +461,11 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
 
     # 5. Counter Goal Accomplishments vs Agent Ratio
     ax5 = axes[0, 2]
-    ax5.errorbar(df_summary['goal_first_count'], df_summary['counter_goal_accomplishments'], 
+    ax5.errorbar(df_summary['goal_first_count'] / 1000, df_summary['counter_goal_accomplishments'], 
                  yerr=df_summary['counter_goal_accomplishments_sem'],
                  fmt='o-', linewidth=2, markersize=8, capsize=5,
                  label='Counter Goal Accomplishments', color='brown')
-    ax5.set_xlabel('Goal-First Agent Count', fontsize=11)
+    ax5.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
     ax5.set_ylabel('Total Counter Goal Accomplishments', fontsize=11)
     ax5.set_title('Counter Goal Accomplishments vs Agent Ratio', fontsize=12, fontweight='bold')
     ax5.grid(True, alpha=0.3)
@@ -478,17 +479,17 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
     ax6_goals = ax6.twinx()
     
     # Plot average steps (left y-axis)
-    line1 = ax6_steps.errorbar(df_summary['goal_first_count'], df_summary['avg_steps_overall'], 
+    line1 = ax6_steps.errorbar(df_summary['goal_first_count'] / 1000, df_summary['avg_steps_overall'], 
                                yerr=df_summary['avg_steps_overall_sem'],
                                fmt='o-', linewidth=2, markersize=8, capsize=5,
                                label='Average Steps', color='purple')
-    ax6_steps.set_xlabel('Goal-First Agent Count', fontsize=11)
+    ax6_steps.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
     ax6_steps.set_ylabel('Average Steps', fontsize=11, color='purple')
     ax6_steps.tick_params(axis='y', labelcolor='purple')
     ax6_steps.grid(True, alpha=0.3)
     
     # Plot accomplished goals (right y-axis)
-    line2 = ax6_goals.errorbar(df_summary['goal_first_count'], df_summary['accomplished_goals'], 
+    line2 = ax6_goals.errorbar(df_summary['goal_first_count'] / 1000, df_summary['accomplished_goals'], 
                                yerr=df_summary['accomplished_goals_sem'],
                                fmt='s-', linewidth=2, markersize=8, capsize=5,
                                label='Accomplished Goals', color='green')
@@ -647,19 +648,20 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # FIGURE 1: R (Receiver) specific graphs
     fig_r, axes_r = plt.subplots(2, 2, figsize=(15, 12))
-    exp_name_display = df_agent_summary['experiment_name'].iloc[0].replace('_', ' ').title()
+    #exp_name_display = df_agent_summary['experiment_name'].iloc[0].replace('_', ' ').title()
+    exp_name_display = "Deontic vs Teleological Agents Comparison".title()
     fig_r.suptitle(f'{exp_name_display} - Agent-Level Analysis: Receiver (R) Perspective\n(Averaged across {df_agent_summary["num_seeds"].iloc[0]} seeds)', 
                    fontsize=16, fontweight='bold')
     
     # R1. Violated Consents as R per Agent
     ax_r1 = axes_r[0, 0]
-    ax_r1.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_violated_consents_consent_first_r'], 
+    ax_r1.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_violated_consents_consent_first_r'], 
                    yerr=df_agent_summary['avg_violated_consents_consent_first_r_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent (R)', color='blue')
-    ax_r1.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_violated_consents_goal_first_r'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (R)', color='green')
+    ax_r1.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_violated_consents_goal_first_r'], 
                    yerr=df_agent_summary['avg_violated_consents_goal_first_r_sem'], 
-                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent (R)', color='red')
-    ax_r1.set_xlabel('Goal-First Agent Count', fontsize=10)
+                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (R)', color='red')
+    ax_r1.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_r1.set_ylabel('Avg Violated Consents as R per Agent', fontsize=10)
     ax_r1.set_title('Violated Consents as Receiver per Agent Type', fontsize=11, fontweight='bold')
     ax_r1.grid(True, alpha=0.3)
@@ -667,13 +669,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # R2. Total Consents as R per Agent
     ax_r2 = axes_r[0, 1]
-    ax_r2.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_total_consents_consent_first_r'], 
+    ax_r2.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_total_consents_consent_first_r'], 
                    yerr=df_agent_summary['avg_total_consents_consent_first_r_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent (R)', color='blue')
-    ax_r2.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_total_consents_goal_first_r'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (R)', color='green')
+    ax_r2.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_total_consents_goal_first_r'], 
                    yerr=df_agent_summary['avg_total_consents_goal_first_r_sem'], 
-                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent (R)', color='red')
-    ax_r2.set_xlabel('Goal-First Agent Count', fontsize=10)
+                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (R)', color='red')
+    ax_r2.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_r2.set_ylabel('Avg Total Consents as R per Agent', fontsize=10)
     ax_r2.set_title('Total Consents as Receiver per Agent Type', fontsize=11, fontweight='bold')
     ax_r2.grid(True, alpha=0.3)
@@ -681,13 +683,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # R3. Consent Violation Ratio as R per Agent
     ax_r3 = axes_r[1, 0]
-    ax_r3.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_consent_violation_ratio_consent_first_r'], 
+    ax_r3.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_violation_ratio_consent_first_r'], 
                    yerr=df_agent_summary['avg_consent_violation_ratio_consent_first_r_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent (R)', color='blue')
-    ax_r3.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_consent_violation_ratio_goal_first_r'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (R)', color='green')
+    ax_r3.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_violation_ratio_goal_first_r'], 
                    yerr=df_agent_summary['avg_consent_violation_ratio_goal_first_r_sem'], 
-                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent (R)', color='red')
-    ax_r3.set_xlabel('Goal-First Agent Count', fontsize=10)
+                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (R)', color='red')
+    ax_r3.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_r3.set_ylabel('Avg Consent Violation Ratio as R per Agent', fontsize=10)
     ax_r3.set_title('Consent Violation Ratio as Receiver per Agent Type', fontsize=11, fontweight='bold')
     ax_r3.grid(True, alpha=0.3)
@@ -695,13 +697,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # R4. Consent Fulfillment Ratio as R per Agent
     ax_r4 = axes_r[1, 1]
-    ax_r4.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_consent_fulfillment_ratio_consent_first_r'], 
+    ax_r4.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_fulfillment_ratio_consent_first_r'], 
                    yerr=df_agent_summary['avg_consent_fulfillment_ratio_consent_first_r_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent (R)', color='blue')
-    ax_r4.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_consent_fulfillment_ratio_goal_first_r'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (R)', color='green')
+    ax_r4.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_fulfillment_ratio_goal_first_r'], 
                    yerr=df_agent_summary['avg_consent_fulfillment_ratio_goal_first_r_sem'], 
-                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent (R)', color='red')
-    ax_r4.set_xlabel('Goal-First Agent Count', fontsize=10)
+                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (R)', color='red')
+    ax_r4.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_r4.set_ylabel('Avg Consent Fulfillment Ratio as R per Agent', fontsize=10)
     ax_r4.set_title('Consent Fulfillment Ratio as Receiver per Agent Type', fontsize=11, fontweight='bold')
     ax_r4.grid(True, alpha=0.3)
@@ -723,13 +725,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # G1. Violated Consents as G per Agent
     ax_g1 = axes_g[0, 0]
-    ax_g1.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_violated_consents_consent_first_g'], 
+    ax_g1.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_violated_consents_consent_first_g'], 
                    yerr=df_agent_summary['avg_violated_consents_consent_first_g_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent (G)', color='blue')
-    ax_g1.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_violated_consents_goal_first_g'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (G)', color='green')
+    ax_g1.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_violated_consents_goal_first_g'], 
                    yerr=df_agent_summary['avg_violated_consents_goal_first_g_sem'], 
-                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent (G)', color='red')
-    ax_g1.set_xlabel('Goal-First Agent Count', fontsize=10)
+                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (G)', color='red')
+    ax_g1.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_g1.set_ylabel('Avg Violated Consents as G per Agent', fontsize=10)
     ax_g1.set_title('Violated Consents as Giver per Agent Type', fontsize=11, fontweight='bold')
     ax_g1.grid(True, alpha=0.3)
@@ -737,13 +739,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # G2. Total Consents as G per Agent
     ax_g2 = axes_g[0, 1]
-    ax_g2.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_total_consents_consent_first_g'], 
+    ax_g2.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_total_consents_consent_first_g'], 
                    yerr=df_agent_summary['avg_total_consents_consent_first_g_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent (G)', color='blue')
-    ax_g2.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_total_consents_goal_first_g'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (G)', color='green')
+    ax_g2.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_total_consents_goal_first_g'], 
                    yerr=df_agent_summary['avg_total_consents_goal_first_g_sem'], 
-                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent (G)', color='red')
-    ax_g2.set_xlabel('Goal-First Agent Count', fontsize=10)
+                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (G)', color='red')
+    ax_g2.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_g2.set_ylabel('Avg Total Consents as G per Agent', fontsize=10)
     ax_g2.set_title('Total Consents as Giver per Agent Type', fontsize=11, fontweight='bold')
     ax_g2.grid(True, alpha=0.3)
@@ -751,13 +753,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # G3. Consent Violation Ratio as G per Agent
     ax_g3 = axes_g[1, 0]
-    ax_g3.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_consent_violation_ratio_consent_first_g'], 
+    ax_g3.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_violation_ratio_consent_first_g'], 
                    yerr=df_agent_summary['avg_consent_violation_ratio_consent_first_g_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent (G)', color='blue')
-    ax_g3.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_consent_violation_ratio_goal_first_g'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (G)', color='green')
+    ax_g3.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_violation_ratio_goal_first_g'], 
                    yerr=df_agent_summary['avg_consent_violation_ratio_goal_first_g_sem'], 
-                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent (G)', color='red')
-    ax_g3.set_xlabel('Goal-First Agent Count', fontsize=10)
+                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (G)', color='red')
+    ax_g3.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_g3.set_ylabel('Avg Consent Violation Ratio as G per Agent', fontsize=10)
     ax_g3.set_title('Consent Violation Ratio as Giver per Agent Type', fontsize=11, fontweight='bold')
     ax_g3.grid(True, alpha=0.3)
@@ -765,13 +767,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # G4. Consent Fulfillment Ratio as G per Agent
     ax_g4 = axes_g[1, 1]
-    ax_g4.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_consent_fulfillment_ratio_consent_first_g'], 
+    ax_g4.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_fulfillment_ratio_consent_first_g'], 
                    yerr=df_agent_summary['avg_consent_fulfillment_ratio_consent_first_g_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent (G)', color='blue')
-    ax_g4.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_consent_fulfillment_ratio_goal_first_g'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (G)', color='green')
+    ax_g4.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_fulfillment_ratio_goal_first_g'], 
                    yerr=df_agent_summary['avg_consent_fulfillment_ratio_goal_first_g_sem'], 
-                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent (G)', color='red')
-    ax_g4.set_xlabel('Goal-First Agent Count', fontsize=10)
+                   fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (G)', color='red')
+    ax_g4.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_g4.set_ylabel('Avg Consent Fulfillment Ratio as G per Agent', fontsize=10)
     ax_g4.set_title('Consent Fulfillment Ratio as Giver per Agent Type', fontsize=11, fontweight='bold')
     ax_g4.grid(True, alpha=0.3)
@@ -792,13 +794,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Gen1. Accomplished Goals per Agent
     ax_gen1 = axes_gen[0, 0]
-    ax_gen1.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_accomplished_goals_consent_first_agent'], 
+    ax_gen1.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_accomplished_goals_consent_first_agent'], 
                      yerr=df_agent_summary['avg_accomplished_goals_consent_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent', color='blue')
-    ax_gen1.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_accomplished_goals_goal_first_agent'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
+    ax_gen1.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_accomplished_goals_goal_first_agent'], 
                      yerr=df_agent_summary['avg_accomplished_goals_goal_first_agent_sem'], 
-                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent', color='red')
-    ax_gen1.set_xlabel('Goal-First Agent Count', fontsize=10)
+                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent', color='red')
+    ax_gen1.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_gen1.set_ylabel('Avg Accomplished Goals per Agent', fontsize=10)
     ax_gen1.set_title('Accomplished Goals per Agent Type', fontsize=11, fontweight='bold')
     ax_gen1.grid(True, alpha=0.3)
@@ -806,13 +808,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Gen2. Remaining Goals per Agent
     ax_gen2 = axes_gen[0, 1]
-    ax_gen2.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_remaining_goals_consent_first_agent'], 
+    ax_gen2.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_remaining_goals_consent_first_agent'], 
                      yerr=df_agent_summary['avg_remaining_goals_consent_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent', color='blue')
-    ax_gen2.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_remaining_goals_goal_first_agent'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
+    ax_gen2.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_remaining_goals_goal_first_agent'], 
                      yerr=df_agent_summary['avg_remaining_goals_goal_first_agent_sem'], 
-                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent', color='red')
-    ax_gen2.set_xlabel('Goal-First Agent Count', fontsize=10)
+                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent', color='red')
+    ax_gen2.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_gen2.set_ylabel('Avg Remaining Goals per Agent', fontsize=10)
     ax_gen2.set_title('Remaining Goals per Agent Type', fontsize=11, fontweight='bold')
     ax_gen2.grid(True, alpha=0.3)
@@ -820,13 +822,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Gen3. Resource Conflicts per Agent
     ax_gen3 = axes_gen[1, 0]
-    ax_gen3.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_resource_conflicts_consent_first_agent'], 
+    ax_gen3.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_resource_conflicts_consent_first_agent'], 
                      yerr=df_agent_summary['avg_resource_conflicts_consent_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent', color='blue')
-    ax_gen3.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_resource_conflicts_goal_first_agent'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
+    ax_gen3.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_resource_conflicts_goal_first_agent'], 
                      yerr=df_agent_summary['avg_resource_conflicts_goal_first_agent_sem'], 
-                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent', color='red')
-    ax_gen3.set_xlabel('Goal-First Agent Count', fontsize=10)
+                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent', color='red')
+    ax_gen3.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_gen3.set_ylabel('Avg Resource Conflicts per Agent', fontsize=10)
     ax_gen3.set_title('Resource Conflicts per Agent Type', fontsize=11, fontweight='bold')
     ax_gen3.grid(True, alpha=0.3)
@@ -834,13 +836,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Gen4. Counter Goal Accomplishments per Agent
     ax_gen4 = axes_gen[1, 1]
-    ax_gen4.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_counter_goal_accomplishments_consent_first_agent'], 
+    ax_gen4.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_counter_goal_accomplishments_consent_first_agent'], 
                      yerr=df_agent_summary['avg_counter_goal_accomplishments_consent_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent', color='blue')
-    ax_gen4.errorbar(df_agent_summary['goal_first_count'], df_agent_summary['avg_counter_goal_accomplishments_goal_first_agent'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
+    ax_gen4.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_counter_goal_accomplishments_goal_first_agent'], 
                      yerr=df_agent_summary['avg_counter_goal_accomplishments_goal_first_agent_sem'], 
-                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent', color='red')
-    ax_gen4.set_xlabel('Goal-First Agent Count', fontsize=10)
+                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent', color='red')
+    ax_gen4.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_gen4.set_ylabel('Avg Counter Goal Accomplishments per Agent', fontsize=10)
     ax_gen4.set_title('Counter Goal Accomplishments per Agent Type', fontsize=11, fontweight='bold')
     ax_gen4.grid(True, alpha=0.3)
@@ -896,13 +898,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Int1. Average Finished Step per Agent
     ax_int1 = axes_interaction[0, 0]
-    ax_int1.errorbar(df_interaction_summary['goal_first_count'], df_interaction_summary['avg_finished_step_consent_first_agent'], 
+    ax_int1.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_finished_step_consent_first_agent'], 
                      yerr=df_interaction_summary['avg_finished_step_consent_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent', color='blue')
-    ax_int1.errorbar(df_interaction_summary['goal_first_count'], df_interaction_summary['avg_finished_step_goal_first_agent'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
+    ax_int1.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_finished_step_goal_first_agent'], 
                      yerr=df_interaction_summary['avg_finished_step_goal_first_agent_sem'], 
-                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent', color='red')
-    ax_int1.set_xlabel('Goal-First Agent Count', fontsize=10)
+                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent', color='red')
+    ax_int1.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_int1.set_ylabel('Avg Finished Step per Agent', fontsize=10)
     ax_int1.set_title('Average Finished Step per Agent Type', fontsize=11, fontweight='bold')
     ax_int1.grid(True, alpha=0.3)
@@ -910,13 +912,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Int2. Average Longest Idle Time per Agent
     ax_int2 = axes_interaction[0, 1]
-    ax_int2.errorbar(df_interaction_summary['goal_first_count'], df_interaction_summary['avg_longest_idle_time_consent_first_agent'], 
+    ax_int2.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_longest_idle_time_consent_first_agent'], 
                      yerr=df_interaction_summary['avg_longest_idle_time_consent_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent', color='blue')
-    ax_int2.errorbar(df_interaction_summary['goal_first_count'], df_interaction_summary['avg_longest_idle_time_goal_first_agent'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
+    ax_int2.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_longest_idle_time_goal_first_agent'], 
                      yerr=df_interaction_summary['avg_longest_idle_time_goal_first_agent_sem'], 
-                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent', color='red')
-    ax_int2.set_xlabel('Goal-First Agent Count', fontsize=10)
+                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent', color='red')
+    ax_int2.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_int2.set_ylabel('Avg Longest Idle Time per Agent', fontsize=10)
     ax_int2.set_title('Average Longest Idle Time per Agent Type', fontsize=11, fontweight='bold')
     ax_int2.grid(True, alpha=0.3)
@@ -924,13 +926,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Int3. Average Distinct Agents Interacted as R per Agent
     ax_int3 = axes_interaction[1, 0]
-    ax_int3.errorbar(df_interaction_summary['goal_first_count'], df_interaction_summary['avg_distinct_agents_interacted_r_consent_first_agent'], 
+    ax_int3.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_distinct_agents_interacted_r_consent_first_agent'], 
                      yerr=df_interaction_summary['avg_distinct_agents_interacted_r_consent_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent (R)', color='blue')
-    ax_int3.errorbar(df_interaction_summary['goal_first_count'], df_interaction_summary['avg_distinct_agents_interacted_r_goal_first_agent'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (R)', color='green')
+    ax_int3.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_distinct_agents_interacted_r_goal_first_agent'], 
                      yerr=df_interaction_summary['avg_distinct_agents_interacted_r_goal_first_agent_sem'], 
-                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent (R)', color='red')
-    ax_int3.set_xlabel('Goal-First Agent Count', fontsize=10)
+                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (R)', color='red')
+    ax_int3.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_int3.set_ylabel('Avg Distinct Agents Interacted as R per Agent', fontsize=10)
     ax_int3.set_title('Average Distinct Agents Interacted as Receiver per Agent Type', fontsize=11, fontweight='bold')
     ax_int3.grid(True, alpha=0.3)
@@ -938,13 +940,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Int4. Average Distinct Agents Interacted as G per Agent
     ax_int4 = axes_interaction[1, 1]
-    ax_int4.errorbar(df_interaction_summary['goal_first_count'], df_interaction_summary['avg_distinct_agents_interacted_g_consent_first_agent'], 
+    ax_int4.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_distinct_agents_interacted_g_consent_first_agent'], 
                      yerr=df_interaction_summary['avg_distinct_agents_interacted_g_consent_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Consent-First Agent (G)', color='blue')
-    ax_int4.errorbar(df_interaction_summary['goal_first_count'], df_interaction_summary['avg_distinct_agents_interacted_g_goal_first_agent'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (G)', color='green')
+    ax_int4.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_distinct_agents_interacted_g_goal_first_agent'], 
                      yerr=df_interaction_summary['avg_distinct_agents_interacted_g_goal_first_agent_sem'], 
-                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Goal-First Agent (G)', color='red')
-    ax_int4.set_xlabel('Goal-First Agent Count', fontsize=10)
+                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (G)', color='red')
+    ax_int4.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
     ax_int4.set_ylabel('Avg Distinct Agents Interacted as G per Agent', fontsize=10)
     ax_int4.set_title('Average Distinct Agents Interacted as Giver per Agent Type', fontsize=11, fontweight='bold')
     ax_int4.grid(True, alpha=0.3)

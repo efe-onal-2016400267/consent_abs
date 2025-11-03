@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Analysis script for simulation results showing how metrics change with GoalFirst vs Monitoring agent ratios.
+Analysis script for simulation results showing how metrics change with ConsentFirst vs Monitoring agent ratios.
 Averages results across all seeds for each experiment configuration.
 """
 
@@ -20,8 +20,8 @@ sns.set_palette("husl")
 
 # Specify the experiment name and date to analyze
 # Set experiment_name to None to analyze all experiments
-experiment_name = "monitoring_vs_goal_based_analysis"
-experiment_date = "20251022"  # Format: YYYYMMDD
+experiment_name = "monitoring_vs_consent_based_analysis"
+experiment_date = "20251023"  # Format: YYYYMMDD
 
 def extract_experiment_info(config_filename):
     """Extract experiment name and configuration from config filename.
@@ -140,13 +140,13 @@ def load_simulation_data(experiment_name=None, experiment_date=None):
         
         # Extract agent counts
         params = config['parameters']
-        goal_first = params.get('GoalFirstAgent_COUNT', 0)
+        consent_first = params.get('ConsentFirstAgent_COUNT', 0)
         monitoring = params.get('MonitoringAgent_COUNT', 0)
         fifty_fifty = params.get('FiftyFiftyAgent_COUNT', 0)
-        total_agents = goal_first + monitoring + fifty_fifty
+        total_agents = consent_first + monitoring + fifty_fifty
         
         # Calculate ratios
-        goal_ratio = goal_first / total_agents if total_agents > 0 else 0
+        consent_ratio = consent_first / total_agents if total_agents > 0 else 0
         monitoring_ratio = monitoring / total_agents if total_agents > 0 else 0
         fifty_fifty_ratio = fifty_fifty / total_agents if total_agents > 0 else 0
         
@@ -221,60 +221,60 @@ def load_simulation_data(experiment_name=None, experiment_date=None):
             final_agent_values = agent_df.iloc[-distinct_agent_count:]
             
             # Calculate agent-level metrics for each agent type
-            goal_first_mask = final_agent_values['Agent Persona'] == 'GoalFirstAgent'
+            consent_first_mask = final_agent_values['Agent Persona'] == 'ConsentFirstAgent'
             monitoring_mask = final_agent_values['Agent Persona'] == 'MonitoringAgent'
             
             # Calculate consent-related metrics from the available columns
             # Note: The CSV has different column names than expected
-            avg_accomplished_goals_goal_first_agent = final_agent_values[goal_first_mask]['Accomplished Goals'].mean() if goal_first_mask.any() else 0
+            avg_accomplished_goals_consent_first_agent = final_agent_values[consent_first_mask]['Accomplished Goals'].mean() if consent_first_mask.any() else 0
             avg_accomplished_goals_monitoring_agent = final_agent_values[monitoring_mask]['Accomplished Goals'].mean() if monitoring_mask.any() else 0
-            avg_remaining_goals_goal_first_agent = final_agent_values[goal_first_mask]['Remaining Goals'].mean() if goal_first_mask.any() else 0
+            avg_remaining_goals_consent_first_agent = final_agent_values[consent_first_mask]['Remaining Goals'].mean() if consent_first_mask.any() else 0
             avg_remaining_goals_monitoring_agent = final_agent_values[monitoring_mask]['Remaining Goals'].mean() if monitoring_mask.any() else 0
-            avg_resource_conflicts_goal_first_agent = final_agent_values[goal_first_mask]['Resource Conflicts'].mean() if goal_first_mask.any() else 0
+            avg_resource_conflicts_consent_first_agent = final_agent_values[consent_first_mask]['Resource Conflicts'].mean() if consent_first_mask.any() else 0
             avg_resource_conflicts_monitoring_agent = final_agent_values[monitoring_mask]['Resource Conflicts'].mean() if monitoring_mask.any() else 0
-            avg_counter_goal_accomplishments_goal_first_agent = final_agent_values[goal_first_mask]['Counter Conflict Goal Accomplishments'].mean() if goal_first_mask.any() else 0
+            avg_counter_goal_accomplishments_consent_first_agent = final_agent_values[consent_first_mask]['Counter Conflict Goal Accomplishments'].mean() if consent_first_mask.any() else 0
             avg_counter_goal_accomplishments_monitoring_agent = final_agent_values[monitoring_mask]['Counter Conflict Goal Accomplishments'].mean() if monitoring_mask.any() else 0
             
             # Calculate consent metrics from available columns
             # Separately for R (Receiver) and G (Giver) and agent type.
-            total_consents_goal_first_r = final_agent_values[goal_first_mask]['Number of Consents as R'].mean() if goal_first_mask.any() else 0
-            total_consents_goal_first_g = final_agent_values[goal_first_mask]['Number of Consents as G'].mean() if goal_first_mask.any() else 0
+            total_consents_consent_first_r = final_agent_values[consent_first_mask]['Number of Consents as R'].mean() if consent_first_mask.any() else 0
+            total_consents_consent_first_g = final_agent_values[consent_first_mask]['Number of Consents as G'].mean() if consent_first_mask.any() else 0
             total_consents_monitoring_r = final_agent_values[monitoring_mask]['Number of Consents as R'].mean() if monitoring_mask.any() else 0
             total_consents_monitoring_g = final_agent_values[monitoring_mask]['Number of Consents as G'].mean() if monitoring_mask.any() else 0
-            violated_consents_goal_first_r = final_agent_values[goal_first_mask]['Number of Consents as R Violated'].mean() if goal_first_mask.any() else 0
-            violated_consents_goal_first_g = final_agent_values[goal_first_mask]['Number of Consents as G Violated'].mean() if goal_first_mask.any() else 0
+            violated_consents_consent_first_r = final_agent_values[consent_first_mask]['Number of Consents as R Violated'].mean() if consent_first_mask.any() else 0
+            violated_consents_consent_first_g = final_agent_values[consent_first_mask]['Number of Consents as G Violated'].mean() if consent_first_mask.any() else 0
             violated_consents_monitoring_r = final_agent_values[monitoring_mask]['Number of Consents as R Violated'].mean() if monitoring_mask.any() else 0
             violated_consents_monitoring_g = final_agent_values[monitoring_mask]['Number of Consents as G Violated'].mean() if monitoring_mask.any() else 0
             
-            fulfilled_consents_goal_first_r = final_agent_values[goal_first_mask]['Number of Consents as R Fulfilled'].mean() if goal_first_mask.any() else 0
-            fulfilled_consents_goal_first_g = final_agent_values[goal_first_mask]['Number of Consents as G Fulfilled'].mean() if goal_first_mask.any() else 0
+            fulfilled_consents_consent_first_r = final_agent_values[consent_first_mask]['Number of Consents as R Fulfilled'].mean() if consent_first_mask.any() else 0
+            fulfilled_consents_consent_first_g = final_agent_values[consent_first_mask]['Number of Consents as G Fulfilled'].mean() if consent_first_mask.any() else 0
             fulfilled_consents_monitoring_r = final_agent_values[monitoring_mask]['Number of Consents as R Fulfilled'].mean() if monitoring_mask.any() else 0
             fulfilled_consents_monitoring_g = final_agent_values[monitoring_mask]['Number of Consents as G Fulfilled'].mean() if monitoring_mask.any() else 0
             
             # Calculate ratios (avoid division by zero)
-            avg_consent_violation_ratio_goal_first_r = (violated_consents_goal_first_r / total_consents_goal_first_r) if total_consents_goal_first_r > 0 else 0
-            avg_consent_violation_ratio_goal_first_g = (violated_consents_goal_first_g / total_consents_goal_first_g) if total_consents_goal_first_g > 0 else 0
+            avg_consent_violation_ratio_consent_first_r = (violated_consents_consent_first_r / total_consents_consent_first_r) if total_consents_consent_first_r > 0 else 0
+            avg_consent_violation_ratio_consent_first_g = (violated_consents_consent_first_g / total_consents_consent_first_g) if total_consents_consent_first_g > 0 else 0
             avg_consent_violation_ratio_monitoring_r = (violated_consents_monitoring_r / total_consents_monitoring_r) if total_consents_monitoring_r > 0 else 0
             avg_consent_violation_ratio_monitoring_g = (violated_consents_monitoring_g / total_consents_monitoring_g) if total_consents_monitoring_g > 0 else 0
             
-            avg_consent_fulfillment_ratio_goal_first_r = (fulfilled_consents_goal_first_r / total_consents_goal_first_r) if total_consents_goal_first_r > 0 else 0
-            avg_consent_fulfillment_ratio_goal_first_g = (fulfilled_consents_goal_first_g / total_consents_goal_first_g) if total_consents_goal_first_g > 0 else 0
+            avg_consent_fulfillment_ratio_consent_first_r = (fulfilled_consents_consent_first_r / total_consents_consent_first_r) if total_consents_consent_first_r > 0 else 0
+            avg_consent_fulfillment_ratio_consent_first_g = (fulfilled_consents_consent_first_g / total_consents_consent_first_g) if total_consents_consent_first_g > 0 else 0
             avg_consent_fulfillment_ratio_monitoring_r = (fulfilled_consents_monitoring_r / total_consents_monitoring_r) if total_consents_monitoring_r > 0 else 0
             avg_consent_fulfillment_ratio_monitoring_g = (fulfilled_consents_monitoring_g / total_consents_monitoring_g) if total_consents_monitoring_g > 0 else 0
         
             
             # Resource conflict counter goal accomplishment ratio
-            avg_resource_conflict_counter_goal_accomplishment_ratio_goal_first_agent = (avg_resource_conflicts_goal_first_agent / avg_counter_goal_accomplishments_goal_first_agent) if avg_counter_goal_accomplishments_goal_first_agent > 0 else 0
+            avg_resource_conflict_counter_goal_accomplishment_ratio_consent_first_agent = (avg_resource_conflicts_consent_first_agent / avg_counter_goal_accomplishments_consent_first_agent) if avg_counter_goal_accomplishments_consent_first_agent > 0 else 0
             avg_resource_conflict_counter_goal_accomplishment_ratio_monitoring_agent = (avg_resource_conflicts_monitoring_agent / avg_counter_goal_accomplishments_monitoring_agent) if avg_counter_goal_accomplishments_monitoring_agent > 0 else 0
             
             # Calculate interaction and timing metrics
-            avg_finished_step_goal_first_agent = final_agent_values[goal_first_mask]['Finished Step'].mean() if goal_first_mask.any() else 0
+            avg_finished_step_consent_first_agent = final_agent_values[consent_first_mask]['Finished Step'].mean() if consent_first_mask.any() else 0
             avg_finished_step_monitoring_agent = final_agent_values[monitoring_mask]['Finished Step'].mean() if monitoring_mask.any() else 0
-            avg_longest_idle_time_goal_first_agent = final_agent_values[goal_first_mask]['Longest Idle Time'].mean() if goal_first_mask.any() else 0
+            avg_longest_idle_time_consent_first_agent = final_agent_values[consent_first_mask]['Longest Idle Time'].mean() if consent_first_mask.any() else 0
             avg_longest_idle_time_monitoring_agent = final_agent_values[monitoring_mask]['Longest Idle Time'].mean() if monitoring_mask.any() else 0
-            avg_distinct_agents_interacted_r_goal_first_agent = final_agent_values[goal_first_mask]['Number of Distinct Agents Interacted as R'].mean() if goal_first_mask.any() else 0
+            avg_distinct_agents_interacted_r_consent_first_agent = final_agent_values[consent_first_mask]['Number of Distinct Agents Interacted as R'].mean() if consent_first_mask.any() else 0
             avg_distinct_agents_interacted_r_monitoring_agent = final_agent_values[monitoring_mask]['Number of Distinct Agents Interacted as R'].mean() if monitoring_mask.any() else 0
-            avg_distinct_agents_interacted_g_goal_first_agent = final_agent_values[goal_first_mask]['Number of Distinct Agents Interacted as G'].mean() if goal_first_mask.any() else 0
+            avg_distinct_agents_interacted_g_consent_first_agent = final_agent_values[consent_first_mask]['Number of Distinct Agents Interacted as G'].mean() if consent_first_mask.any() else 0
             avg_distinct_agents_interacted_g_monitoring_agent = final_agent_values[monitoring_mask]['Number of Distinct Agents Interacted as G'].mean() if monitoring_mask.any() else 0
             
             # Calculate overall average steps for this configuration
@@ -286,7 +286,7 @@ def load_simulation_data(experiment_name=None, experiment_date=None):
                 'agent_config': agent_config,
                 'seed': seed,
                 'config_name': config_name,
-                'goal_first_count': goal_first,
+                'consent_first_count': consent_first,
                 'monitoring_count': monitoring,
                 'fifty_fifty_count': fifty_fifty,
                 'total_agents': total_agents,
@@ -303,50 +303,50 @@ def load_simulation_data(experiment_name=None, experiment_date=None):
                 'resource_conflict_counter_goal_accomplishment_ratio': final_values['Resource Conflict Counter Goal Accomplishment Ratio'],
                 'max_steps': config.get('max_steps', 1000),
                 'avg_steps_overall': avg_steps_overall,
-                'avg_accomplished_goals_goal_first_agent': avg_accomplished_goals_goal_first_agent,
+                'avg_accomplished_goals_consent_first_agent': avg_accomplished_goals_consent_first_agent,
                 'avg_accomplished_goals_monitoring_agent': avg_accomplished_goals_monitoring_agent,
-                'avg_remaining_goals_goal_first_agent': avg_remaining_goals_goal_first_agent,
+                'avg_remaining_goals_consent_first_agent': avg_remaining_goals_consent_first_agent,
                 'avg_remaining_goals_monitoring_agent': avg_remaining_goals_monitoring_agent,
                 # R (Receiver) specific metrics
-                'avg_total_consents_goal_first_r': total_consents_goal_first_r,
+                'avg_total_consents_consent_first_r': total_consents_consent_first_r,
                 'avg_total_consents_monitoring_r': total_consents_monitoring_r,
-                'avg_violated_consents_goal_first_r': violated_consents_goal_first_r,
+                'avg_violated_consents_consent_first_r': violated_consents_consent_first_r,
                 'avg_violated_consents_monitoring_r': violated_consents_monitoring_r,
-                'avg_fulfilled_consents_goal_first_r': fulfilled_consents_goal_first_r,
+                'avg_fulfilled_consents_consent_first_r': fulfilled_consents_consent_first_r,
                 'avg_fulfilled_consents_monitoring_r': fulfilled_consents_monitoring_r,
-                'avg_consent_violation_ratio_goal_first_r': avg_consent_violation_ratio_goal_first_r,
+                'avg_consent_violation_ratio_consent_first_r': avg_consent_violation_ratio_consent_first_r,
                 'avg_consent_violation_ratio_monitoring_r': avg_consent_violation_ratio_monitoring_r,
-                'avg_consent_fulfillment_ratio_goal_first_r': avg_consent_fulfillment_ratio_goal_first_r,
+                'avg_consent_fulfillment_ratio_consent_first_r': avg_consent_fulfillment_ratio_consent_first_r,
                 'avg_consent_fulfillment_ratio_monitoring_r': avg_consent_fulfillment_ratio_monitoring_r,
                 
                 # G (Giver) specific metrics
-                'avg_total_consents_goal_first_g': total_consents_goal_first_g,
+                'avg_total_consents_consent_first_g': total_consents_consent_first_g,
                 'avg_total_consents_monitoring_g': total_consents_monitoring_g,
-                'avg_violated_consents_goal_first_g': violated_consents_goal_first_g,
+                'avg_violated_consents_consent_first_g': violated_consents_consent_first_g,
                 'avg_violated_consents_monitoring_g': violated_consents_monitoring_g,
-                'avg_fulfilled_consents_goal_first_g': fulfilled_consents_goal_first_g,
+                'avg_fulfilled_consents_consent_first_g': fulfilled_consents_consent_first_g,
                 'avg_fulfilled_consents_monitoring_g': fulfilled_consents_monitoring_g,
-                'avg_consent_violation_ratio_goal_first_g': avg_consent_violation_ratio_goal_first_g,
+                'avg_consent_violation_ratio_consent_first_g': avg_consent_violation_ratio_consent_first_g,
                 'avg_consent_violation_ratio_monitoring_g': avg_consent_violation_ratio_monitoring_g,
-                'avg_consent_fulfillment_ratio_goal_first_g': avg_consent_fulfillment_ratio_goal_first_g,
+                'avg_consent_fulfillment_ratio_consent_first_g': avg_consent_fulfillment_ratio_consent_first_g,
                 'avg_consent_fulfillment_ratio_monitoring_g': avg_consent_fulfillment_ratio_monitoring_g,
                 
                 # General agent metrics
-                'avg_resource_conflicts_goal_first_agent': avg_resource_conflicts_goal_first_agent,
+                'avg_resource_conflicts_consent_first_agent': avg_resource_conflicts_consent_first_agent,
                 'avg_resource_conflicts_monitoring_agent': avg_resource_conflicts_monitoring_agent,
-                'avg_counter_goal_accomplishments_goal_first_agent': avg_counter_goal_accomplishments_goal_first_agent,
+                'avg_counter_goal_accomplishments_consent_first_agent': avg_counter_goal_accomplishments_consent_first_agent,
                 'avg_counter_goal_accomplishments_monitoring_agent': avg_counter_goal_accomplishments_monitoring_agent,
-                'avg_resource_conflict_counter_goal_accomplishment_ratio_goal_first_agent': avg_resource_conflict_counter_goal_accomplishment_ratio_goal_first_agent,
+                'avg_resource_conflict_counter_goal_accomplishment_ratio_consent_first_agent': avg_resource_conflict_counter_goal_accomplishment_ratio_consent_first_agent,
                 'avg_resource_conflict_counter_goal_accomplishment_ratio_monitoring_agent': avg_resource_conflict_counter_goal_accomplishment_ratio_monitoring_agent,
                 
                 # Interaction and timing metrics
-                'avg_finished_step_goal_first_agent': avg_finished_step_goal_first_agent,
+                'avg_finished_step_consent_first_agent': avg_finished_step_consent_first_agent,
                 'avg_finished_step_monitoring_agent': avg_finished_step_monitoring_agent,
-                'avg_longest_idle_time_goal_first_agent': avg_longest_idle_time_goal_first_agent,
+                'avg_longest_idle_time_consent_first_agent': avg_longest_idle_time_consent_first_agent,
                 'avg_longest_idle_time_monitoring_agent': avg_longest_idle_time_monitoring_agent,
-                'avg_distinct_agents_interacted_r_goal_first_agent': avg_distinct_agents_interacted_r_goal_first_agent,
+                'avg_distinct_agents_interacted_r_consent_first_agent': avg_distinct_agents_interacted_r_consent_first_agent,
                 'avg_distinct_agents_interacted_r_monitoring_agent': avg_distinct_agents_interacted_r_monitoring_agent,
-                'avg_distinct_agents_interacted_g_goal_first_agent': avg_distinct_agents_interacted_g_goal_first_agent,
+                'avg_distinct_agents_interacted_g_consent_first_agent': avg_distinct_agents_interacted_g_consent_first_agent,
                 'avg_distinct_agents_interacted_g_monitoring_agent': avg_distinct_agents_interacted_g_monitoring_agent,
             })
         else:
@@ -374,7 +374,7 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
     
     # Group by experiment_name and agent_config, then calculate mean and std
     metrics_to_average = [
-        'goal_first_count', 'monitoring_count', 'fifty_fifty_count', 'total_agents',
+        'consent_first_count', 'monitoring_count', 'fifty_fifty_count', 'total_agents',
         'accomplished_goals', 'remaining_goals', 'violated_consents', 'total_consents',
         'resource_conflicts', 'counter_goal_accomplishments',
         'consent_violation_ratio', 'consent_fulfillment_ratio', 
@@ -397,79 +397,79 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
         df_summary[f'{col}_sem'] = sem_df[col]
     df_summary = df_summary.merge(count_df, on=['experiment_name', 'agent_config'])
     
-    # Sort by goal_first_count for consistent plotting
-    df_summary = df_summary.sort_values('goal_first_count')
+    # Sort by consent_first_count for consistent plotting
+    df_summary = df_summary.sort_values('consent_first_count')
     
     print(f"\nAnalyzing Experiment: {df_summary['experiment_name'].iloc[0]}")
     print(f"Number of seeds per configuration: {df_summary['num_seeds'].iloc[0]}")
     print("\nAveraged Simulation Data Summary:")
-    print(df_summary[['agent_config', 'goal_first_count', 'monitoring_count', 'fifty_fifty_count', 
+    print(df_summary[['agent_config', 'consent_first_count', 'monitoring_count', 'fifty_fifty_count', 
               'accomplished_goals', 'remaining_goals', 'violated_consents', 'resource_conflicts']].to_string())
     
     # Create the analysis plots
     fig, axes = plt.subplots(2, 3, figsize=(18, 12))
     #exp_name_display = df_summary['experiment_name'].iloc[0].replace('_', ' ').title()
-    exp_name_display = "Teleological vs Virtue Agents Comparison".title()
+    exp_name_display = "Deontic vs Virtue Agents Comparison".title()
     fig.suptitle(f'{exp_name_display}\n(Averaged across {df_summary["num_seeds"].iloc[0]} seeds)', 
                  fontsize=16, fontweight='bold')
     
     # 1. Accomplished Goals vs Agent Ratio
     ax1 = axes[0, 0]
-    ax1.errorbar(df_summary['goal_first_count'] / 1000, df_summary['accomplished_goals'], 
+    ax1.errorbar((df_summary['consent_first_count'] / 1000), df_summary['accomplished_goals'], 
                  yerr=df_summary['accomplished_goals_sem'], 
                  fmt='o-', linewidth=2, markersize=8, capsize=5,
                  label='Accomplished Goals', color='green')
-    ax1.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
+    ax1.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=11)
     ax1.set_ylabel('Total Accomplished Goals', fontsize=11)
-    ax1.set_title('Accomplished Goals vs Agent Ratio', fontsize=12, fontweight='bold')
+    ax1.set_title('Accomplished Goals vs Deontic/Virtue Agents Ratio', fontsize=12, fontweight='bold')
     ax1.grid(True, alpha=0.3)
     ax1.legend()
     
     # 2. Remaining Goals vs Agent Ratio
     ax2 = axes[0, 1]
-    ax2.errorbar(df_summary['goal_first_count'] / 1000, df_summary['remaining_goals'], 
+    ax2.errorbar((df_summary['consent_first_count'] / 1000), df_summary['remaining_goals'], 
                  yerr=df_summary['remaining_goals_sem'],
                  fmt='o-', linewidth=2, markersize=8, capsize=5,
                  label='Remaining Goals', color='red')
-    ax2.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
+    ax2.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=11)
     ax2.set_ylabel('Total Remaining Goals', fontsize=11)
-    ax2.set_title('Remaining Goals vs Agent Ratio', fontsize=12, fontweight='bold')
+    ax2.set_title('Remaining Goals vs Deontic/Virtue Agents Ratio', fontsize=12, fontweight='bold')
     ax2.grid(True, alpha=0.3)
     ax2.legend()
     
     # 3. Consent Violations vs Agent Ratio
     ax3 = axes[1, 0]
-    ax3.errorbar(df_summary['goal_first_count'] / 1000, df_summary['consent_violation_ratio'], 
+    ax3.errorbar((df_summary['consent_first_count'] / 1000), df_summary['consent_violation_ratio'], 
                  yerr=df_summary['consent_violation_ratio_sem'],
                  fmt='o-', linewidth=2, markersize=8, capsize=5,
                  label='Consent Violation Ratio', color='orange')
-    ax3.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
+    ax3.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=11)
     ax3.set_ylabel('Consent Violation Ratio', fontsize=11)
-    ax3.set_title('Consent Violation Ratio vs Agent Ratio', fontsize=12, fontweight='bold')
+    ax3.set_title('Consent Violation Ratio vs Deontic/Virtue Agents Ratio', fontsize=12, fontweight='bold')
     ax3.grid(True, alpha=0.3)
     ax3.legend()
     
     # 4. Resource Conflicts vs Agent Ratio
     ax4 = axes[1, 1]
-    ax4.errorbar(df_summary['goal_first_count'] / 1000, df_summary['resource_conflicts'], 
+    ax4.errorbar((df_summary['consent_first_count'] / 1000), df_summary['resource_conflicts'], 
                  yerr=df_summary['resource_conflicts_sem'],
                  fmt='o-', linewidth=2, markersize=8, capsize=5,
                  label='Resource Conflicts', color='purple')
-    ax4.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
+    ax4.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=11)
     ax4.set_ylabel('Total Resource Conflicts', fontsize=11)
-    ax4.set_title('Resource Conflicts vs Agent Ratio', fontsize=12, fontweight='bold')
+    ax4.set_title('Resource Conflicts vs Deontic/Virtue Agents Ratio', fontsize=12, fontweight='bold')
     ax4.grid(True, alpha=0.3)
     ax4.legend()
 
     # 5. Counter Goal Accomplishments vs Agent Ratio
     ax5 = axes[0, 2]
-    ax5.errorbar(df_summary['goal_first_count'] / 1000, df_summary['counter_goal_accomplishments'], 
+    ax5.errorbar((df_summary['consent_first_count'] / 1000), df_summary['counter_goal_accomplishments'], 
                  yerr=df_summary['counter_goal_accomplishments_sem'],
                  fmt='o-', linewidth=2, markersize=8, capsize=5,
                  label='Counter Goal Accomplishments', color='brown')
-    ax5.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
+    ax5.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=11)
     ax5.set_ylabel('Total Counter Goal Accomplishments', fontsize=11)
-    ax5.set_title('Counter Goal Accomplishments vs Agent Ratio', fontsize=12, fontweight='bold')
+    ax5.set_title('Counter Goal Accomplishments vs Deontic/Virtue Agents Ratio', fontsize=12, fontweight='bold')
     ax5.grid(True, alpha=0.3)
     ax5.legend()
 
@@ -481,17 +481,17 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
     ax6_goals = ax6.twinx()
     
     # Plot average steps (left y-axis)
-    line1 = ax6_steps.errorbar(df_summary['goal_first_count'] / 1000, df_summary['avg_steps_overall'], 
+    line1 = ax6_steps.errorbar((df_summary['consent_first_count'] / 1000), df_summary['avg_steps_overall'], 
                                yerr=df_summary['avg_steps_overall_sem'],
                                fmt='o-', linewidth=2, markersize=8, capsize=5,
                                label='Average Steps', color='purple')
-    ax6_steps.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
+    ax6_steps.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=11)
     ax6_steps.set_ylabel('Average Steps', fontsize=11, color='purple')
     ax6_steps.tick_params(axis='y', labelcolor='purple')
     ax6_steps.grid(True, alpha=0.3)
     
     # Plot accomplished goals (right y-axis)
-    line2 = ax6_goals.errorbar(df_summary['goal_first_count'] / 1000, df_summary['accomplished_goals'], 
+    line2 = ax6_goals.errorbar((df_summary['consent_first_count'] / 1000), df_summary['accomplished_goals'], 
                                yerr=df_summary['accomplished_goals_sem'],
                                fmt='s-', linewidth=2, markersize=8, capsize=5,
                                label='Accomplished Goals', color='green')
@@ -499,7 +499,7 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
     ax6_goals.tick_params(axis='y', labelcolor='green')
     
     # Set title
-    ax6_steps.set_title('Average Steps & Accomplished Goals vs Agent Ratio', fontsize=12, fontweight='bold')
+    ax6_steps.set_title('Average Steps & Accomplished Goals vs Deontic/Virtue Agents Ratio', fontsize=12, fontweight='bold')
     
     # Create combined legend
     lines = line1[0], line2[0]
@@ -522,7 +522,7 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
     print("DETAILED ANALYSIS SUMMARY (AVERAGED ACROSS SEEDS)")
     print("="*100)
     
-    summary_table = df_summary[['agent_config', 'goal_first_count', 'monitoring_count', 
+    summary_table = df_summary[['agent_config', 'consent_first_count', 'monitoring_count', 
                      'accomplished_goals', 'accomplished_goals_sem',
                      'remaining_goals', 'remaining_goals_sem',
                      'violated_consents', 'violated_consents_sem',
@@ -550,31 +550,31 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
     
     print(f"• Maximum accomplished goals: {df_summary.loc[max_accomplished_idx, 'accomplished_goals']:.1f} "
           f"± {df_summary.loc[max_accomplished_idx, 'accomplished_goals_sem']:.1f} "
-          f"(at {int(df_summary.loc[max_accomplished_idx, 'goal_first_count'])} goal-first agents)")
+          f"(at {int(df_summary.loc[max_accomplished_idx, 'consent_first_count'])} consent-first agents)")
     print(f"• Minimum remaining goals: {df_summary.loc[min_remaining_idx, 'remaining_goals']:.1f} "
           f"± {df_summary.loc[min_remaining_idx, 'remaining_goals_sem']:.1f} "
-          f"(at {int(df_summary.loc[min_remaining_idx, 'goal_first_count'])} goal-first agents)")
+          f"(at {int(df_summary.loc[min_remaining_idx, 'consent_first_count'])} consent-first agents)")
     print(f"• Minimum consent violations: {df_summary.loc[min_violations_idx, 'violated_consents']:.1f} "
           f"± {df_summary.loc[min_violations_idx, 'violated_consents_sem']:.1f} "
-          f"(at {int(df_summary.loc[min_violations_idx, 'goal_first_count'])} goal-first agents)")
+          f"(at {int(df_summary.loc[min_violations_idx, 'consent_first_count'])} consent-first agents)")
     print(f"• Minimum resource conflicts: {df_summary.loc[min_conflicts_idx, 'resource_conflicts']:.1f} "
           f"± {df_summary.loc[min_conflicts_idx, 'resource_conflicts_sem']:.1f} "
-          f"(at {int(df_summary.loc[min_conflicts_idx, 'goal_first_count'])} goal-first agents)")
+          f"(at {int(df_summary.loc[min_conflicts_idx, 'consent_first_count'])} consent-first agents)")
     
     # Calculate correlation coefficients (using averaged data)
-    corr_accomplished = df_summary['goal_first_count'].corr(df_summary['accomplished_goals'])
-    corr_remaining = df_summary['goal_first_count'].corr(df_summary['remaining_goals'])
-    corr_violations = df_summary['goal_first_count'].corr(df_summary['violated_consents'])
-    corr_conflicts = df_summary['goal_first_count'].corr(df_summary['resource_conflicts'])
+    corr_accomplished = df_summary['consent_first_count'].corr(df_summary['accomplished_goals'])
+    corr_remaining = df_summary['consent_first_count'].corr(df_summary['remaining_goals'])
+    corr_violations = df_summary['consent_first_count'].corr(df_summary['violated_consents'])
+    corr_conflicts = df_summary['consent_first_count'].corr(df_summary['resource_conflicts'])
     
-    print(f"\n• Correlation with goal-first agent count:")
+    print(f"\n• Correlation with consent-first agent count:")
     print(f"  - Accomplished goals: {corr_accomplished:.3f}")
     print(f"  - Remaining goals: {corr_remaining:.3f}")
     print(f"  - Consent violations: {corr_violations:.3f}")
     print(f"  - Resource conflicts: {corr_conflicts:.3f}")
 
 def create_agent_level_analysis(experiment_name=None, experiment_date=None):
-    """Create analysis of agent-level metrics comparing ConsentFirstAgent and GoalFirstAgent.
+    """Create analysis of agent-level metrics comparing ConsentFirstAgent and MonitoringAgent.
     
     This function shows how individual agent performance varies across different configurations.
     """
@@ -592,30 +592,30 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Group by experiment_name and agent_config, then calculate mean and std for agent-level metrics
     agent_metrics_to_average = [
-        'avg_accomplished_goals_goal_first_agent', 'avg_accomplished_goals_monitoring_agent',
-        'avg_remaining_goals_goal_first_agent', 'avg_remaining_goals_monitoring_agent',
+        'avg_accomplished_goals_consent_first_agent', 'avg_accomplished_goals_monitoring_agent',
+        'avg_remaining_goals_consent_first_agent', 'avg_remaining_goals_monitoring_agent',
         # R (Receiver) specific metrics
-        'avg_total_consents_goal_first_r', 'avg_total_consents_monitoring_r',
-        'avg_violated_consents_goal_first_r', 'avg_violated_consents_monitoring_r',
-        'avg_fulfilled_consents_goal_first_r', 'avg_fulfilled_consents_monitoring_r',
-        'avg_consent_violation_ratio_goal_first_r', 'avg_consent_violation_ratio_monitoring_r',
-        'avg_consent_fulfillment_ratio_goal_first_r', 'avg_consent_fulfillment_ratio_monitoring_r',
+        'avg_total_consents_consent_first_r', 'avg_total_consents_monitoring_r',
+        'avg_violated_consents_consent_first_r', 'avg_violated_consents_monitoring_r',
+        'avg_fulfilled_consents_consent_first_r', 'avg_fulfilled_consents_monitoring_r',
+        'avg_consent_violation_ratio_consent_first_r', 'avg_consent_violation_ratio_monitoring_r',
+        'avg_consent_fulfillment_ratio_consent_first_r', 'avg_consent_fulfillment_ratio_monitoring_r',
         # G (Giver) specific metrics
-        'avg_total_consents_goal_first_g', 'avg_total_consents_monitoring_g',
-        'avg_violated_consents_goal_first_g', 'avg_violated_consents_monitoring_g',
-        'avg_fulfilled_consents_goal_first_g', 'avg_fulfilled_consents_monitoring_g',
-        'avg_consent_violation_ratio_goal_first_g', 'avg_consent_violation_ratio_monitoring_g',
-        'avg_consent_fulfillment_ratio_goal_first_g', 'avg_consent_fulfillment_ratio_monitoring_g',
+        'avg_total_consents_consent_first_g', 'avg_total_consents_monitoring_g',
+        'avg_violated_consents_consent_first_g', 'avg_violated_consents_monitoring_g',
+        'avg_fulfilled_consents_consent_first_g', 'avg_fulfilled_consents_monitoring_g',
+        'avg_consent_violation_ratio_consent_first_g', 'avg_consent_violation_ratio_monitoring_g',
+        'avg_consent_fulfillment_ratio_consent_first_g', 'avg_consent_fulfillment_ratio_monitoring_g',
         # General agent metrics
-        'avg_resource_conflicts_goal_first_agent', 'avg_resource_conflicts_monitoring_agent',
-        'avg_counter_goal_accomplishments_goal_first_agent', 'avg_counter_goal_accomplishments_monitoring_agent',
-        'avg_resource_conflict_counter_goal_accomplishment_ratio_goal_first_agent',
+        'avg_resource_conflicts_consent_first_agent', 'avg_resource_conflicts_monitoring_agent',
+        'avg_counter_goal_accomplishments_consent_first_agent', 'avg_counter_goal_accomplishments_monitoring_agent',
+        'avg_resource_conflict_counter_goal_accomplishment_ratio_consent_first_agent',
         'avg_resource_conflict_counter_goal_accomplishment_ratio_monitoring_agent',
         # Interaction and timing metrics
-        'avg_finished_step_goal_first_agent', 'avg_finished_step_monitoring_agent',
-        'avg_longest_idle_time_goal_first_agent', 'avg_longest_idle_time_monitoring_agent',
-        'avg_distinct_agents_interacted_r_goal_first_agent', 'avg_distinct_agents_interacted_r_monitoring_agent',
-        'avg_distinct_agents_interacted_g_goal_first_agent', 'avg_distinct_agents_interacted_g_monitoring_agent'
+        'avg_finished_step_consent_first_agent', 'avg_finished_step_monitoring_agent',
+        'avg_longest_idle_time_consent_first_agent', 'avg_longest_idle_time_monitoring_agent',
+        'avg_distinct_agents_interacted_r_consent_first_agent', 'avg_distinct_agents_interacted_r_monitoring_agent',
+        'avg_distinct_agents_interacted_g_consent_first_agent', 'avg_distinct_agents_interacted_g_monitoring_agent'
     ]
     
     # Calculate mean and standard error for each agent-level metric
@@ -634,14 +634,14 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     df_agent_summary = df_agent_summary.merge(count_df, on=['experiment_name', 'agent_config'])
     
     # Add the configuration columns needed for plotting
-    config_columns = ['goal_first_count', 'monitoring_count', 'fifty_fifty_count', 'total_agents']
+    config_columns = ['consent_first_count', 'monitoring_count', 'fifty_fifty_count', 'total_agents']
     for col in config_columns:
         if col in df.columns:
             config_mean = df.groupby(['experiment_name', 'agent_config'])[col].mean().reset_index()
             df_agent_summary = df_agent_summary.merge(config_mean, on=['experiment_name', 'agent_config'])
     
-    # Sort by goal_first_count for consistent plotting
-    df_agent_summary = df_agent_summary.sort_values('goal_first_count')
+    # Sort by consent_first_count for consistent plotting
+    df_agent_summary = df_agent_summary.sort_values('consent_first_count')
     
     print(f"\nAgent-Level Analysis for Experiment: {df_agent_summary['experiment_name'].iloc[0]}")
     print(f"Number of seeds per configuration: {df_agent_summary['num_seeds'].iloc[0]}")
@@ -651,19 +651,19 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     # FIGURE 1: R (Receiver) specific graphs
     fig_r, axes_r = plt.subplots(2, 2, figsize=(15, 12))
     #exp_name_display = df_agent_summary['experiment_name'].iloc[0].replace('_', ' ').title()
-    exp_name_display = "Teleological vs Virtue Agents Comparison".title()
+    exp_name_display = "Deontic vs Virtue Agents Comparison".title()
     fig_r.suptitle(f'{exp_name_display} - Agent-Level Analysis: Receiver (R) Perspective\n(Averaged across {df_agent_summary["num_seeds"].iloc[0]} seeds)', 
                    fontsize=16, fontweight='bold')
     
     # R1. Violated Consents as R per Agent
     ax_r1 = axes_r[0, 0]
-    ax_r1.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_violated_consents_goal_first_r'], 
-                   yerr=df_agent_summary['avg_violated_consents_goal_first_r_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (R)', color='red')
-    ax_r1.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_violated_consents_monitoring_r'], 
+    ax_r1.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_violated_consents_consent_first_r'], 
+                   yerr=df_agent_summary['avg_violated_consents_consent_first_r_sem'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (R)', color='green')
+    ax_r1.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_violated_consents_monitoring_r'], 
                    yerr=df_agent_summary['avg_violated_consents_monitoring_r_sem'], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (R)', color='blue')
-    ax_r1.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_r1.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_r1.set_ylabel('Avg Violated Consents as R per Agent', fontsize=10)
     ax_r1.set_title('Violated Consents as Receiver per Agent Type', fontsize=11, fontweight='bold')
     ax_r1.grid(True, alpha=0.3)
@@ -671,13 +671,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # R2. Total Consents as R per Agent
     ax_r2 = axes_r[0, 1]
-    ax_r2.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_total_consents_goal_first_r'], 
-                   yerr=df_agent_summary['avg_total_consents_goal_first_r_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (R)', color='red')
-    ax_r2.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_total_consents_monitoring_r'], 
+    ax_r2.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_total_consents_consent_first_r'], 
+                   yerr=df_agent_summary['avg_total_consents_consent_first_r_sem'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (R)', color='green')
+    ax_r2.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_total_consents_monitoring_r'], 
                    yerr=df_agent_summary['avg_total_consents_monitoring_r_sem'], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (R)', color='blue')
-    ax_r2.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_r2.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_r2.set_ylabel('Avg Total Consents as R per Agent', fontsize=10)
     ax_r2.set_title('Total Consents as Receiver per Agent Type', fontsize=11, fontweight='bold')
     ax_r2.grid(True, alpha=0.3)
@@ -685,13 +685,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # R3. Consent Violation Ratio as R per Agent
     ax_r3 = axes_r[1, 0]
-    ax_r3.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_violation_ratio_goal_first_r'], 
-                   yerr=df_agent_summary['avg_consent_violation_ratio_goal_first_r_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (R)', color='red')
-    ax_r3.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_violation_ratio_monitoring_r'], 
+    ax_r3.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_violation_ratio_consent_first_r'], 
+                   yerr=df_agent_summary['avg_consent_violation_ratio_consent_first_r_sem'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (R)', color='green')
+    ax_r3.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_violation_ratio_monitoring_r'], 
                    yerr=df_agent_summary['avg_consent_violation_ratio_monitoring_r_sem'], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (R)', color='blue')
-    ax_r3.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_r3.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_r3.set_ylabel('Avg Consent Violation Ratio as R per Agent', fontsize=10)
     ax_r3.set_title('Consent Violation Ratio as Receiver per Agent Type', fontsize=11, fontweight='bold')
     ax_r3.grid(True, alpha=0.3)
@@ -699,13 +699,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # R4. Consent Fulfillment Ratio as R per Agent
     ax_r4 = axes_r[1, 1]
-    ax_r4.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_fulfillment_ratio_goal_first_r'], 
-                   yerr=df_agent_summary['avg_consent_fulfillment_ratio_goal_first_r_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (R)', color='red')
-    ax_r4.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_fulfillment_ratio_monitoring_r'], 
+    ax_r4.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_fulfillment_ratio_consent_first_r'], 
+                   yerr=df_agent_summary['avg_consent_fulfillment_ratio_consent_first_r_sem'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (R)', color='green')
+    ax_r4.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_fulfillment_ratio_monitoring_r'], 
                    yerr=df_agent_summary['avg_consent_fulfillment_ratio_monitoring_r_sem'], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (R)', color='blue')
-    ax_r4.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_r4.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_r4.set_ylabel('Avg Consent Fulfillment Ratio as R per Agent', fontsize=10)
     ax_r4.set_title('Consent Fulfillment Ratio as Receiver per Agent Type', fontsize=11, fontweight='bold')
     ax_r4.grid(True, alpha=0.3)
@@ -727,13 +727,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # G1. Violated Consents as G per Agent
     ax_g1 = axes_g[0, 0]
-    ax_g1.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_violated_consents_goal_first_g'], 
-                   yerr=df_agent_summary['avg_violated_consents_goal_first_g_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (G)', color='red')
-    ax_g1.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_violated_consents_monitoring_g'], 
+    ax_g1.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_violated_consents_consent_first_g'], 
+                   yerr=df_agent_summary['avg_violated_consents_consent_first_g_sem'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (G)', color='green')
+    ax_g1.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_violated_consents_monitoring_g'], 
                    yerr=df_agent_summary['avg_violated_consents_monitoring_g_sem'], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (G)', color='blue')
-    ax_g1.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_g1.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_g1.set_ylabel('Avg Violated Consents as G per Agent', fontsize=10)
     ax_g1.set_title('Violated Consents as Giver per Agent Type', fontsize=11, fontweight='bold')
     ax_g1.grid(True, alpha=0.3)
@@ -741,13 +741,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # G2. Total Consents as G per Agent
     ax_g2 = axes_g[0, 1]
-    ax_g2.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_total_consents_goal_first_g'], 
-                   yerr=df_agent_summary['avg_total_consents_goal_first_g_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (G)', color='red')
-    ax_g2.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_total_consents_monitoring_g'], 
+    ax_g2.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_total_consents_consent_first_g'], 
+                   yerr=df_agent_summary['avg_total_consents_consent_first_g_sem'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (G)', color='green')
+    ax_g2.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_total_consents_monitoring_g'], 
                    yerr=df_agent_summary['avg_total_consents_monitoring_g_sem'], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (G)', color='blue')
-    ax_g2.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_g2.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_g2.set_ylabel('Avg Total Consents as G per Agent', fontsize=10)
     ax_g2.set_title('Total Consents as Giver per Agent Type', fontsize=11, fontweight='bold')
     ax_g2.grid(True, alpha=0.3)
@@ -755,13 +755,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # G3. Consent Violation Ratio as G per Agent
     ax_g3 = axes_g[1, 0]
-    ax_g3.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_violation_ratio_goal_first_g'], 
-                   yerr=df_agent_summary['avg_consent_violation_ratio_goal_first_g_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (G)', color='red')
-    ax_g3.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_violation_ratio_monitoring_g'], 
+    ax_g3.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_violation_ratio_consent_first_g'], 
+                   yerr=df_agent_summary['avg_consent_violation_ratio_consent_first_g_sem'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (G)', color='green')
+    ax_g3.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_violation_ratio_monitoring_g'], 
                    yerr=df_agent_summary['avg_consent_violation_ratio_monitoring_g_sem'], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (G)', color='blue')
-    ax_g3.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_g3.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_g3.set_ylabel('Avg Consent Violation Ratio as G per Agent', fontsize=10)
     ax_g3.set_title('Consent Violation Ratio as Giver per Agent Type', fontsize=11, fontweight='bold')
     ax_g3.grid(True, alpha=0.3)
@@ -769,13 +769,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # G4. Consent Fulfillment Ratio as G per Agent
     ax_g4 = axes_g[1, 1]
-    ax_g4.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_fulfillment_ratio_goal_first_g'], 
-                   yerr=df_agent_summary['avg_consent_fulfillment_ratio_goal_first_g_sem'], 
-                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (G)', color='red')
-    ax_g4.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_consent_fulfillment_ratio_monitoring_g'], 
+    ax_g4.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_fulfillment_ratio_consent_first_g'], 
+                   yerr=df_agent_summary['avg_consent_fulfillment_ratio_consent_first_g_sem'], 
+                   fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (G)', color='green')
+    ax_g4.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_fulfillment_ratio_monitoring_g'], 
                    yerr=df_agent_summary['avg_consent_fulfillment_ratio_monitoring_g_sem'], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (G)', color='blue')
-    ax_g4.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_g4.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_g4.set_ylabel('Avg Consent Fulfillment Ratio as G per Agent', fontsize=10)
     ax_g4.set_title('Consent Fulfillment Ratio as Giver per Agent Type', fontsize=11, fontweight='bold')
     ax_g4.grid(True, alpha=0.3)
@@ -796,13 +796,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Gen1. Accomplished Goals per Agent
     ax_gen1 = axes_gen[0, 0]
-    ax_gen1.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_accomplished_goals_goal_first_agent'], 
-                     yerr=df_agent_summary['avg_accomplished_goals_goal_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent', color='red')
-    ax_gen1.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_accomplished_goals_monitoring_agent'], 
+    ax_gen1.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_accomplished_goals_consent_first_agent'], 
+                     yerr=df_agent_summary['avg_accomplished_goals_consent_first_agent_sem'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
+    ax_gen1.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_accomplished_goals_monitoring_agent'], 
                      yerr=df_agent_summary['avg_accomplished_goals_monitoring_agent_sem'], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent', color='blue')
-    ax_gen1.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_gen1.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_gen1.set_ylabel('Avg Accomplished Goals per Agent', fontsize=10)
     ax_gen1.set_title('Accomplished Goals per Agent Type', fontsize=11, fontweight='bold')
     ax_gen1.grid(True, alpha=0.3)
@@ -810,13 +810,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Gen2. Remaining Goals per Agent
     ax_gen2 = axes_gen[0, 1]
-    ax_gen2.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_remaining_goals_goal_first_agent'], 
-                     yerr=df_agent_summary['avg_remaining_goals_goal_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent', color='red')
-    ax_gen2.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_remaining_goals_monitoring_agent'], 
+    ax_gen2.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_remaining_goals_consent_first_agent'], 
+                     yerr=df_agent_summary['avg_remaining_goals_consent_first_agent_sem'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
+    ax_gen2.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_remaining_goals_monitoring_agent'], 
                      yerr=df_agent_summary['avg_remaining_goals_monitoring_agent_sem'], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent', color='blue')
-    ax_gen2.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_gen2.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_gen2.set_ylabel('Avg Remaining Goals per Agent', fontsize=10)
     ax_gen2.set_title('Remaining Goals per Agent Type', fontsize=11, fontweight='bold')
     ax_gen2.grid(True, alpha=0.3)
@@ -824,13 +824,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Gen3. Resource Conflicts per Agent
     ax_gen3 = axes_gen[1, 0]
-    ax_gen3.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_resource_conflicts_goal_first_agent'], 
-                     yerr=df_agent_summary['avg_resource_conflicts_goal_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent', color='red')
-    ax_gen3.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_resource_conflicts_monitoring_agent'], 
+    ax_gen3.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_resource_conflicts_consent_first_agent'], 
+                     yerr=df_agent_summary['avg_resource_conflicts_consent_first_agent_sem'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
+    ax_gen3.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_resource_conflicts_monitoring_agent'], 
                      yerr=df_agent_summary['avg_resource_conflicts_monitoring_agent_sem'], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent', color='blue')
-    ax_gen3.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_gen3.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_gen3.set_ylabel('Avg Resource Conflicts per Agent', fontsize=10)
     ax_gen3.set_title('Resource Conflicts per Agent Type', fontsize=11, fontweight='bold')
     ax_gen3.grid(True, alpha=0.3)
@@ -838,13 +838,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Gen4. Counter Goal Accomplishments per Agent
     ax_gen4 = axes_gen[1, 1]
-    ax_gen4.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_counter_goal_accomplishments_goal_first_agent'], 
-                     yerr=df_agent_summary['avg_counter_goal_accomplishments_goal_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent', color='red')
-    ax_gen4.errorbar(df_agent_summary['goal_first_count'] / 1000, df_agent_summary['avg_counter_goal_accomplishments_monitoring_agent'], 
+    ax_gen4.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_counter_goal_accomplishments_consent_first_agent'], 
+                     yerr=df_agent_summary['avg_counter_goal_accomplishments_consent_first_agent_sem'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
+    ax_gen4.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_counter_goal_accomplishments_monitoring_agent'], 
                      yerr=df_agent_summary['avg_counter_goal_accomplishments_monitoring_agent_sem'], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent', color='blue')
-    ax_gen4.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_gen4.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_gen4.set_ylabel('Avg Counter Goal Accomplishments per Agent', fontsize=10)
     ax_gen4.set_title('Counter Goal Accomplishments per Agent Type', fontsize=11, fontweight='bold')
     ax_gen4.grid(True, alpha=0.3)
@@ -865,10 +865,10 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Calculate interaction and timing metrics
     interaction_metrics = [
-        'avg_finished_step_goal_first_agent', 'avg_finished_step_monitoring_agent',
-        'avg_longest_idle_time_goal_first_agent', 'avg_longest_idle_time_monitoring_agent',
-        'avg_distinct_agents_interacted_r_goal_first_agent', 'avg_distinct_agents_interacted_r_monitoring_agent',
-        'avg_distinct_agents_interacted_g_goal_first_agent', 'avg_distinct_agents_interacted_g_monitoring_agent'
+        'avg_finished_step_consent_first_agent', 'avg_finished_step_monitoring_agent',
+        'avg_longest_idle_time_consent_first_agent', 'avg_longest_idle_time_monitoring_agent',
+        'avg_distinct_agents_interacted_r_consent_first_agent', 'avg_distinct_agents_interacted_r_monitoring_agent',
+        'avg_distinct_agents_interacted_g_consent_first_agent', 'avg_distinct_agents_interacted_g_monitoring_agent'
     ]
     
     # Add these metrics to the agent_metrics_to_average list if not already present
@@ -889,24 +889,24 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
         df_interaction_summary[f'{col}_sem'] = sem_df[col]
     
     # Add the configuration columns needed for plotting
-    config_columns = ['consent_first_count', 'goal_first_count', 'fifty_fifty_count', 'total_agents']
+    config_columns = ['consent_first_count', 'monitoring_count', 'fifty_fifty_count', 'total_agents']
     for col in config_columns:
         if col in df.columns:
             config_mean = df.groupby(['experiment_name', 'agent_config'])[col].mean().reset_index()
             df_interaction_summary = df_interaction_summary.merge(config_mean, on=['experiment_name', 'agent_config'])
     
-    # Sort by goal_first_count for consistent plotting
-    df_interaction_summary = df_interaction_summary.sort_values('goal_first_count')
+    # Sort by consent_first_count for consistent plotting
+    df_interaction_summary = df_interaction_summary.sort_values('consent_first_count')
     
     # Int1. Average Finished Step per Agent
     ax_int1 = axes_interaction[0, 0]
-    ax_int1.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_finished_step_goal_first_agent'], 
-                     yerr=df_interaction_summary['avg_finished_step_goal_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent', color='red')
-    ax_int1.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_finished_step_monitoring_agent'], 
+    ax_int1.errorbar((df_interaction_summary['consent_first_count'] / 1000), df_interaction_summary['avg_finished_step_consent_first_agent'], 
+                     yerr=df_interaction_summary['avg_finished_step_consent_first_agent_sem'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
+    ax_int1.errorbar((df_interaction_summary['consent_first_count'] / 1000), df_interaction_summary['avg_finished_step_monitoring_agent'], 
                      yerr=df_interaction_summary['avg_finished_step_monitoring_agent_sem'], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent', color='blue')
-    ax_int1.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_int1.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_int1.set_ylabel('Avg Finished Step per Agent', fontsize=10)
     ax_int1.set_title('Average Finished Step per Agent Type', fontsize=11, fontweight='bold')
     ax_int1.grid(True, alpha=0.3)
@@ -914,13 +914,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Int2. Average Longest Idle Time per Agent
     ax_int2 = axes_interaction[0, 1]
-    ax_int2.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_longest_idle_time_goal_first_agent'], 
-                     yerr=df_interaction_summary['avg_longest_idle_time_goal_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent', color='red')
-    ax_int2.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_longest_idle_time_monitoring_agent'], 
+    ax_int2.errorbar((df_interaction_summary['consent_first_count'] / 1000), df_interaction_summary['avg_longest_idle_time_consent_first_agent'], 
+                     yerr=df_interaction_summary['avg_longest_idle_time_consent_first_agent_sem'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
+    ax_int2.errorbar((df_interaction_summary['consent_first_count'] / 1000), df_interaction_summary['avg_longest_idle_time_monitoring_agent'], 
                      yerr=df_interaction_summary['avg_longest_idle_time_monitoring_agent_sem'], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent', color='blue')
-    ax_int2.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_int2.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_int2.set_ylabel('Avg Longest Idle Time per Agent', fontsize=10)
     ax_int2.set_title('Average Longest Idle Time per Agent Type', fontsize=11, fontweight='bold')
     ax_int2.grid(True, alpha=0.3)
@@ -928,13 +928,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Int3. Average Distinct Agents Interacted as R per Agent
     ax_int3 = axes_interaction[1, 0]
-    ax_int3.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_distinct_agents_interacted_r_goal_first_agent'], 
-                     yerr=df_interaction_summary['avg_distinct_agents_interacted_r_goal_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (R)', color='red')
-    ax_int3.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_distinct_agents_interacted_r_monitoring_agent'], 
+    ax_int3.errorbar((df_interaction_summary['consent_first_count'] / 1000) , df_interaction_summary['avg_distinct_agents_interacted_r_consent_first_agent'], 
+                     yerr=df_interaction_summary['avg_distinct_agents_interacted_r_consent_first_agent_sem'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (R)', color='green')
+    ax_int3.errorbar((df_interaction_summary['consent_first_count'] / 1000), df_interaction_summary['avg_distinct_agents_interacted_r_monitoring_agent'], 
                      yerr=df_interaction_summary['avg_distinct_agents_interacted_r_monitoring_agent_sem'], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (R)', color='blue')
-    ax_int3.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_int3.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_int3.set_ylabel('Avg Distinct Agents Interacted as R per Agent', fontsize=10)
     ax_int3.set_title('Average Distinct Agents Interacted as Receiver per Agent Type', fontsize=11, fontweight='bold')
     ax_int3.grid(True, alpha=0.3)
@@ -942,13 +942,13 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Int4. Average Distinct Agents Interacted as G per Agent
     ax_int4 = axes_interaction[1, 1]
-    ax_int4.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_distinct_agents_interacted_g_goal_first_agent'], 
-                     yerr=df_interaction_summary['avg_distinct_agents_interacted_g_goal_first_agent_sem'], 
-                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent (G)', color='red')
-    ax_int4.errorbar(df_interaction_summary['goal_first_count'] / 1000, df_interaction_summary['avg_distinct_agents_interacted_g_monitoring_agent'], 
+    ax_int4.errorbar((df_interaction_summary['consent_first_count'] / 1000), df_interaction_summary['avg_distinct_agents_interacted_g_consent_first_agent'], 
+                     yerr=df_interaction_summary['avg_distinct_agents_interacted_g_consent_first_agent_sem'], 
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (G)', color='green')
+    ax_int4.errorbar((df_interaction_summary['consent_first_count'] / 1000), df_interaction_summary['avg_distinct_agents_interacted_g_monitoring_agent'], 
                      yerr=df_interaction_summary['avg_distinct_agents_interacted_g_monitoring_agent_sem'], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (G)', color='blue')
-    ax_int4.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_int4.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_int4.set_ylabel('Avg Distinct Agents Interacted as G per Agent', fontsize=10)
     ax_int4.set_title('Average Distinct Agents Interacted as Giver per Agent Type', fontsize=11, fontweight='bold')
     ax_int4.grid(True, alpha=0.3)
@@ -971,17 +971,17 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     comparison_data = []
     for idx, row in df_agent_summary.iterrows():
         comparison_data.append({
-            'Goal_First_Count': int(row['goal_first_count']),
+            'Consent_First_Count': int(row['consent_first_count']),
             'Monitoring_Count': int(row['monitoring_count']),
-            'GF_Accomplished_Goals': f"{row['avg_accomplished_goals_goal_first_agent']:.2f} ± {row['avg_accomplished_goals_goal_first_agent_sem']:.2f}",
+            'CF_Accomplished_Goals': f"{row['avg_accomplished_goals_consent_first_agent']:.2f} ± {row['avg_accomplished_goals_consent_first_agent_sem']:.2f}",
             'M_Accomplished_Goals': f"{row['avg_accomplished_goals_monitoring_agent']:.2f} ± {row['avg_accomplished_goals_monitoring_agent_sem']:.2f}",
-            'GF_Violated_Consents_R': f"{row['avg_violated_consents_goal_first_r']:.2f} ± {row['avg_violated_consents_goal_first_r_sem']:.2f}",
+            'CF_Violated_Consents_R': f"{row['avg_violated_consents_consent_first_r']:.2f} ± {row['avg_violated_consents_consent_first_r_sem']:.2f}",
             'M_Violated_Consents_R': f"{row['avg_violated_consents_monitoring_r']:.2f} ± {row['avg_violated_consents_monitoring_r_sem']:.2f}",
-            'GF_Violated_Consents_G': f"{row['avg_violated_consents_goal_first_g']:.2f} ± {row['avg_violated_consents_goal_first_g_sem']:.2f}",
+            'CF_Violated_Consents_G': f"{row['avg_violated_consents_consent_first_g']:.2f} ± {row['avg_violated_consents_consent_first_g_sem']:.2f}",
             'M_Violated_Consents_G': f"{row['avg_violated_consents_monitoring_g']:.2f} ± {row['avg_violated_consents_monitoring_g_sem']:.2f}",
-            'GF_Consent_Violation_Ratio_R': f"{row['avg_consent_violation_ratio_goal_first_r']:.3f} ± {row['avg_consent_violation_ratio_goal_first_r_sem']:.3f}",
+            'CF_Consent_Violation_Ratio_R': f"{row['avg_consent_violation_ratio_consent_first_r']:.3f} ± {row['avg_consent_violation_ratio_consent_first_r_sem']:.3f}",
             'M_Consent_Violation_Ratio_R': f"{row['avg_consent_violation_ratio_monitoring_r']:.3f} ± {row['avg_consent_violation_ratio_monitoring_r_sem']:.3f}",
-            'GF_Resource_Conflicts': f"{row['avg_resource_conflicts_goal_first_agent']:.2f} ± {row['avg_resource_conflicts_goal_first_agent_sem']:.2f}",
+            'CF_Resource_Conflicts': f"{row['avg_resource_conflicts_consent_first_agent']:.2f} ± {row['avg_resource_conflicts_consent_first_agent_sem']:.2f}",
             'M_Resource_Conflicts': f"{row['avg_resource_conflicts_monitoring_agent']:.2f} ± {row['avg_resource_conflicts_monitoring_agent_sem']:.2f}"
         })
     
@@ -994,31 +994,31 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     print("="*120)
     
     # Find configurations with best performance for each agent type
-    best_gf_accomplished_idx = df_agent_summary['avg_accomplished_goals_goal_first_agent'].idxmax()
+    best_cf_accomplished_idx = df_agent_summary['avg_accomplished_goals_consent_first_agent'].idxmax()
     best_m_accomplished_idx = df_agent_summary['avg_accomplished_goals_monitoring_agent'].idxmax()
-    min_gf_violations_r_idx = df_agent_summary['avg_violated_consents_goal_first_r'].idxmin()
+    min_cf_violations_r_idx = df_agent_summary['avg_violated_consents_consent_first_r'].idxmin()
     min_m_violations_r_idx = df_agent_summary['avg_violated_consents_monitoring_r'].idxmin()
-    min_gf_violations_g_idx = df_agent_summary['avg_violated_consents_goal_first_g'].idxmin()
+    min_cf_violations_g_idx = df_agent_summary['avg_violated_consents_consent_first_g'].idxmin()
     min_m_violations_g_idx = df_agent_summary['avg_violated_consents_monitoring_g'].idxmin()
     
-    print(f"• Best Goal-First Agent performance: {df_agent_summary.loc[best_gf_accomplished_idx, 'avg_accomplished_goals_goal_first_agent']:.2f} "
-          f"± {df_agent_summary.loc[best_gf_accomplished_idx, 'avg_accomplished_goals_goal_first_agent_sem']:.2f} goals "
-          f"(at {int(df_agent_summary.loc[best_gf_accomplished_idx, 'goal_first_count'])} goal-first agents)")
+    print(f"• Best Consent-First Agent performance: {df_agent_summary.loc[best_cf_accomplished_idx, 'avg_accomplished_goals_consent_first_agent']:.2f} "
+          f"± {df_agent_summary.loc[best_cf_accomplished_idx, 'avg_accomplished_goals_consent_first_agent_sem']:.2f} goals "
+          f"(at {int(df_agent_summary.loc[best_cf_accomplished_idx, 'consent_first_count'])} consent-first agents)")
     print(f"• Best Monitoring Agent performance: {df_agent_summary.loc[best_m_accomplished_idx, 'avg_accomplished_goals_monitoring_agent']:.2f} "
           f"± {df_agent_summary.loc[best_m_accomplished_idx, 'avg_accomplished_goals_monitoring_agent_sem']:.2f} goals "
-          f"(at {int(df_agent_summary.loc[best_m_accomplished_idx, 'goal_first_count'])} goal-first agents)")
-    print(f"• Lowest Goal-First Agent violations as R: {df_agent_summary.loc[min_gf_violations_r_idx, 'avg_violated_consents_goal_first_r']:.2f} "
-          f"± {df_agent_summary.loc[min_gf_violations_r_idx, 'avg_violated_consents_goal_first_r_sem']:.2f} "
-          f"(at {int(df_agent_summary.loc[min_gf_violations_r_idx, 'goal_first_count'])} goal-first agents)")
+          f"(at {int(df_agent_summary.loc[best_m_accomplished_idx, 'consent_first_count'])} consent-first agents)")
+    print(f"• Lowest Consent-First Agent violations as R: {df_agent_summary.loc[min_cf_violations_r_idx, 'avg_violated_consents_consent_first_r']:.2f} "
+          f"± {df_agent_summary.loc[min_cf_violations_r_idx, 'avg_violated_consents_consent_first_r_sem']:.2f} "
+          f"(at {int(df_agent_summary.loc[min_cf_violations_r_idx, 'consent_first_count'])} consent-first agents)")
     print(f"• Lowest Monitoring Agent violations as R: {df_agent_summary.loc[min_m_violations_r_idx, 'avg_violated_consents_monitoring_r']:.2f} "
           f"± {df_agent_summary.loc[min_m_violations_r_idx, 'avg_violated_consents_monitoring_r_sem']:.2f} "
-          f"(at {int(df_agent_summary.loc[min_m_violations_r_idx, 'goal_first_count'])} goal-first agents)")
-    print(f"• Lowest Goal-First Agent violations as G: {df_agent_summary.loc[min_gf_violations_g_idx, 'avg_violated_consents_goal_first_g']:.2f} "
-          f"± {df_agent_summary.loc[min_gf_violations_g_idx, 'avg_violated_consents_goal_first_g_sem']:.2f} "
-          f"(at {int(df_agent_summary.loc[min_gf_violations_g_idx, 'goal_first_count'])} goal-first agents)")
+          f"(at {int(df_agent_summary.loc[min_m_violations_r_idx, 'consent_first_count'])} consent-first agents)")
+    print(f"• Lowest Consent-First Agent violations as G: {df_agent_summary.loc[min_cf_violations_g_idx, 'avg_violated_consents_consent_first_g']:.2f} "
+          f"± {df_agent_summary.loc[min_cf_violations_g_idx, 'avg_violated_consents_consent_first_g_sem']:.2f} "
+          f"(at {int(df_agent_summary.loc[min_cf_violations_g_idx, 'consent_first_count'])} consent-first agents)")
     print(f"• Lowest Monitoring Agent violations as G: {df_agent_summary.loc[min_m_violations_g_idx, 'avg_violated_consents_monitoring_g']:.2f} "
           f"± {df_agent_summary.loc[min_m_violations_g_idx, 'avg_violated_consents_monitoring_g_sem']:.2f} "
-          f"(at {int(df_agent_summary.loc[min_m_violations_g_idx, 'goal_first_count'])} goal-first agents)")
+          f"(at {int(df_agent_summary.loc[min_m_violations_g_idx, 'consent_first_count'])} consent-first agents)")
 
 if __name__ == "__main__":
     create_agent_ratio_analysis(experiment_name=experiment_name, experiment_date=experiment_date)
