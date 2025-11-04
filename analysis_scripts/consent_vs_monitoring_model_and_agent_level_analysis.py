@@ -642,6 +642,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Sort by consent_first_count for consistent plotting
     df_agent_summary = df_agent_summary.sort_values('consent_first_count')
+
+    # Per-series masks: keep other agent's points when one agent count is zero
+    x_all = (df_agent_summary['consent_first_count'] / 1000)
+    cf_mask = df_agent_summary['consent_first_count'] > 0
+    m_mask = df_agent_summary['monitoring_count'] > 0
     
     print(f"\nAgent-Level Analysis for Experiment: {df_agent_summary['experiment_name'].iloc[0]}")
     print(f"Number of seeds per configuration: {df_agent_summary['num_seeds'].iloc[0]}")
@@ -657,11 +662,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # R1. Violated Consents as R per Agent
     ax_r1 = axes_r[0, 0]
-    ax_r1.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_violated_consents_consent_first_r'], 
-                   yerr=df_agent_summary['avg_violated_consents_consent_first_r_sem'], 
+    ax_r1.errorbar(x_all[cf_mask], df_agent_summary['avg_violated_consents_consent_first_r'][cf_mask], 
+                   yerr=df_agent_summary['avg_violated_consents_consent_first_r_sem'][cf_mask], 
                    fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (R)', color='green')
-    ax_r1.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_violated_consents_monitoring_r'], 
-                   yerr=df_agent_summary['avg_violated_consents_monitoring_r_sem'], 
+    ax_r1.errorbar(x_all[m_mask], df_agent_summary['avg_violated_consents_monitoring_r'][m_mask], 
+                   yerr=df_agent_summary['avg_violated_consents_monitoring_r_sem'][m_mask], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (R)', color='blue')
     ax_r1.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_r1.set_ylabel('Avg Violated Consents as R per Agent', fontsize=10)
@@ -671,11 +676,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # R2. Total Consents as R per Agent
     ax_r2 = axes_r[0, 1]
-    ax_r2.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_total_consents_consent_first_r'], 
-                   yerr=df_agent_summary['avg_total_consents_consent_first_r_sem'], 
+    ax_r2.errorbar(x_all[cf_mask], df_agent_summary['avg_total_consents_consent_first_r'][cf_mask], 
+                   yerr=df_agent_summary['avg_total_consents_consent_first_r_sem'][cf_mask], 
                    fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (R)', color='green')
-    ax_r2.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_total_consents_monitoring_r'], 
-                   yerr=df_agent_summary['avg_total_consents_monitoring_r_sem'], 
+    ax_r2.errorbar(x_all[m_mask], df_agent_summary['avg_total_consents_monitoring_r'][m_mask], 
+                   yerr=df_agent_summary['avg_total_consents_monitoring_r_sem'][m_mask], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (R)', color='blue')
     ax_r2.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_r2.set_ylabel('Avg Total Consents as R per Agent', fontsize=10)
@@ -685,11 +690,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # R3. Consent Violation Ratio as R per Agent
     ax_r3 = axes_r[1, 0]
-    ax_r3.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_violation_ratio_consent_first_r'], 
-                   yerr=df_agent_summary['avg_consent_violation_ratio_consent_first_r_sem'], 
+    ax_r3.errorbar(x_all[cf_mask], df_agent_summary['avg_consent_violation_ratio_consent_first_r'][cf_mask], 
+                   yerr=df_agent_summary['avg_consent_violation_ratio_consent_first_r_sem'][cf_mask], 
                    fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (R)', color='green')
-    ax_r3.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_violation_ratio_monitoring_r'], 
-                   yerr=df_agent_summary['avg_consent_violation_ratio_monitoring_r_sem'], 
+    ax_r3.errorbar(x_all[m_mask], df_agent_summary['avg_consent_violation_ratio_monitoring_r'][m_mask], 
+                   yerr=df_agent_summary['avg_consent_violation_ratio_monitoring_r_sem'][m_mask], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (R)', color='blue')
     ax_r3.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_r3.set_ylabel('Avg Consent Violation Ratio as R per Agent', fontsize=10)
@@ -699,11 +704,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # R4. Consent Fulfillment Ratio as R per Agent
     ax_r4 = axes_r[1, 1]
-    ax_r4.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_fulfillment_ratio_consent_first_r'], 
-                   yerr=df_agent_summary['avg_consent_fulfillment_ratio_consent_first_r_sem'], 
+    ax_r4.errorbar(x_all[cf_mask], df_agent_summary['avg_consent_fulfillment_ratio_consent_first_r'][cf_mask], 
+                   yerr=df_agent_summary['avg_consent_fulfillment_ratio_consent_first_r_sem'][cf_mask], 
                    fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (R)', color='green')
-    ax_r4.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_fulfillment_ratio_monitoring_r'], 
-                   yerr=df_agent_summary['avg_consent_fulfillment_ratio_monitoring_r_sem'], 
+    ax_r4.errorbar(x_all[m_mask], df_agent_summary['avg_consent_fulfillment_ratio_monitoring_r'][m_mask], 
+                   yerr=df_agent_summary['avg_consent_fulfillment_ratio_monitoring_r_sem'][m_mask], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (R)', color='blue')
     ax_r4.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_r4.set_ylabel('Avg Consent Fulfillment Ratio as R per Agent', fontsize=10)
@@ -727,11 +732,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # G1. Violated Consents as G per Agent
     ax_g1 = axes_g[0, 0]
-    ax_g1.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_violated_consents_consent_first_g'], 
-                   yerr=df_agent_summary['avg_violated_consents_consent_first_g_sem'], 
+    ax_g1.errorbar(x_all[cf_mask], df_agent_summary['avg_violated_consents_consent_first_g'][cf_mask], 
+                   yerr=df_agent_summary['avg_violated_consents_consent_first_g_sem'][cf_mask], 
                    fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (G)', color='green')
-    ax_g1.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_violated_consents_monitoring_g'], 
-                   yerr=df_agent_summary['avg_violated_consents_monitoring_g_sem'], 
+    ax_g1.errorbar(x_all[m_mask], df_agent_summary['avg_violated_consents_monitoring_g'][m_mask], 
+                   yerr=df_agent_summary['avg_violated_consents_monitoring_g_sem'][m_mask], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (G)', color='blue')
     ax_g1.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_g1.set_ylabel('Avg Violated Consents as G per Agent', fontsize=10)
@@ -741,11 +746,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # G2. Total Consents as G per Agent
     ax_g2 = axes_g[0, 1]
-    ax_g2.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_total_consents_consent_first_g'], 
-                   yerr=df_agent_summary['avg_total_consents_consent_first_g_sem'], 
+    ax_g2.errorbar(x_all[cf_mask], df_agent_summary['avg_total_consents_consent_first_g'][cf_mask], 
+                   yerr=df_agent_summary['avg_total_consents_consent_first_g_sem'][cf_mask], 
                    fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (G)', color='green')
-    ax_g2.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_total_consents_monitoring_g'], 
-                   yerr=df_agent_summary['avg_total_consents_monitoring_g_sem'], 
+    ax_g2.errorbar(x_all[m_mask], df_agent_summary['avg_total_consents_monitoring_g'][m_mask], 
+                   yerr=df_agent_summary['avg_total_consents_monitoring_g_sem'][m_mask], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (G)', color='blue')
     ax_g2.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_g2.set_ylabel('Avg Total Consents as G per Agent', fontsize=10)
@@ -755,11 +760,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # G3. Consent Violation Ratio as G per Agent
     ax_g3 = axes_g[1, 0]
-    ax_g3.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_violation_ratio_consent_first_g'], 
-                   yerr=df_agent_summary['avg_consent_violation_ratio_consent_first_g_sem'], 
+    ax_g3.errorbar(x_all[cf_mask], df_agent_summary['avg_consent_violation_ratio_consent_first_g'][cf_mask], 
+                   yerr=df_agent_summary['avg_consent_violation_ratio_consent_first_g_sem'][cf_mask], 
                    fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (G)', color='green')
-    ax_g3.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_violation_ratio_monitoring_g'], 
-                   yerr=df_agent_summary['avg_consent_violation_ratio_monitoring_g_sem'], 
+    ax_g3.errorbar(x_all[m_mask], df_agent_summary['avg_consent_violation_ratio_monitoring_g'][m_mask], 
+                   yerr=df_agent_summary['avg_consent_violation_ratio_monitoring_g_sem'][m_mask], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (G)', color='blue')
     ax_g3.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_g3.set_ylabel('Avg Consent Violation Ratio as G per Agent', fontsize=10)
@@ -769,11 +774,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # G4. Consent Fulfillment Ratio as G per Agent
     ax_g4 = axes_g[1, 1]
-    ax_g4.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_fulfillment_ratio_consent_first_g'], 
-                   yerr=df_agent_summary['avg_consent_fulfillment_ratio_consent_first_g_sem'], 
+    ax_g4.errorbar(x_all[cf_mask], df_agent_summary['avg_consent_fulfillment_ratio_consent_first_g'][cf_mask], 
+                   yerr=df_agent_summary['avg_consent_fulfillment_ratio_consent_first_g_sem'][cf_mask], 
                    fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (G)', color='green')
-    ax_g4.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_consent_fulfillment_ratio_monitoring_g'], 
-                   yerr=df_agent_summary['avg_consent_fulfillment_ratio_monitoring_g_sem'], 
+    ax_g4.errorbar(x_all[m_mask], df_agent_summary['avg_consent_fulfillment_ratio_monitoring_g'][m_mask], 
+                   yerr=df_agent_summary['avg_consent_fulfillment_ratio_monitoring_g_sem'][m_mask], 
                    fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (G)', color='blue')
     ax_g4.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_g4.set_ylabel('Avg Consent Fulfillment Ratio as G per Agent', fontsize=10)
@@ -796,11 +801,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Gen1. Accomplished Goals per Agent
     ax_gen1 = axes_gen[0, 0]
-    ax_gen1.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_accomplished_goals_consent_first_agent'], 
-                     yerr=df_agent_summary['avg_accomplished_goals_consent_first_agent_sem'], 
+    ax_gen1.errorbar(x_all[cf_mask], df_agent_summary['avg_accomplished_goals_consent_first_agent'][cf_mask], 
+                     yerr=df_agent_summary['avg_accomplished_goals_consent_first_agent_sem'][cf_mask], 
                      fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
-    ax_gen1.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_accomplished_goals_monitoring_agent'], 
-                     yerr=df_agent_summary['avg_accomplished_goals_monitoring_agent_sem'], 
+    ax_gen1.errorbar(x_all[m_mask], df_agent_summary['avg_accomplished_goals_monitoring_agent'][m_mask], 
+                     yerr=df_agent_summary['avg_accomplished_goals_monitoring_agent_sem'][m_mask], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent', color='blue')
     ax_gen1.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_gen1.set_ylabel('Avg Accomplished Goals per Agent', fontsize=10)
@@ -810,11 +815,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Gen2. Remaining Goals per Agent
     ax_gen2 = axes_gen[0, 1]
-    ax_gen2.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_remaining_goals_consent_first_agent'], 
-                     yerr=df_agent_summary['avg_remaining_goals_consent_first_agent_sem'], 
+    ax_gen2.errorbar(x_all[cf_mask], df_agent_summary['avg_remaining_goals_consent_first_agent'][cf_mask], 
+                     yerr=df_agent_summary['avg_remaining_goals_consent_first_agent_sem'][cf_mask], 
                      fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
-    ax_gen2.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_remaining_goals_monitoring_agent'], 
-                     yerr=df_agent_summary['avg_remaining_goals_monitoring_agent_sem'], 
+    ax_gen2.errorbar(x_all[m_mask], df_agent_summary['avg_remaining_goals_monitoring_agent'][m_mask], 
+                     yerr=df_agent_summary['avg_remaining_goals_monitoring_agent_sem'][m_mask], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent', color='blue')
     ax_gen2.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_gen2.set_ylabel('Avg Remaining Goals per Agent', fontsize=10)
@@ -824,11 +829,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Gen3. Resource Conflicts per Agent
     ax_gen3 = axes_gen[1, 0]
-    ax_gen3.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_resource_conflicts_consent_first_agent'], 
-                     yerr=df_agent_summary['avg_resource_conflicts_consent_first_agent_sem'], 
+    ax_gen3.errorbar(x_all[cf_mask], df_agent_summary['avg_resource_conflicts_consent_first_agent'][cf_mask], 
+                     yerr=df_agent_summary['avg_resource_conflicts_consent_first_agent_sem'][cf_mask], 
                      fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
-    ax_gen3.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_resource_conflicts_monitoring_agent'], 
-                     yerr=df_agent_summary['avg_resource_conflicts_monitoring_agent_sem'], 
+    ax_gen3.errorbar(x_all[m_mask], df_agent_summary['avg_resource_conflicts_monitoring_agent'][m_mask], 
+                     yerr=df_agent_summary['avg_resource_conflicts_monitoring_agent_sem'][m_mask], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent', color='blue')
     ax_gen3.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_gen3.set_ylabel('Avg Resource Conflicts per Agent', fontsize=10)
@@ -838,11 +843,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Gen4. Counter Goal Accomplishments per Agent
     ax_gen4 = axes_gen[1, 1]
-    ax_gen4.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_counter_goal_accomplishments_consent_first_agent'], 
-                     yerr=df_agent_summary['avg_counter_goal_accomplishments_consent_first_agent_sem'], 
+    ax_gen4.errorbar(x_all[cf_mask], df_agent_summary['avg_counter_goal_accomplishments_consent_first_agent'][cf_mask], 
+                     yerr=df_agent_summary['avg_counter_goal_accomplishments_consent_first_agent_sem'][cf_mask], 
                      fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
-    ax_gen4.errorbar((df_agent_summary['consent_first_count'] / 1000), df_agent_summary['avg_counter_goal_accomplishments_monitoring_agent'], 
-                     yerr=df_agent_summary['avg_counter_goal_accomplishments_monitoring_agent_sem'], 
+    ax_gen4.errorbar(x_all[m_mask], df_agent_summary['avg_counter_goal_accomplishments_monitoring_agent'][m_mask], 
+                     yerr=df_agent_summary['avg_counter_goal_accomplishments_monitoring_agent_sem'][m_mask], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent', color='blue')
     ax_gen4.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_gen4.set_ylabel('Avg Counter Goal Accomplishments per Agent', fontsize=10)
@@ -897,14 +902,19 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Sort by consent_first_count for consistent plotting
     df_interaction_summary = df_interaction_summary.sort_values('consent_first_count')
+
+    # Per-series masks for interaction summary
+    x_all_int = (df_interaction_summary['consent_first_count'] / 1000)
+    cf_mask_int = df_interaction_summary['consent_first_count'] > 0
+    m_mask_int = df_interaction_summary['monitoring_count'] > 0
     
     # Int1. Average Finished Step per Agent
     ax_int1 = axes_interaction[0, 0]
-    ax_int1.errorbar((df_interaction_summary['consent_first_count'] / 1000), df_interaction_summary['avg_finished_step_consent_first_agent'], 
-                     yerr=df_interaction_summary['avg_finished_step_consent_first_agent_sem'], 
+    ax_int1.errorbar(x_all_int[cf_mask_int], df_interaction_summary['avg_finished_step_consent_first_agent'][cf_mask_int], 
+                     yerr=df_interaction_summary['avg_finished_step_consent_first_agent_sem'][cf_mask_int], 
                      fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
-    ax_int1.errorbar((df_interaction_summary['consent_first_count'] / 1000), df_interaction_summary['avg_finished_step_monitoring_agent'], 
-                     yerr=df_interaction_summary['avg_finished_step_monitoring_agent_sem'], 
+    ax_int1.errorbar(x_all_int[m_mask_int], df_interaction_summary['avg_finished_step_monitoring_agent'][m_mask_int], 
+                     yerr=df_interaction_summary['avg_finished_step_monitoring_agent_sem'][m_mask_int], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent', color='blue')
     ax_int1.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_int1.set_ylabel('Avg Finished Step per Agent', fontsize=10)
@@ -914,11 +924,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Int2. Average Longest Idle Time per Agent
     ax_int2 = axes_interaction[0, 1]
-    ax_int2.errorbar((df_interaction_summary['consent_first_count'] / 1000), df_interaction_summary['avg_longest_idle_time_consent_first_agent'], 
-                     yerr=df_interaction_summary['avg_longest_idle_time_consent_first_agent_sem'], 
+    ax_int2.errorbar(x_all_int[cf_mask_int], df_interaction_summary['avg_longest_idle_time_consent_first_agent'][cf_mask_int], 
+                     yerr=df_interaction_summary['avg_longest_idle_time_consent_first_agent_sem'][cf_mask_int], 
                      fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
-    ax_int2.errorbar((df_interaction_summary['consent_first_count'] / 1000), df_interaction_summary['avg_longest_idle_time_monitoring_agent'], 
-                     yerr=df_interaction_summary['avg_longest_idle_time_monitoring_agent_sem'], 
+    ax_int2.errorbar(x_all_int[m_mask_int], df_interaction_summary['avg_longest_idle_time_monitoring_agent'][m_mask_int], 
+                     yerr=df_interaction_summary['avg_longest_idle_time_monitoring_agent_sem'][m_mask_int], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent', color='blue')
     ax_int2.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_int2.set_ylabel('Avg Longest Idle Time per Agent', fontsize=10)
@@ -928,11 +938,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Int3. Average Distinct Agents Interacted as R per Agent
     ax_int3 = axes_interaction[1, 0]
-    ax_int3.errorbar((df_interaction_summary['consent_first_count'] / 1000) , df_interaction_summary['avg_distinct_agents_interacted_r_consent_first_agent'], 
-                     yerr=df_interaction_summary['avg_distinct_agents_interacted_r_consent_first_agent_sem'], 
+    ax_int3.errorbar(x_all_int[cf_mask_int] , df_interaction_summary['avg_distinct_agents_interacted_r_consent_first_agent'][cf_mask_int], 
+                     yerr=df_interaction_summary['avg_distinct_agents_interacted_r_consent_first_agent_sem'][cf_mask_int], 
                      fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (R)', color='green')
-    ax_int3.errorbar((df_interaction_summary['consent_first_count'] / 1000), df_interaction_summary['avg_distinct_agents_interacted_r_monitoring_agent'], 
-                     yerr=df_interaction_summary['avg_distinct_agents_interacted_r_monitoring_agent_sem'], 
+    ax_int3.errorbar(x_all_int[m_mask_int], df_interaction_summary['avg_distinct_agents_interacted_r_monitoring_agent'][m_mask_int], 
+                     yerr=df_interaction_summary['avg_distinct_agents_interacted_r_monitoring_agent_sem'][m_mask_int], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (R)', color='blue')
     ax_int3.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_int3.set_ylabel('Avg Distinct Agents Interacted as R per Agent', fontsize=10)
@@ -942,11 +952,11 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     
     # Int4. Average Distinct Agents Interacted as G per Agent
     ax_int4 = axes_interaction[1, 1]
-    ax_int4.errorbar((df_interaction_summary['consent_first_count'] / 1000), df_interaction_summary['avg_distinct_agents_interacted_g_consent_first_agent'], 
-                     yerr=df_interaction_summary['avg_distinct_agents_interacted_g_consent_first_agent_sem'], 
+    ax_int4.errorbar(x_all_int[cf_mask_int], df_interaction_summary['avg_distinct_agents_interacted_g_consent_first_agent'][cf_mask_int], 
+                     yerr=df_interaction_summary['avg_distinct_agents_interacted_g_consent_first_agent_sem'][cf_mask_int], 
                      fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent (G)', color='green')
-    ax_int4.errorbar((df_interaction_summary['consent_first_count'] / 1000), df_interaction_summary['avg_distinct_agents_interacted_g_monitoring_agent'], 
-                     yerr=df_interaction_summary['avg_distinct_agents_interacted_g_monitoring_agent_sem'], 
+    ax_int4.errorbar(x_all_int[m_mask_int], df_interaction_summary['avg_distinct_agents_interacted_g_monitoring_agent'][m_mask_int], 
+                     yerr=df_interaction_summary['avg_distinct_agents_interacted_g_monitoring_agent_sem'][m_mask_int], 
                      fmt='s-', linewidth=2, markersize=6, capsize=4, label='Virtue Agent (G)', color='blue')
     ax_int4.set_xlabel('Deontic Agent Ratio (Deontic:All)', fontsize=10)
     ax_int4.set_ylabel('Avg Distinct Agents Interacted as G per Agent', fontsize=10)
