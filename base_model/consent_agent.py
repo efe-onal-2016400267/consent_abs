@@ -192,7 +192,7 @@ class ConsentChefAgent(BaseChefAgent):
         """
         for CI in self.consents_received[:]:
             initial_state = CI.state
-            if CI.state == "ACTIVE":
+            if CI.state in ("ACTIVE", "FULFILLED"):
                 # Call consent functions
                 CI.update_norm_activations(agent=self) # First lets see states of the norms
                 violated = CI.is_violated(agent=self)

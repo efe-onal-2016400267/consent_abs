@@ -70,6 +70,7 @@ class BaseChefAgent(CellAgent):
         self.counter_conflict_goal_accomplishments = 0 # to be reported - when agent accomplishes a goal countering a resource conflict
         self.finished_step = None # to be reported - when agent finishes all of its goals
         self.longest_idle_time = 0 # to be reported - when agent is idle for the longest time
+        self.total_idle_time = 0 # to be reported - when agent is idle for the total time
         self.current_idle_length = 0 # to be reported - when agent is idle for the last time
 
 
@@ -138,6 +139,7 @@ class BaseChefAgent(CellAgent):
                 # We decided not to have CO expiry for now, for monitoring agents.
                 #self.treat_future_CO_expiry()
             else:
+                self.total_idle_time += 1
                 if self.model.print_execution:
                     print(f"Agent: {self.unique_id} could not accomplish the goal: {self.current_goal[0]}")
                 self.current_idle_length += 1
@@ -176,11 +178,6 @@ class BaseChefAgent(CellAgent):
                 self.goal_count_update()
                 pass
             
-
-            # TODO: Before releasing I can do extensive tests by using assesrt statements.
-            # Check if the agent has obtained all the resources needed for the goal.
-            # Check if the lists are correctly updated at self side, owner side, etc.
-            # I'll need to create the test cases myself for this, probably.
             break # treat only 1 goal at each tick
 
 

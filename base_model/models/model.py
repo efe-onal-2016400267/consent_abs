@@ -59,6 +59,7 @@ class BaseModel(mesa.Model):
                            "Counter Conflict Goal Accomplishments": "counter_conflict_goal_accomplishments",
                            "Finished Step": "finished_step",
                            "Longest Idle Time": "longest_idle_time",
+                           "Total Idle Time": "total_idle_time",
                            "Number of Distinct Agents Interacted as G": "num_distinct_agents_interacted_as_G",
                            "Number of Distinct Agents Interacted as R": "num_distinct_agents_interacted_as_R",
                            "Number of Consents as R": "num_consents_as_R",

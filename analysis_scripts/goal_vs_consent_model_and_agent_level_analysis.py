@@ -274,9 +274,19 @@ def load_simulation_data(experiment_name=None, experiment_date=None):
             avg_distinct_agents_interacted_r_goal_first_agent = final_agent_values[goal_first_mask]['Number of Distinct Agents Interacted as R'].mean() if goal_first_mask.any() else 0
             avg_distinct_agents_interacted_g_consent_first_agent = final_agent_values[consent_first_mask]['Number of Distinct Agents Interacted as G'].mean() if consent_first_mask.any() else 0
             avg_distinct_agents_interacted_g_goal_first_agent = final_agent_values[goal_first_mask]['Number of Distinct Agents Interacted as G'].mean() if goal_first_mask.any() else 0
+            # New: total idle time per agent
+            avg_total_idle_time_consent_first_agent = final_agent_values[consent_first_mask]['Total Idle Time'].mean() if consent_first_mask.any() else 0
+            avg_total_idle_time_goal_first_agent = final_agent_values[goal_first_mask]['Total Idle Time'].mean() if goal_first_mask.any() else 0
             
-            # Calculate overall average steps for this configuration
-            avg_steps_overall = final_agent_values['Finished Step'].mean()
+            # Calculate steps for this run as the last value of the Step/index column
+            if not model_df.empty:
+                if 'Step' in model_df.columns:
+                    avg_steps_overall = int(pd.to_numeric(model_df['Step'], errors='coerce').dropna().iloc[-1])
+                else:
+                    first_col = model_df.columns[0]
+                    avg_steps_overall = int(pd.to_numeric(model_df[first_col], errors='coerce').dropna().iloc[-1])
+            else:
+                avg_steps_overall = np.nan
             final_values = model_df.iloc[-1]
             
             simulation_data.append({
@@ -346,6 +356,9 @@ def load_simulation_data(experiment_name=None, experiment_date=None):
                 'avg_distinct_agents_interacted_r_goal_first_agent': avg_distinct_agents_interacted_r_goal_first_agent,
                 'avg_distinct_agents_interacted_g_consent_first_agent': avg_distinct_agents_interacted_g_consent_first_agent,
                 'avg_distinct_agents_interacted_g_goal_first_agent': avg_distinct_agents_interacted_g_goal_first_agent,
+                # New: total idle time
+                'avg_total_idle_time_consent_first_agent': avg_total_idle_time_consent_first_agent,
+                'avg_total_idle_time_goal_first_agent': avg_total_idle_time_goal_first_agent,
             })
         else:
             print(f"Warning: Model data file not found for {config_name}")
@@ -515,6 +528,137 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
     # Show the plot
     plt.show()
     
+    # NEW FIGURE: Cumulative Accomplished Goals vs Steps per Population Ratio (averaged across seeds)
+    results_dir = Path("/Users/efeonal/py_envs/MESA_thesis/consent_abs/simulation_results")
+
+    def _find_agent_file(prefix: str):
+        main_data = results_dir / "data"
+        p = main_data / f"{prefix}_agents.csv"
+        if p.exists():
+            return p
+        for sub in results_dir.iterdir():
+            if sub.is_dir():
+                d = sub / "data"
+                q = d / f"{prefix}_agents.csv"
+                if d.exists() and q.exists():
+                    return q
+        return None
+
+    unique_cfgs = df.groupby(['agent_config']).agg({
+        'consent_first_count': 'mean',
+        'goal_first_count': 'mean'
+    }).reset_index().sort_values('goal_first_count')
+
+    n_cfg = len(unique_cfgs)
+    if n_cfg > 0:
+        ncols = 3
+        nrows = int(np.ceil(n_cfg / ncols))
+        fig_cum, axes_cum = plt.subplots(nrows, ncols, figsize=(6*ncols, 4*nrows), squeeze=False)
+        fig_cum.suptitle(f'{exp_name_display} - Cumulative Accomplished Goals vs Steps by Ratio\n(Average across seeds)',
+                         fontsize=16, fontweight='bold')
+
+        for idx, (_, cfg_row) in enumerate(unique_cfgs.iterrows()):
+            r = idx // ncols
+            c = idx % ncols
+            ax = axes_cum[r][c]
+            cfg = cfg_row['agent_config']
+
+            seed_rows = df[df['agent_config'] == cfg]
+            gf_list = []  # GoalFirstAgent per-step cumulative accomplished goals (sum over agents), per seed
+            cf_list = []  # ConsentFirstAgent per-step cumulative accomplished goals (sum over agents), per seed
+            for _, srow in seed_rows.iterrows():
+                if 'config_name' not in srow or not isinstance(srow['config_name'], str):
+                    continue
+                prefix = srow['config_name'].rsplit('_', 1)[0]
+                afile = _find_agent_file(prefix)
+                if afile is None:
+                    continue
+                adf = pd.read_csv(afile)
+                step_col = 'Step' if 'Step' in adf.columns else adf.columns[0]
+                if 'Agent Persona' not in adf.columns or 'Accomplished Goals' not in adf.columns:
+                    continue
+                gf = adf[adf['Agent Persona'] == 'GoalFirstAgent'].groupby(step_col)['Accomplished Goals'].sum()
+                cf = adf[adf['Agent Persona'] == 'ConsentFirstAgent'].groupby(step_col)['Accomplished Goals'].sum()
+                gf_list.append(gf)
+                cf_list.append(cf)
+
+            if not gf_list and not cf_list:
+                ax.text(0.5, 0.5, 'No data', ha='center', va='center')
+                ax.axis('off')
+                continue
+
+            # divide by number of agents of that type in this configuration
+            gf_n = max(1, int(round(cfg_row['goal_first_count']))) if 'goal_first_count' in cfg_row else 1
+            cf_n = max(1, int(round(cfg_row['consent_first_count']))) if 'consent_first_count' in cfg_row else 1
+
+            if gf_list:
+                gf_df = pd.concat(gf_list, axis=1)
+                gf_mean = (gf_df.mean(axis=1) / gf_n).sort_index()
+                ax.plot(gf_mean.index, gf_mean.values, 'r-', label='Teleological Agent (per agent)')
+            if cf_list:
+                cf_df = pd.concat(cf_list, axis=1)
+                cf_mean = (cf_df.mean(axis=1) / cf_n).sort_index()
+                ax.plot(cf_mean.index, cf_mean.values, 'g-', label='Deontic Agent (per agent)')
+
+            ax.set_title(f"GF:{int(round(cfg_row['goal_first_count']))} / CF:{int(round(cfg_row['consent_first_count']))}")
+            ax.set_xlabel('Step')
+            ax.set_ylabel('Cumulative Accomplished Goals per Agent')
+            ax.grid(True, alpha=0.3)
+            ax.legend()
+
+        for j in range(n_cfg, nrows*ncols):
+            r = j // ncols
+            c = j % ncols
+            axes_cum[r][c].axis('off')
+
+        plt.tight_layout()
+        output_path_cum = figures_dir / f"agent_level_cumulative_goals_by_ratio_{exp_name_clean}.png"
+        plt.savefig(output_path_cum, dpi=300, bbox_inches='tight')
+        print(f"\nCumulative Accomplished Goals by Ratio plot saved to: {output_path_cum}")
+        plt.show()
+
+    
+    # NEW FIGURE: Normalized (general) by steps: Resource Conflicts and Counter Goals per Step
+    fig_norm_gen, axes_norm_gen = plt.subplots(1, 2, figsize=(15, 6))
+    fig_norm_gen.suptitle(f'{exp_name_display} - Normalized (General) by Steps\n(Averaged across {df_summary["num_seeds"].iloc[0]} seeds)',
+                          fontsize=16, fontweight='bold')
+
+    steps_gen = pd.to_numeric(df_summary['avg_steps_overall'], errors='coerce').replace(0, np.nan)
+
+    # G-N1. Resource Conflicts per Step (general)
+    ax_gn1 = axes_norm_gen[0]
+    rc_per_step = df_summary['resource_conflicts'] / steps_gen
+    rc_per_step_sem = df_summary['resource_conflicts_sem'] / steps_gen
+    ax_gn1.errorbar(df_summary['goal_first_count'] / 1000, rc_per_step,
+                    yerr=rc_per_step_sem,
+                    fmt='o-', linewidth=2, markersize=8, capsize=5,
+                    label='Resource Conflicts per Step', color='purple')
+    ax_gn1.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
+    ax_gn1.set_ylabel('Resource Conflicts per Step', fontsize=11)
+    ax_gn1.set_title('Resource Conflicts per Step vs Agent Ratio', fontsize=12, fontweight='bold')
+    ax_gn1.grid(True, alpha=0.3)
+    ax_gn1.legend()
+
+    # G-N2. Counter Goal Accomplishments per Step (general)
+    ax_gn2 = axes_norm_gen[1]
+    cg_per_step = df_summary['counter_goal_accomplishments'] / steps_gen
+    cg_per_step_sem = df_summary['counter_goal_accomplishments_sem'] / steps_gen
+    ax_gn2.errorbar(df_summary['goal_first_count'] / 1000, cg_per_step,
+                    yerr=cg_per_step_sem,
+                    fmt='o-', linewidth=2, markersize=8, capsize=5,
+                    label='Counter Goal Accomplishments per Step', color='brown')
+    ax_gn2.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
+    ax_gn2.set_ylabel('Counter Goal Accomplishments per Step', fontsize=11)
+    ax_gn2.set_title('Counter Goal Accomplishments per Step vs Agent Ratio', fontsize=12, fontweight='bold')
+    ax_gn2.grid(True, alpha=0.3)
+    ax_gn2.legend()
+
+    plt.tight_layout()
+    output_path_norm_gen = figures_dir / f"simulation_analysis_normalized_by_steps_{exp_name_clean}.png"
+    plt.savefig(output_path_norm_gen, dpi=300, bbox_inches='tight')
+    print(f"\nNormalized (general) analysis plot saved to: {output_path_norm_gen}")
+    plt.show()
+    
     # Create detailed summary table
     print("\n" + "="*100)
     print("DETAILED ANALYSIS SUMMARY (AVERAGED ACROSS SEEDS)")
@@ -609,6 +753,7 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
         'avg_counter_goal_accomplishments_consent_first_agent', 'avg_counter_goal_accomplishments_goal_first_agent',
         'avg_resource_conflict_counter_goal_accomplishment_ratio_consent_first_agent',
         'avg_resource_conflict_counter_goal_accomplishment_ratio_goal_first_agent',
+        'avg_total_idle_time_consent_first_agent', 'avg_total_idle_time_goal_first_agent',
         # Interaction and timing metrics
         'avg_finished_step_consent_first_agent', 'avg_finished_step_goal_first_agent',
         'avg_longest_idle_time_consent_first_agent', 'avg_longest_idle_time_goal_first_agent',
@@ -632,7 +777,7 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     df_agent_summary = df_agent_summary.merge(count_df, on=['experiment_name', 'agent_config'])
     
     # Add the configuration columns needed for plotting
-    config_columns = ['consent_first_count', 'goal_first_count', 'fifty_fifty_count', 'total_agents']
+    config_columns = ['consent_first_count', 'goal_first_count', 'fifty_fifty_count', 'total_agents', 'avg_steps_overall']
     for col in config_columns:
         if col in df.columns:
             config_mean = df.groupby(['experiment_name', 'agent_config'])[col].mean().reset_index()
@@ -859,6 +1004,99 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     output_path_gen = figures_dir / f"agent_level_analysis_general_{exp_name_clean}.png"
     plt.savefig(output_path_gen, dpi=300, bbox_inches='tight')
     print(f"\nAgent-level General Performance analysis plot saved to: {output_path_gen}")
+    plt.show()
+
+    # NEW FIGURE: Total Idle Time per Agent (by persona)
+    fig_idle, ax_idle = plt.subplots(1, 1, figsize=(7.5, 5))
+    fig_idle.suptitle(f'{exp_name_display} - Agent-Level: Total Idle Time per Agent\n(Averaged across {df_agent_summary["num_seeds"].iloc[0]} seeds)',
+                      fontsize=16, fontweight='bold')
+
+    ax_idle.errorbar(x_all[cf_mask], df_agent_summary['avg_total_idle_time_consent_first_agent'][cf_mask],
+                     yerr=df_agent_summary['avg_total_idle_time_consent_first_agent_sem'][cf_mask],
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
+    ax_idle.errorbar(x_all[gf_mask], df_agent_summary['avg_total_idle_time_goal_first_agent'][gf_mask],
+                     yerr=df_agent_summary['avg_total_idle_time_goal_first_agent_sem'][gf_mask],
+                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent', color='red')
+    ax_idle.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_idle.set_ylabel('Avg Total Idle Time per Agent', fontsize=10)
+    ax_idle.set_title('Total Idle Time per Agent Type', fontsize=11, fontweight='bold')
+    ax_idle.grid(True, alpha=0.3)
+    ax_idle.legend()
+
+    plt.tight_layout()
+    output_path_idle = figures_dir / f"agent_level_analysis_total_idle_time_{exp_name_clean}.png"
+    plt.savefig(output_path_idle, dpi=300, bbox_inches='tight')
+    print(f"\nAgent-level Total Idle Time analysis plot saved to: {output_path_idle}")
+    plt.show()
+
+    # NEW FIGURE: Total Idle Time per Agent per Step (normalized by steps)
+    fig_idle_norm, ax_idle_norm = plt.subplots(1, 1, figsize=(7.5, 5))
+    fig_idle_norm.suptitle(f'{exp_name_display} - Agent-Level: Total Idle Time per Step\n(Averaged across {df_agent_summary["num_seeds"].iloc[0]} seeds)',
+                           fontsize=16, fontweight='bold')
+
+    steps_idle = pd.to_numeric(df_agent_summary['avg_steps_overall'], errors='coerce').replace(0, np.nan)
+    y_cf_idle = (df_agent_summary['avg_total_idle_time_consent_first_agent'] / steps_idle)
+    y_gf_idle = (df_agent_summary['avg_total_idle_time_goal_first_agent'] / steps_idle)
+    ax_idle_norm.plot(x_all[cf_mask], y_cf_idle[cf_mask], 'o-', linewidth=2, markersize=6, label='Deontic Agent', color='green')
+    ax_idle_norm.plot(x_all[gf_mask], y_gf_idle[gf_mask], 's-', linewidth=2, markersize=6, label='Teleological Agent', color='red')
+    ax_idle_norm.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_idle_norm.set_ylabel('Avg Total Idle Time per Agent per Step', fontsize=10)
+    ax_idle_norm.set_title('Total Idle Time per Agent normalized by Steps', fontsize=11, fontweight='bold')
+    ax_idle_norm.grid(True, alpha=0.3)
+    ax_idle_norm.legend()
+
+    plt.tight_layout()
+    output_path_idle_norm = figures_dir / f"agent_level_analysis_total_idle_time_normalized_{exp_name_clean}.png"
+    plt.savefig(output_path_idle_norm, dpi=300, bbox_inches='tight')
+    print(f"\nAgent-level Total Idle Time (normalized) analysis plot saved to: {output_path_idle_norm}")
+    plt.show()
+    
+    # FIGURE 5: Normalized per-agent metrics by average steps
+    fig_norm, axes_norm = plt.subplots(1, 2, figsize=(15, 6))
+    fig_norm.suptitle(f'{exp_name_display} - Agent-Level: Normalized by Steps\n(Averaged across {df_agent_summary["num_seeds"].iloc[0]} seeds)',
+                      fontsize=16, fontweight='bold')
+
+    # Guard against divide-by-zero and print diagnostics
+    steps = pd.to_numeric(df_agent_summary['avg_steps_overall'], errors='coerce').replace(0, np.nan)
+    try:
+        print("[DIAG] goal_vs_consent normalized-by-steps checks:")
+        print("       min steps:", steps.min())
+        print("       min RC CF:", df_agent_summary['avg_resource_conflicts_consent_first_agent'].min())
+        print("       min RC GF:", df_agent_summary['avg_resource_conflicts_goal_first_agent'].min())
+        norm_cf_tmp = df_agent_summary['avg_resource_conflicts_consent_first_agent'] / steps
+        norm_gf_tmp = df_agent_summary['avg_resource_conflicts_goal_first_agent'] / steps
+        print("       min norm RC CF:", norm_cf_tmp.min(), "min norm RC GF:", norm_gf_tmp.min())
+    except Exception as _e:
+        pass
+
+    # N1. Resource Conflicts per Agent per Step
+    ax_n1 = axes_norm[0]
+    y_cf_rc = (df_agent_summary['avg_resource_conflicts_consent_first_agent'] / steps)
+    y_gf_rc = (df_agent_summary['avg_resource_conflicts_goal_first_agent'] / steps)
+    ax_n1.plot(x_all[cf_mask], y_cf_rc[cf_mask], 'o-', linewidth=2, markersize=6, label='Deontic Agent', color='green')
+    ax_n1.plot(x_all[gf_mask], y_gf_rc[gf_mask], 's-', linewidth=2, markersize=6, label='Teleological Agent', color='red')
+    ax_n1.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_n1.set_ylabel('Avg Resource Conflicts per Agent per Step', fontsize=10)
+    ax_n1.set_title('Resource Conflicts per Agent normalized by Steps', fontsize=11, fontweight='bold')
+    ax_n1.grid(True, alpha=0.3)
+    ax_n1.legend()
+
+    # N2. Counter Goal Accomplishments per Agent per Step
+    ax_n2 = axes_norm[1]
+    y_cf_cg = (df_agent_summary['avg_counter_goal_accomplishments_consent_first_agent'] / steps)
+    y_gf_cg = (df_agent_summary['avg_counter_goal_accomplishments_goal_first_agent'] / steps)
+    ax_n2.plot(x_all[cf_mask], y_cf_cg[cf_mask], 'o-', linewidth=2, markersize=6, label='Deontic Agent', color='green')
+    ax_n2.plot(x_all[gf_mask], y_gf_cg[gf_mask], 's-', linewidth=2, markersize=6, label='Teleological Agent', color='red')
+    ax_n2.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_n2.set_ylabel('Avg Counter Goal Accomplishments per Agent per Step', fontsize=10)
+    ax_n2.set_title('Counter Goal Accomplishments per Agent normalized by Steps', fontsize=11, fontweight='bold')
+    ax_n2.grid(True, alpha=0.3)
+    ax_n2.legend()
+
+    plt.tight_layout()
+    output_path_norm = figures_dir / f"agent_level_analysis_normalized_by_steps_{exp_name_clean}.png"
+    plt.savefig(output_path_norm, dpi=300, bbox_inches='tight')
+    print(f"\nAgent-level Normalized-by-Steps analysis plot saved to: {output_path_norm}")
     plt.show()
     
     # FIGURE 4: Agent interaction and timing metrics
