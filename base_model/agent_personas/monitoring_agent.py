@@ -62,13 +62,12 @@ class MonitoringAgent(ConsentChefAgent):
                 if self.model.print_execution:
                     print(f"Agent: {self.unique_id} has released resource: {res.name}, owned by: {res.owner}")
 
+    def treat_consent_violations(self, agent, other, CI):
+        """Only release when we are the borrower; do not reclaim when we are the giver."""
+        if agent is self:
             return
+        super().treat_consent_violations(agent, other, CI)
 
     def treat_future_CO_expiry(self):
-        """
-        This function will be different for different personas.
-        Some agents dont care if CO expires.
-        Some return the resource if they realize CO will expire in the next step.
-        For now, lets just return it.
-        """
+        """Placeholder for possible CO-expiry-specific behaviour."""
         pass

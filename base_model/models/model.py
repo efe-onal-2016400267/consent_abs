@@ -379,18 +379,18 @@ class ConsentModel(BaseModel):
         # Agents update the states of the norms of the consents they have given and received.
         # This could be done by the model as well?
         # self.agents.do("norm_state_update") : DEPRICATED
-        self.agents.do("update_exp_cond")
+        self.agents.shuffle_do("update_exp_cond")
         # Agents check the states of the consents they have given or received.
         # TODO: They should change behavour based on current consent state.
-        self.agents.do("check_given_consents")
+        self.agents.shuffle_do("check_given_consents")
         # The model should check its own Consent instances too
         self.check_consent_state()
         # The actual step function that runs the agent, interpret_goals.
-        self.agents.do("interpret_goals")
-        self.agents.do("check_given_consents")
+        self.agents.shuffle_do("interpret_goals")
+        self.agents.shuffle_do("check_given_consents")
         # The model should check its own Consent instances too
         self.check_consent_state()
-        self.agents.do("release_resources")
+        self.agents.shuffle_do("release_resources")
         #print(self.state.atoms )
         # Call parent step method for common data collection logic
         super().step()

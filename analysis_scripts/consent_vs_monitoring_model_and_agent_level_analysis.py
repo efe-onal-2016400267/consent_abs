@@ -21,7 +21,7 @@ sns.set_palette("husl")
 # Specify the experiment name and date to analyze
 # Set experiment_name to None to analyze all experiments
 experiment_name = "monitoring_vs_consent_based_analysis"
-experiment_date = "20251023"  # Format: YYYYMMDD
+experiment_date = "20251108"  # Format: YYYYMMDD
 
 def extract_experiment_info(config_filename):
     """Extract experiment name and configuration from config filename.
@@ -515,9 +515,7 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
     ax6_steps.set_title('Average Steps & Accomplished Goals vs Deontic/Virtue Agents Ratio', fontsize=12, fontweight='bold')
     
     # Create combined legend
-    lines = line1[0], line2[0]
-    labels = [l.get_label() for l in lines]
-    ax6_steps.legend(lines, labels, loc='upper right')
+    ax6_steps.legend([line1[0], line2[0]], ['Average Simulation Length', 'Total Accomplished Goals'], loc='upper right')
 
     plt.tight_layout()
     
@@ -566,8 +564,8 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
             cfg = cfg_row['agent_config']
 
             seed_rows = df[df['agent_config'] == cfg]
-            cf_list = []  # ConsentFirstAgent per-step cumulative accomplished goals (sum over agents), per seed
-            m_list = []   # MonitoringAgent per-step cumulative accomplished goals (sum over agents), per seed
+            cf_list = []  # ConsentFirstAgent per-step cumulative accomplished goals (per agent), per seed
+            m_list = []   # MonitoringAgent per-step cumulative accomplished goals (per agent), per seed
             for _, srow in seed_rows.iterrows():
                 if 'config_name' not in srow or not isinstance(srow['config_name'], str):
                     continue
@@ -579,8 +577,10 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
                 step_col = 'Step' if 'Step' in adf.columns else adf.columns[0]
                 if 'Agent Persona' not in adf.columns or 'Accomplished Goals' not in adf.columns:
                     continue
-                cf = adf[adf['Agent Persona'] == 'ConsentFirstAgent'].groupby(step_col)['Accomplished Goals'].sum()
-                m  = adf[adf['Agent Persona'] == 'MonitoringAgent'].groupby(step_col)['Accomplished Goals'].sum()
+                cf = adf[adf['Agent Persona'] == 'ConsentFirstAgent'].groupby(step_col)['Accomplished Goals'].mean()
+                cf = cf.sort_index()
+                m  = adf[adf['Agent Persona'] == 'MonitoringAgent'].groupby(step_col)['Accomplished Goals'].mean()
+                m = m.sort_index()
                 cf_list.append(cf)
                 m_list.append(m)
 
@@ -589,20 +589,28 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
                 ax.axis('off')
                 continue
 
-            # divide by number of agents of that type in this configuration
-            cf_n = max(1, int(round(cfg_row['consent_first_count']))) if 'consent_first_count' in cfg_row else 1
-            m_n  = max(1, int(round(cfg_row['monitoring_count']))) if 'monitoring_count' in cfg_row else 1
-
             if cf_list:
-                cf_df = pd.concat(cf_list, axis=1)
-                cf_mean = (cf_df.mean(axis=1) / cf_n).sort_index()
+                all_steps = sorted(set().union(*(s.index.tolist() for s in cf_list)))
+                cf_aligned = []
+                for s in cf_list:
+                    s = s.reindex(all_steps, method='ffill')
+                    s = s.fillna(0)
+                    cf_aligned.append(s)
+                cf_df = pd.concat(cf_aligned, axis=1)
+                cf_mean = cf_df.mean(axis=1).cummax()
                 ax.plot(cf_mean.index, cf_mean.values, 'g-', label='Deontic Agent (per agent)')
             if m_list:
-                m_df = pd.concat(m_list, axis=1)
-                m_mean = (m_df.mean(axis=1) / m_n).sort_index()
+                all_steps_m = sorted(set().union(*(s.index.tolist() for s in m_list)))
+                m_aligned = []
+                for s in m_list:
+                    s = s.reindex(all_steps_m, method='ffill')
+                    s = s.fillna(0)
+                    m_aligned.append(s)
+                m_df = pd.concat(m_aligned, axis=1)
+                m_mean = m_df.mean(axis=1).cummax()
                 ax.plot(m_mean.index, m_mean.values, 'b-', label='Virtue Agent (per agent)')
 
-            ax.set_title(f"CF:{int(round(cfg_row['consent_first_count']))} / M:{int(round(cfg_row['monitoring_count']))}")
+            ax.set_title(f"DA:{int(round(cfg_row['consent_first_count']))} / VA:{int(round(cfg_row['monitoring_count']))}")
             ax.set_xlabel('Step')
             ax.set_ylabel('Cumulative Accomplished Goals per Agent')
             ax.grid(True, alpha=0.3)

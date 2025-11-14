@@ -20,8 +20,8 @@ sns.set_palette("husl")
 
 # Specify the experiment name and date to analyze
 # Set experiment_name to None to analyze all experiments
-experiment_name = "consent_or_goal_sensitivity_analysis"
-experiment_date = "20251021"  # Format: YYYYMMDD
+experiment_name = "goal_vs_consent_based_analysis"
+experiment_date = "20251107"  # Format: YYYYMMDD
 # Note: The actual data is in the directory: consent_first_vs_goal_first_full_analysis_20251013
 
 def extract_experiment_info(config_filename):
@@ -513,9 +513,7 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
     ax6_steps.set_title('Average Steps & Accomplished Goals vs Agent Ratio', fontsize=12, fontweight='bold')
     
     # Create combined legend
-    lines = line1[0], line2[0]
-    labels = [l.get_label() for l in lines]
-    ax6_steps.legend(lines, labels, loc='upper right')
+    ax6_steps.legend([line1[0], line2[0]], ['Average Simulation Length', 'Total Accomplished Goals'], loc='upper right')
 
     plt.tight_layout()
     
@@ -577,8 +575,10 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
                 step_col = 'Step' if 'Step' in adf.columns else adf.columns[0]
                 if 'Agent Persona' not in adf.columns or 'Accomplished Goals' not in adf.columns:
                     continue
-                gf = adf[adf['Agent Persona'] == 'GoalFirstAgent'].groupby(step_col)['Accomplished Goals'].sum()
-                cf = adf[adf['Agent Persona'] == 'ConsentFirstAgent'].groupby(step_col)['Accomplished Goals'].sum()
+                gf = adf[adf['Agent Persona'] == 'GoalFirstAgent'].groupby(step_col)['Accomplished Goals'].mean()
+                gf = gf.sort_index()
+                cf = adf[adf['Agent Persona'] == 'ConsentFirstAgent'].groupby(step_col)['Accomplished Goals'].mean()
+                cf = cf.sort_index()
                 gf_list.append(gf)
                 cf_list.append(cf)
 
@@ -587,20 +587,28 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
                 ax.axis('off')
                 continue
 
-            # divide by number of agents of that type in this configuration
-            gf_n = max(1, int(round(cfg_row['goal_first_count']))) if 'goal_first_count' in cfg_row else 1
-            cf_n = max(1, int(round(cfg_row['consent_first_count']))) if 'consent_first_count' in cfg_row else 1
-
             if gf_list:
-                gf_df = pd.concat(gf_list, axis=1)
-                gf_mean = (gf_df.mean(axis=1) / gf_n).sort_index()
+                all_steps = sorted(set().union(*(s.index.tolist() for s in gf_list)))
+                gf_aligned = []
+                for s in gf_list:
+                    s = s.reindex(all_steps, method='ffill')
+                    s = s.fillna(0)
+                    gf_aligned.append(s)
+                gf_df = pd.concat(gf_aligned, axis=1)
+                gf_mean = gf_df.mean(axis=1)
                 ax.plot(gf_mean.index, gf_mean.values, 'r-', label='Teleological Agent (per agent)')
             if cf_list:
-                cf_df = pd.concat(cf_list, axis=1)
-                cf_mean = (cf_df.mean(axis=1) / cf_n).sort_index()
+                all_steps_cf = sorted(set().union(*(s.index.tolist() for s in cf_list)))
+                cf_aligned = []
+                for s in cf_list:
+                    s = s.reindex(all_steps_cf, method='ffill')
+                    s = s.fillna(0)
+                    cf_aligned.append(s)
+                cf_df = pd.concat(cf_aligned, axis=1)
+                cf_mean = cf_df.mean(axis=1)
                 ax.plot(cf_mean.index, cf_mean.values, 'g-', label='Deontic Agent (per agent)')
 
-            ax.set_title(f"GF:{int(round(cfg_row['goal_first_count']))} / CF:{int(round(cfg_row['consent_first_count']))}")
+            ax.set_title(f"TA:{int(round(cfg_row['goal_first_count']))} / DA:{int(round(cfg_row['consent_first_count']))}")
             ax.set_xlabel('Step')
             ax.set_ylabel('Cumulative Accomplished Goals per Agent')
             ax.grid(True, alpha=0.3)
