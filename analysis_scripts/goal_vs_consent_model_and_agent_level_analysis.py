@@ -435,7 +435,6 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
     ax1.set_title('Accomplished Goals vs Agent Ratio', fontsize=12, fontweight='bold')
     ax1.grid(True, alpha=0.3)
     ax1.legend()
-    
     # 2. Remaining Goals vs Agent Ratio
     ax2 = axes[0, 1]
     ax2.errorbar(df_summary['goal_first_count'] / 1000, df_summary['remaining_goals'], 
