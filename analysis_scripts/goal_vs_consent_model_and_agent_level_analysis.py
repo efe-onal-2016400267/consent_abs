@@ -1137,7 +1137,7 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
         df_interaction_summary[f'{col}_sem'] = sem_df[col]
     
     # Add the configuration columns needed for plotting
-    config_columns = ['consent_first_count', 'goal_first_count', 'fifty_fifty_count', 'total_agents']
+    config_columns = ['consent_first_count', 'goal_first_count', 'fifty_fifty_count', 'total_agents', 'avg_steps_overall']
     for col in config_columns:
         if col in df.columns:
             config_mean = df.groupby(['experiment_name', 'agent_config'])[col].mean().reset_index()
