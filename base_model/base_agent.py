@@ -148,7 +148,7 @@ class BaseChefAgent(CellAgent):
                     self.longest_idle_time = self.current_idle_length
                 # Track resource conflicts when goal cannot be accomplished
                 if resource_conflict_this_goal:
-                    self.num_resource_conflicts += 1
+                    # DEPRICATED: We count resource conflicts inside find_resources for R. self.num_resource_conflicts += 1
                     # We should also add this conflict to a model level list.
                     # At the end of the step, the model will check this list, look at all the NEW conflicts
                     # A conflict will have
@@ -251,6 +251,7 @@ class BaseChefAgent(CellAgent):
                 # Agent owns this resource but it's being used by someone else
                 # Check if there's a VIOLATED consent instance for this resource
                 if self.has_violated_consent_for_resource(res):
+                    res.in_use_by.num_resource_conflicts += 1
                     if self.model.print_execution:
                         print(f"Agent: {self.unique_id}, owns resource {res.name} but it's being used by {res.in_use_by.unique_id} and consent is VIOLATED")
                     return False, 'sovereign_conflict', res

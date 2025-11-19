@@ -6,7 +6,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 
-from config import GOAL_FILE_PATH, TEST_CASE_PATH, TEST, MAX_STEP_COUNT, ConsentFirstAgent_COUNT, FiftyFiftyAgent_COUNT, GoalFirstAgent_COUNT, CO_exp_step, AU_exp_step, MonitoringAgent_COUNT, random_exp_times, max_random_AU_exp_step, min_random_AU_exp_step, max_random_CO_exp_step, min_random_CO_exp_step, print_state, print_execution
+from config import GOAL_FILE_PATH, TEST_CASE_PATH, TEST, MAX_STEP_COUNT, ConsentFirstAgent_COUNT, FiftyFiftyAgent_COUNT, GoalFirstAgent_COUNT, CO_exp_step, AU_exp_step, MonitoringAgent_COUNT, random_exp_times, max_random_AU_exp_step, min_random_AU_exp_step, max_random_CO_exp_step, min_random_CO_exp_step, print_state, print_execution, random_agent_execution
 from state import EnvState
 from pathlib import Path
 import mesa
@@ -379,20 +379,36 @@ class ConsentModel(BaseModel):
         # Agents update the states of the norms of the consents they have given and received.
         # This could be done by the model as well?
         # self.agents.do("norm_state_update") : DEPRICATED
-        self.agents.shuffle_do("update_exp_cond")
-        # Agents check the states of the consents they have given or received.
-        # TODO: They should change behavour based on current consent state.
-        self.agents.shuffle_do("check_given_consents")
-        # The model should check its own Consent instances too
-        self.check_consent_state()
-        # The actual step function that runs the agent, interpret_goals.
-        self.agents.shuffle_do("interpret_goals")
-        self.agents.shuffle_do("check_given_consents")
-        # The model should check its own Consent instances too
-        self.check_consent_state()
-        self.agents.shuffle_do("release_resources")
-        #print(self.state.atoms )
-        # Call parent step method for common data collection logic
+        if random_agent_execution:
+            self.agents.shuffle_do("update_exp_cond")
+            # Agents check the states of the consents they have given or received.
+            # TODO: They should change behavour based on current consent state.
+            self.agents.shuffle_do("check_given_consents")
+            # The model should check its own Consent instances too
+            self.check_consent_state()
+            # The actual step function that runs the agent, interpret_goals.
+            self.agents.shuffle_do("interpret_goals")
+            self.agents.shuffle_do("check_given_consents")
+            # The model should check its own Consent instances too
+            self.check_consent_state()
+            self.agents.shuffle_do("release_resources")
+            #print(self.state.atoms )
+            # Call parent step method for common data collection logic
+        else:
+            self.agents.do("update_exp_cond")
+            # Agents check the states of the consents they have given or received.
+            # TODO: They should change behavour based on current consent state.
+            self.agents.do("check_given_consents")
+            # The model should check its own Consent instances too
+            self.check_consent_state()
+            # The actual step function that runs the agent, interpret_goals.
+            self.agents.do("interpret_goals")
+            self.agents.do("check_given_consents")
+            # The model should check its own Consent instances too
+            self.check_consent_state()
+            self.agents.do("release_resources")
+            #print(self.state.atoms )
+            # Call parent step method for common data collection logic
         super().step()
 
 
