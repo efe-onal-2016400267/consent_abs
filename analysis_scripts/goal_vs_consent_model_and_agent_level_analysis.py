@@ -21,7 +21,7 @@ sns.set_palette("husl")
 # Specify the experiment name and date to analyze
 # Set experiment_name to None to analyze all experiments
 experiment_name = "goal_vs_consent_based_analysis"
-experiment_date = "20251107"  # Format: YYYYMMDD
+experiment_date = "20251119"  # Format: YYYYMMDD
 # Note: The actual data is in the directory: consent_first_vs_goal_first_full_analysis_20251013
 
 def extract_experiment_info(config_filename):

@@ -21,7 +21,7 @@ sns.set_palette("husl")
 # Specify the experiment name and date to analyze
 # Set experiment_name to None to analyze all experiments
 experiment_name = "monitoring_vs_consent_based_analysis"
-experiment_date = "20251108"  # Format: YYYYMMDD
+experiment_date = "20251119"  # Format: YYYYMMDD
 
 def extract_experiment_info(config_filename):
     """Extract experiment name and configuration from config filename.
