@@ -91,7 +91,7 @@ class BaseChefAgent(CellAgent):
                     # Only count as conflict if agent owns the resource but cannot access it
                     resource_conflict_this_goal = True
                     #TODO: Conflict maker = res.in_use_by.unique_id # To be used to count conflicts for the conflict maker.
-                    break  # No need to check other subgoals once we find a conflict
+                    #break  # No need to check other subgoals once we find a conflict
 
             # Once all resources are acquired, update norm states if self is a ConsentChefAgent
             # Done here because norms will find their actual states after the resources were acquired and related atoms were reflected into model.state.

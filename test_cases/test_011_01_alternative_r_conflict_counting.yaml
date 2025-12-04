@@ -1,0 +1,98 @@
+# test case for resource conflicts and counter goal accomplishmets.
+# Agent1 will acquire egg2 from Agent2, to accomplish stated goal make_cake.
+# Agent1 will not release egg2 until it finishes all of its goals since they all require egg2.
+# So at step 1 there will be no conflict since CI will not have been violated.
+# At step 2, CI will be violated by Agent1 (I will set expiry condition to 1 step) So both conflict count and counter goal count will be 1.
+
+# Checklist:
+# Step 1: conflict_count = 0, counter_goal_count = 0
+# Step 2: conflict_count = 0, counter_goal_count = 0
+# Step 3: conflict_count = 1, counter_goal_count = 0
+# Step 4: conflict_count = 2, counter_goal_count = 1
+# Step 5: conflict_count = 3, counter_goal_count = 2
+# Step 6: conflict_count = 4, counter_goal_count = 3
+# counts are not the same because Agent1 acts before Agent2. 
+# So Agent1 will accomplish 1 more goal in step 3, then Agent2 will realize there was a conflict and create the conflict object.
+
+agents:
+  - id: 1
+    persona: GoalFirstAgent
+    goals:
+      - name: make_cake
+        sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
+      - name: make_egg
+        sub_goals: ["use_egg"]
+      - name: make_my_egg
+        sub_goals: ["use_egg"]
+      - name: make_your_egg
+        sub_goals: ["use_egg"]
+      - name: make_our_egg
+        sub_goals: ["use_egg"]
+      - name: make_their_egg
+        sub_goals: ["use_egg"]
+      - name: make_flour
+        sub_goals: ["use_flour"]
+      - name: make_my_flour
+        sub_goals: ["use_flour"]
+    resources:
+      - name: oven_1
+        type: oven
+      - name: sugar_1
+        type: sugar
+
+  - id: 2
+    persona: GoalFirstAgent
+    goals: 
+      - name: make_egg
+        sub_goals: ["use_egg"]
+    resources:
+      - name: egg_2
+        type: egg
+
+  - id: 3
+    persona: GoalFirstAgent
+    goals: 
+      - name: make_flour
+        sub_goals: ["use_flour"]
+    resources:
+      - name: flour_3
+        type: flour
+
+  - id: 4
+    persona: GoalFirstAgent
+    goals:
+      - name: make_sake
+        sub_goals: ["use_bottle", "use_sake"]
+      - name: make_bottle
+        sub_goals: ["use_bottle"]
+      - name: make_a_bottle
+        sub_goals: ["use_bottle"]
+      - name: make_b_bottle
+        sub_goals: ["use_bottle"]
+      - name: make_c_bottle
+        sub_goals: ["use_bottle"]
+      - name: make_d_bottle
+        sub_goals: ["use_bottle"]
+      - name: make_sake
+        sub_goals: ["use_sake"]
+      - name: make_a_sake
+        sub_goals: ["use_sake"]
+    resources:
+
+  - id: 5
+    persona: GoalFirstAgent
+    goals: 
+      - name: make_bottle
+        sub_goals: ["use_bottle"]
+    resources:
+      - name: bottle_5
+        type: bottle
+
+  - id: 6
+    persona: GoalFirstAgent
+    goals: 
+      - name: make_sake
+        sub_goals: ["use_sake"]
+    resources:
+      - name: sake_6
+        type: sake

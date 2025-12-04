@@ -379,6 +379,7 @@ class ConsentModel(BaseModel):
         # Agents update the states of the norms of the consents they have given and received.
         # This could be done by the model as well?
         # self.agents.do("norm_state_update") : DEPRICATED
+        print(random_agent_execution)
         if random_agent_execution:
             self.agents.shuffle_do("update_exp_cond")
             # Agents check the states of the consents they have given or received.
