@@ -136,9 +136,9 @@ def create_agent_ratio_analysis_separate():
             fmt='o-', linewidth=2, markersize=8, capsize=5,
             color=spec['color'], label=spec['label']
         )
-        ax.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
-        ax.set_ylabel(spec['ylabel'], fontsize=11)
-        ax.set_title(spec['title'], fontsize=12, fontweight='bold')
+        ax.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=13, fontweight='bold')
+        ax.set_ylabel(spec['ylabel'], fontsize=13, fontweight='bold')
+        ax.set_title(spec['title'], fontsize=14, fontweight='bold')
         ax.grid(True, alpha=0.3)
         ax.legend()
 
@@ -166,12 +166,12 @@ def create_agent_ratio_analysis_separate():
         label='Total Accomplished Goals', color='green'
     )
 
-    ax_steps.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
-    ax_steps.set_ylabel('Average Steps', fontsize=11, color='purple')
-    ax_goals.set_ylabel('Total Accomplished Goals', fontsize=11, color='green')
+    ax_steps.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=13)
+    ax_steps.set_ylabel('Average Steps', fontsize=13, color='purple')
+    ax_goals.set_ylabel('Total Accomplished Goals', fontsize=13, color='green')
     ax_steps.tick_params(axis='y', labelcolor='purple')
     ax_goals.tick_params(axis='y', labelcolor='green')
-    ax_steps.set_title('Average Steps & Accomplished Goals vs Agent Ratio', fontsize=12, fontweight='bold')
+    ax_steps.set_title('Average Steps & Accomplished Goals vs Agent Ratio', fontsize=14, fontweight='bold')
     ax_steps.grid(True, alpha=0.3)
     ax_steps.legend([line1[0], line2[0]], ['Average Simulation Length', 'Total Accomplished Goals'], loc='upper right')
 
@@ -343,6 +343,8 @@ def _prepare_agent_summary():
         'avg_counter_goal_accomplishments_consent_first_agent', 'avg_counter_goal_accomplishments_goal_first_agent',
         'avg_resource_conflict_counter_goal_accomplishment_ratio_consent_first_agent',
         'avg_resource_conflict_counter_goal_accomplishment_ratio_goal_first_agent',
+        'avg_counter_goal_per_resource_conflict_ratio_consent_first_agent',
+        'avg_counter_goal_per_resource_conflict_ratio_goal_first_agent',
         'avg_total_idle_time_consent_first_agent', 'avg_total_idle_time_goal_first_agent',
         'avg_finished_step_consent_first_agent', 'avg_finished_step_goal_first_agent',
         'avg_longest_idle_time_consent_first_agent', 'avg_longest_idle_time_goal_first_agent',
@@ -568,6 +570,17 @@ def create_agent_level_analysis_separate():
         ylabel='Avg Counter Goal Accomplishments per Agent per Step',
         cf_series=df_agent['avg_counter_goal_accomplishments_consent_first_agent'] / steps,
         gf_series=df_agent['avg_counter_goal_accomplishments_goal_first_agent'] / steps
+    )
+
+    # Counter Goal Accomplishments per Resource Conflict Ratio.
+    save_dual_series_plot(
+        filename='agent_level_counter_goal_per_resource_conflict',
+        title='Counter Goal Accomplishments per Resource Conflict per Agent Type',
+        ylabel='Counter Goal Accomplishments per Resource Conflict',
+        cf_series=df_agent['avg_counter_goal_per_resource_conflict_ratio_consent_first_agent'],
+        gf_series=df_agent['avg_counter_goal_per_resource_conflict_ratio_goal_first_agent'],
+        cf_sem=df_agent['avg_counter_goal_per_resource_conflict_ratio_consent_first_agent_sem'],
+        gf_sem=df_agent['avg_counter_goal_per_resource_conflict_ratio_goal_first_agent_sem']
     )
 
     # Interaction & timing metrics.

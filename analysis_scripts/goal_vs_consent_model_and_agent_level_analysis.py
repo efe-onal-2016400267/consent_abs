@@ -233,6 +233,22 @@ def load_simulation_data(experiment_name=None, experiment_date=None):
             avg_counter_goal_accomplishments_consent_first_agent = final_agent_values[consent_first_mask]['Counter Conflict Goal Accomplishments'].mean() if consent_first_mask.any() else 0
             avg_counter_goal_accomplishments_goal_first_agent = final_agent_values[goal_first_mask]['Counter Conflict Goal Accomplishments'].mean() if goal_first_mask.any() else 0
             
+            # Calculate counter goal per resource conflict ratio by summing first, then dividing
+            # This gives the aggregate ratio across all agents of each persona type
+            if consent_first_mask.any():
+                total_counter_goals_cf = final_agent_values[consent_first_mask]['Counter Conflict Goal Accomplishments'].sum()
+                total_resource_conflicts_cf = final_agent_values[consent_first_mask]['Resource Conflicts'].sum()
+                avg_counter_goal_per_resource_conflict_ratio_consent_first_agent = (total_counter_goals_cf / total_resource_conflicts_cf) if total_resource_conflicts_cf > 0 else 0
+            else:
+                avg_counter_goal_per_resource_conflict_ratio_consent_first_agent = 0
+                
+            if goal_first_mask.any():
+                total_counter_goals_gf = final_agent_values[goal_first_mask]['Counter Conflict Goal Accomplishments'].sum()
+                total_resource_conflicts_gf = final_agent_values[goal_first_mask]['Resource Conflicts'].sum()
+                avg_counter_goal_per_resource_conflict_ratio_goal_first_agent = (total_counter_goals_gf / total_resource_conflicts_gf) if total_resource_conflicts_gf > 0 else 0
+            else:
+                avg_counter_goal_per_resource_conflict_ratio_goal_first_agent = 0
+            
             # Calculate consent metrics from available columns
             # Separately for R (Receiver) and G (Giver) and agent type.
             total_consents_consent_first_r = final_agent_values[consent_first_mask]['Number of Consents as R'].mean() if consent_first_mask.any() else 0
@@ -261,9 +277,12 @@ def load_simulation_data(experiment_name=None, experiment_date=None):
             avg_consent_fulfillment_ratio_goal_first_g = (fulfilled_consents_goal_first_g / total_consents_goal_first_g) if total_consents_goal_first_g > 0 else 0
         
             
-            # Resource conflict counter goal accomplishment ratio
+            # Resource conflict counter goal accomplishment ratio (conflicts per counter goal)
+            # Note: This divides averages, which is acceptable for this metric
             avg_resource_conflict_counter_goal_accomplishment_ratio_consent_first_agent = (avg_resource_conflicts_consent_first_agent / avg_counter_goal_accomplishments_consent_first_agent) if avg_counter_goal_accomplishments_consent_first_agent > 0 else 0
             avg_resource_conflict_counter_goal_accomplishment_ratio_goal_first_agent = (avg_resource_conflicts_goal_first_agent / avg_counter_goal_accomplishments_goal_first_agent) if avg_counter_goal_accomplishments_goal_first_agent > 0 else 0
+            
+            # Note: Counter goal per resource conflict ratio is calculated above per-agent then averaged
             
             # Calculate interaction and timing metrics
             avg_finished_step_consent_first_agent = final_agent_values[consent_first_mask]['Finished Step'].mean() if consent_first_mask.any() else 0
@@ -346,6 +365,8 @@ def load_simulation_data(experiment_name=None, experiment_date=None):
                 'avg_counter_goal_accomplishments_goal_first_agent': avg_counter_goal_accomplishments_goal_first_agent,
                 'avg_resource_conflict_counter_goal_accomplishment_ratio_consent_first_agent': avg_resource_conflict_counter_goal_accomplishment_ratio_consent_first_agent,
                 'avg_resource_conflict_counter_goal_accomplishment_ratio_goal_first_agent': avg_resource_conflict_counter_goal_accomplishment_ratio_goal_first_agent,
+                'avg_counter_goal_per_resource_conflict_ratio_consent_first_agent': avg_counter_goal_per_resource_conflict_ratio_consent_first_agent,
+                'avg_counter_goal_per_resource_conflict_ratio_goal_first_agent': avg_counter_goal_per_resource_conflict_ratio_goal_first_agent,
                 
                 # Interaction and timing metrics
                 'avg_finished_step_consent_first_agent': avg_finished_step_consent_first_agent,
@@ -760,6 +781,8 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
         'avg_counter_goal_accomplishments_consent_first_agent', 'avg_counter_goal_accomplishments_goal_first_agent',
         'avg_resource_conflict_counter_goal_accomplishment_ratio_consent_first_agent',
         'avg_resource_conflict_counter_goal_accomplishment_ratio_goal_first_agent',
+        'avg_counter_goal_per_resource_conflict_ratio_consent_first_agent',
+        'avg_counter_goal_per_resource_conflict_ratio_goal_first_agent',
         'avg_total_idle_time_consent_first_agent', 'avg_total_idle_time_goal_first_agent',
         # Interaction and timing metrics
         'avg_finished_step_consent_first_agent', 'avg_finished_step_goal_first_agent',
@@ -1104,6 +1127,29 @@ def create_agent_level_analysis(experiment_name=None, experiment_date=None):
     output_path_norm = figures_dir / f"agent_level_analysis_normalized_by_steps_{exp_name_clean}.png"
     plt.savefig(output_path_norm, dpi=300, bbox_inches='tight')
     print(f"\nAgent-level Normalized-by-Steps analysis plot saved to: {output_path_norm}")
+    plt.show()
+    
+    # NEW FIGURE: Counter Goal Accomplishments per Resource Conflict Ratio
+    fig_cg_rc, ax_cg_rc = plt.subplots(1, 1, figsize=(7.5, 5))
+    fig_cg_rc.suptitle(f'{exp_name_display} - Agent-Level: Counter Goal Accomplishments per Resource Conflict\n(Averaged across {df_agent_summary["num_seeds"].iloc[0]} seeds)',
+                       fontsize=16, fontweight='bold')
+
+    ax_cg_rc.errorbar(x_all[cf_mask], df_agent_summary['avg_counter_goal_per_resource_conflict_ratio_consent_first_agent'][cf_mask],
+                     yerr=df_agent_summary['avg_counter_goal_per_resource_conflict_ratio_consent_first_agent_sem'][cf_mask],
+                     fmt='o-', linewidth=2, markersize=6, capsize=4, label='Deontic Agent', color='green')
+    ax_cg_rc.errorbar(x_all[gf_mask], df_agent_summary['avg_counter_goal_per_resource_conflict_ratio_goal_first_agent'][gf_mask],
+                     yerr=df_agent_summary['avg_counter_goal_per_resource_conflict_ratio_goal_first_agent_sem'][gf_mask],
+                     fmt='s-', linewidth=2, markersize=6, capsize=4, label='Teleological Agent', color='red')
+    ax_cg_rc.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
+    ax_cg_rc.set_ylabel('Counter Goal Accomplishments per Resource Conflict', fontsize=10)
+    ax_cg_rc.set_title('Counter Goal Accomplishments per Resource Conflict per Agent Type', fontsize=11, fontweight='bold')
+    ax_cg_rc.grid(True, alpha=0.3)
+    ax_cg_rc.legend()
+
+    plt.tight_layout()
+    output_path_cg_rc = figures_dir / f"agent_level_analysis_counter_goal_per_resource_conflict_{exp_name_clean}.png"
+    plt.savefig(output_path_cg_rc, dpi=300, bbox_inches='tight')
+    print(f"\nAgent-level Counter Goal per Resource Conflict analysis plot saved to: {output_path_cg_rc}")
     plt.show()
     
     # FIGURE 4: Agent interaction and timing metrics

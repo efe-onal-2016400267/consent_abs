@@ -324,6 +324,8 @@ def _prepare_agent_summary():
         'avg_counter_goal_accomplishments_consent_first_agent', 'avg_counter_goal_accomplishments_monitoring_agent',
         'avg_resource_conflict_counter_goal_accomplishment_ratio_consent_first_agent',
         'avg_resource_conflict_counter_goal_accomplishment_ratio_monitoring_agent',
+        'avg_counter_goal_per_resource_conflict_ratio_consent_first_agent',
+        'avg_counter_goal_per_resource_conflict_ratio_monitoring_agent',
         'avg_total_idle_time_consent_first_agent', 'avg_total_idle_time_monitoring_agent',
         'avg_finished_step_consent_first_agent', 'avg_finished_step_monitoring_agent',
         'avg_longest_idle_time_consent_first_agent', 'avg_longest_idle_time_monitoring_agent',
@@ -547,6 +549,17 @@ def create_agent_level_analysis_separate():
         ylabel='Avg Counter Goal Accomplishments per Agent per Step',
         cf_series=df_agent['avg_counter_goal_accomplishments_consent_first_agent'] / steps,
         m_series=df_agent['avg_counter_goal_accomplishments_monitoring_agent'] / steps
+    )
+
+    # Counter Goal Accomplishments per Resource Conflict Ratio.
+    save_dual_series_plot(
+        filename='agent_level_counter_goal_per_resource_conflict',
+        title='Counter Goal Accomplishments per Resource Conflict per Agent Type',
+        ylabel='Counter Goal Accomplishments per Resource Conflict',
+        cf_series=df_agent['avg_counter_goal_per_resource_conflict_ratio_consent_first_agent'],
+        m_series=df_agent['avg_counter_goal_per_resource_conflict_ratio_monitoring_agent'],
+        cf_sem=df_agent['avg_counter_goal_per_resource_conflict_ratio_consent_first_agent_sem'],
+        m_sem=df_agent['avg_counter_goal_per_resource_conflict_ratio_monitoring_agent_sem']
     )
 
     # Interaction & timing
