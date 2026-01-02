@@ -1,9 +1,21 @@
+# Simulation results 
+results/
+simulation_results/
+
+.vscode/settings.json
+.python-version
+.vscode/launch.json
+
+simulation_analysis.png
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
 *$py.class
 
 basemodel/__pycache__
+.DS_Store
 
 # C extensions
 *.so

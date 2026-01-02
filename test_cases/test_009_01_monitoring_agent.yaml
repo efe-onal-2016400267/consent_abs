@@ -1,0 +1,101 @@
+# test case for resource conflicts and counter goal accomplishmets.
+# Agent1 will acquire egg2 from Agent2, to accomplish stated goal make_cake.
+# Agent1 will not release egg2 until it finishes all of its goals since they all require egg2.
+# So at step 1 there will be no conflict since CI will not have been violated.
+# At step 2, CI will be violated by Agent1 (I will set expiry condition to 1 step) So both conflict count and counter goal count will be 1.
+
+# Checklist:
+#-----------STEP: 1--------------
+#Agent: 1, has just acquired resource: oven_1, owned by: 1
+#Agent: 1, has just acquired resource: egg_2, owned by: 2
+#Agent: 1, has just acquired resource: flour_1, owned by: 1
+#Agent: 1, has just acquired resource: sugar_1, owned by: 1
+#Agent: 1 accomplished goal: make_cake.
+#Number of remaning goals for agent 1: 5
+#Number of accomplished goals for agent 1: 1
+#Agent: 2, owns resource egg_2 but it's being used by 1 but consent is not violated
+#Agent: 2 could not accomplish the goal: make_egg
+#Agent: 1 has released resource: oven_1, owned by: 1
+#Agent: 1 has released resource: flour_1, owned by: 1
+# Agent: 1 has released resource: sugar_1, owned by: 1
+#Agent: 1, remaining goal count: 5
+#Agent: 2, remaining goal count: 1
+#-----------STEP: 2--------------
+#Agent: 1, has already borrowed egg_2, owned by 2
+#Agent: 1 accomplished goal: make_egg.
+#Number of remaning goals for agent 1: 4
+#Number of accomplished goals for agent 1: 2
+#Agent: 2, owns resource egg_2 but it's being used by 1 but consent is not violated
+#Agent: 2 could not accomplish the goal: make_egg
+#Agent: 1, remaining goal count: 4
+#Agent: 2, remaining goal count: 1
+#-----------STEP: 3--------------
+#Agent: 1, has already borrowed egg_2, owned by 2
+#Agent: 1 accomplished goal: make_my_egg.
+#Number of remaning goals for agent 1: 3
+#Number of accomplished goals for agent 1: 3
+#Agent: 2, owns resource egg_2 but it's being used by 1 but consent is not violated
+#Agent: 2 could not accomplish the goal: make_egg
+#Agent: 1, remaining goal count: 3
+#Agent: 2, remaining goal count: 1
+#-----------STEP: 4--------------
+#Agent: 1, has already borrowed egg_2, owned by 2
+#Agent: 1 accomplished goal: make_your_egg.
+#Number of remaning goals for agent 1: 2
+#Number of accomplished goals for agent 1: 4
+#Agent: 1 has released resource: egg_2, owned by: 2
+#Agent: 2, has just acquired resource: egg_2, owned by: 2
+#Agent: 2 accomplished goal: make_egg.
+#Number of remaning goals for agent 2: 0
+#Number of accomplished goals for agent 2: 1
+#Agent: 2 has released resource: egg_2, owned by: 2
+#Agent: 1, remaining goal count: 2
+#Agent: 2, remaining goal count: 0
+#-----------STEP: 5--------------
+# Agent: 1, has just acquired resource: egg_2, owned by: 2
+# Agent: 1 accomplished goal: make_our_egg.
+# Number of remaning goals for agent 1: 1
+# Number of accomplished goals for agent 1: 5
+# Agent: 1, remaining goal count: 1
+# Agent: 2, remaining goal count: 0
+#-----------STEP: 6--------------
+# Agent: 1, tried to acquire resource: egg, but could not find any available.
+# Agent: 1 accomplished goal: make_their_egg.
+# Number of remaning goals for agent 1: 0
+# Number of accomplished goals for agent 1: 6
+# Agent: 1 has released resource: egg_2, owned by: 2
+# Agent: 1, remaining goal count: 0
+# Agent: 2, remaining goal count: 0
+
+agents:
+  - id: 1
+    persona: MonitoringAgent
+    goals:
+      - name: make_cake
+        sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
+      - name: make_egg
+        sub_goals: ["use_egg"]
+      - name: make_my_egg
+        sub_goals: ["use_egg"]
+      - name: make_your_egg
+        sub_goals: ["use_egg"]
+      - name: make_our_egg
+        sub_goals: ["use_egg"]
+      - name: make_their_egg
+        sub_goals: ["use_egg"]
+    resources:
+      - name: oven_1
+        type: oven
+      - name: flour_1
+        type: flour
+      - name: sugar_1
+        type: sugar
+
+  - id: 2
+    persona: MonitoringAgent
+    goals: 
+      - name: make_egg
+        sub_goals: ["use_egg"]
+    resources:
+      - name: egg_2
+        type: egg

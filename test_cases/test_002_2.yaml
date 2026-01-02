@@ -1,17 +1,11 @@
-# OK. 1. Can an agent obtain a resource thats in use by taking a resource that is owned by and used by another agent.
-# OK. 2. Agents cannot acquire resources that are in use by other agents.
-# OK. 3. Resource obtaining works properly.
-# OK. 4. If the agent cannot obtain all resources, the goal is not accomplished.
-# OK. 5. If the goal is not accomplished in the current step, the agent continues from the same goal in the next step.
-
 agents:
   - id: 1
     persona: GoalFirstAgent
     goals:
-      - name: make_cake
-        sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
       - name: make_ratatouille
         sub_goals: ["use_oven", "use_tomato", "use_zucchini", "use_garlic", "use_onion", "use_oliveoil"]
+      - name: make_cake
+        sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
     resources:
       - name: oven_1
         type: oven
@@ -32,5 +26,10 @@ agents:
         type: garlic
       - name: onion_2
         type: onion
-      - name: oliveoil_2
-        type: oliveoil
+
+  - id: 3
+    persona: GoalFirstAgent
+    goals:
+    resources:
+      - name: oven_3
+        type: oven
