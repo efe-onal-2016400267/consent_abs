@@ -73,7 +73,7 @@ def create_agent_ratio_analysis_separate():
             'color': 'green',
             'label': 'Accomplished Goals',
             'ylabel': 'Total Accomplished Goals',
-            'title': 'Accomplished Goals vs Agent Ratio',
+            'title': 'Total Accomplished Goals vs Agent Ratio',
             'filename': 'simulation_analysis_accomplished_goals'
         },
         {
@@ -120,12 +120,13 @@ def create_agent_ratio_analysis_separate():
             ratio,
             df_summary[spec['metric']],
             yerr=df_summary[spec['sem']],
-            fmt='o-', linewidth=2, markersize=8, capsize=5,
+            fmt='o-', linewidth=4, markersize=15, capsize=15,
             color=spec['color'], label=spec['label']
         )
-        ax.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
-        ax.set_ylabel(spec['ylabel'], fontsize=11)
-        ax.set_title(spec['title'], fontsize=12, fontweight='bold')
+        ax.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=18, fontweight='bold')
+        ax.set_ylabel(spec['ylabel'], fontsize=18, fontweight='bold')
+        ax.set_title(spec['title'], fontsize=20, fontweight='bold')
+        ax.tick_params(labelsize=17)
         ax.grid(True, alpha=0.3)
         ax.legend()
 
@@ -276,19 +277,21 @@ def create_cumulative_plots_separate():
             all_steps_gf = sorted(set().union(*(s.index.tolist() for s in gf_series)))
             gf_aligned = [s.reindex(all_steps_gf, method='ffill').fillna(0) for s in gf_series]
             gf_values = pd.concat(gf_aligned, axis=1).mean(axis=1)
-            ax.plot(gf_values.index, gf_values.values, 'r-', label='Teleological Agent (per agent)')
+            ax.plot(gf_values.index, gf_values.values, 'r-', linewidth=4, label='Teleological Agent (per agent)')
         if m_series:
             all_steps_m = sorted(set().union(*(s.index.tolist() for s in m_series)))
             m_aligned = [s.reindex(all_steps_m, method='ffill').fillna(0) for s in m_series]
             m_values = pd.concat(m_aligned, axis=1).mean(axis=1)
-            ax.plot(m_values.index, m_values.values, 'b-', label='Virtue Agent (per agent)')
+            ax.plot(m_values.index, m_values.values, 'b-', linewidth=4, label='Virtue Agent (per agent)')
 
-        ax.set_xlabel('Step')
-        ax.set_ylabel('Cumulative Accomplished Goals per Agent')
+        ax.set_xlabel('Step', fontsize=16, fontweight='bold')
+        ax.set_ylabel('Cumulative Accomplished Goals per Agent', fontsize=16, fontweight='bold')
         ax.set_title(
             f"TA:{int(round(cfg_row['goal_first_count']))} / "
-            f"VA:{int(round(cfg_row['monitoring_count']))}"
+            f"VA:{int(round(cfg_row['monitoring_count']))}",
+            fontsize=18, fontweight='bold'
         )
+        ax.tick_params(labelsize=15)
         ax.grid(True, alpha=0.3)
         ax.legend()
 
@@ -371,22 +374,23 @@ def create_agent_level_analysis_separate():
 
         if gf_sem is not None and m_sem is not None:
             ax.errorbar(ratio[gf_mask], gf_series[gf_mask], yerr=gf_sem[gf_mask],
-                        fmt='s-', linewidth=2, markersize=6, capsize=4,
+                        fmt='s-', linewidth=3, markersize=15, capsize=15,
                         label='Teleological Agent', color='red')
             ax.errorbar(ratio[m_mask], m_series[m_mask], yerr=m_sem[m_mask],
-                        fmt='o-', linewidth=2, markersize=6, capsize=4,
+                        fmt='o-', linewidth=3, markersize=15, capsize=15,
                         label='Virtue Agent', color='blue')
         else:
-            ax.plot(ratio[gf_mask], gf_series[gf_mask], 's-', linewidth=2, markersize=6,
+            ax.plot(ratio[gf_mask], gf_series[gf_mask], 's-', linewidth=3, markersize=15,
                     label='Teleological Agent', color='red')
-            ax.plot(ratio[m_mask], m_series[m_mask], 'o-', linewidth=2, markersize=6,
+            ax.plot(ratio[m_mask], m_series[m_mask], 'o-', linewidth=3, markersize=15,
                     label='Virtue Agent', color='blue')
 
-        ax.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=10)
-        ax.set_ylabel(ylabel, fontsize=10)
-        ax.set_title(title, fontsize=11, fontweight='bold')
+        ax.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=18, fontweight='bold')
+        ax.set_ylabel(ylabel, fontsize=18, fontweight='bold')
+        ax.set_title(title, fontsize=20, fontweight='bold')
+        ax.tick_params(labelsize=17)
         ax.grid(True, alpha=0.3)
-        ax.legend()
+        ax.legend(fontsize=14)
 
         fig.tight_layout()
         fig.savefig(figures_dir / f"{filename}_{exp_name_clean}.png", dpi=300, bbox_inches='tight')
@@ -415,8 +419,8 @@ def create_agent_level_analysis_separate():
 
     save_dual_series_plot(
         filename='agent_level_R_consent_violation_ratio',
-        title='Consent Violation Ratio as Receiver per Agent Type',
-        ylabel='Avg Consent Violation Ratio as R per Agent',
+        title='Consent Violation Ratio as Receiver per Agent',
+        ylabel='Consent Violation Ratio as R per Agent',
         gf_series=df_agent['avg_consent_violation_ratio_goal_first_r'],
         m_series=df_agent['avg_consent_violation_ratio_monitoring_r'],
         gf_sem=df_agent['avg_consent_violation_ratio_goal_first_r_sem'],
@@ -425,8 +429,8 @@ def create_agent_level_analysis_separate():
 
     save_dual_series_plot(
         filename='agent_level_R_consent_fulfillment_ratio',
-        title='Consent Fulfillment Ratio as Receiver per Agent Type',
-        ylabel='Avg Consent Fulfillment Ratio as R per Agent',
+        title='Consent Fulfillment Ratio as Receiver per Agent',
+        ylabel='Consent Fulfillment Ratio as R per Agent',
         gf_series=df_agent['avg_consent_fulfillment_ratio_goal_first_r'],
         m_series=df_agent['avg_consent_fulfillment_ratio_monitoring_r'],
         gf_sem=df_agent['avg_consent_fulfillment_ratio_goal_first_r_sem'],
@@ -477,8 +481,8 @@ def create_agent_level_analysis_separate():
     # General metrics
     save_dual_series_plot(
         filename='agent_level_accomplished_goals_per_agent',
-        title='Accomplished Goals per Agent Type',
-        ylabel='Avg Accomplished Goals per Agent',
+        title='Total Accomplished Goals per Agent',
+        ylabel='Total Accomplished Goals per Agent',
         gf_series=df_agent['avg_accomplished_goals_goal_first_agent'],
         m_series=df_agent['avg_accomplished_goals_monitoring_agent'],
         gf_sem=df_agent['avg_accomplished_goals_goal_first_agent_sem'],
@@ -487,8 +491,8 @@ def create_agent_level_analysis_separate():
 
     save_dual_series_plot(
         filename='agent_level_remaining_goals_per_agent',
-        title='Remaining Goals per Agent Type',
-        ylabel='Avg Remaining Goals per Agent',
+        title='Remaining Goals per Agent',
+        ylabel='Remaining Goals per Agent',
         gf_series=df_agent['avg_remaining_goals_goal_first_agent'],
         m_series=df_agent['avg_remaining_goals_monitoring_agent'],
         gf_sem=df_agent['avg_remaining_goals_goal_first_agent_sem'],
@@ -497,8 +501,8 @@ def create_agent_level_analysis_separate():
 
     save_dual_series_plot(
         filename='agent_level_resource_conflicts_per_agent',
-        title='Resource Conflicts per Agent Type',
-        ylabel='Avg Resource Conflicts per Agent',
+        title='Resource Conflicts per Agent',
+        ylabel='Resource Conflicts per Agent',
         gf_series=df_agent['avg_resource_conflicts_goal_first_agent'],
         m_series=df_agent['avg_resource_conflicts_monitoring_agent'],
         gf_sem=df_agent['avg_resource_conflicts_goal_first_agent_sem'],
@@ -507,8 +511,8 @@ def create_agent_level_analysis_separate():
 
     save_dual_series_plot(
         filename='agent_level_counter_goal_accomplishments_per_agent',
-        title='Counter Goal Accomplishments per Agent Type',
-        ylabel='Avg Counter Goal Accomplishments per Agent',
+        title='Counter Goal Accomplishments per Agent',
+        ylabel='Counter Goal Accomplishments per Agent',
         gf_series=df_agent['avg_counter_goal_accomplishments_goal_first_agent'],
         m_series=df_agent['avg_counter_goal_accomplishments_monitoring_agent'],
         gf_sem=df_agent['avg_counter_goal_accomplishments_goal_first_agent_sem'],
@@ -518,8 +522,8 @@ def create_agent_level_analysis_separate():
     # Idle time
     save_dual_series_plot(
         filename='agent_level_total_idle_time_per_agent',
-        title='Total Idle Time per Agent Type',
-        ylabel='Avg Total Idle Time per Agent',
+        title='Idle Time per Agent',
+        ylabel='Idle Time per Agent',
         gf_series=df_agent['avg_total_idle_time_goal_first_agent'],
         m_series=df_agent['avg_total_idle_time_monitoring_agent'],
         gf_sem=df_agent['avg_total_idle_time_goal_first_agent_sem'],
@@ -528,8 +532,8 @@ def create_agent_level_analysis_separate():
 
     save_dual_series_plot(
         filename='agent_level_total_idle_time_per_agent_per_step',
-        title='Total Idle Time per Agent normalized by Steps',
-        ylabel='Avg Total Idle Time per Agent per Step',
+        title='Idle Time per Agent normalized by Steps',
+        ylabel='Idle Time per Agent per Step',
         gf_series=df_agent['avg_total_idle_time_goal_first_agent'] / steps,
         m_series=df_agent['avg_total_idle_time_monitoring_agent'] / steps
     )
@@ -538,15 +542,15 @@ def create_agent_level_analysis_separate():
     save_dual_series_plot(
         filename='agent_level_resource_conflicts_per_agent_per_step',
         title='Resource Conflicts per Agent normalized by Steps',
-        ylabel='Avg Resource Conflicts per Agent per Step',
+        ylabel='Resource Conflicts per Agent per Step',
         gf_series=df_agent['avg_resource_conflicts_goal_first_agent'] / steps,
         m_series=df_agent['avg_resource_conflicts_monitoring_agent'] / steps
     )
 
     save_dual_series_plot(
         filename='agent_level_counter_goals_per_agent_per_step',
-        title='Counter Goal Accomplishments per Agent normalized by Steps',
-        ylabel='Avg Counter Goal Accomplishments per Agent per Step',
+        title='CGA per Agent normalized by Steps',
+        ylabel='CGA per Agent per Step',
         gf_series=df_agent['avg_counter_goal_accomplishments_goal_first_agent'] / steps,
         m_series=df_agent['avg_counter_goal_accomplishments_monitoring_agent'] / steps
     )
@@ -554,8 +558,8 @@ def create_agent_level_analysis_separate():
     # Counter Goal Accomplishments per Resource Conflict Ratio.
     save_dual_series_plot(
         filename='agent_level_counter_goal_per_resource_conflict',
-        title='Counter Goal Accomplishments per Resource Conflict per Agent Type',
-        ylabel='Counter Goal Accomplishments per Resource Conflict',
+        title='CGA per Resource Conflict per Agent',
+        ylabel='CGA per Resource Conflict',
         gf_series=df_agent['avg_counter_goal_per_resource_conflict_ratio_goal_first_agent'],
         m_series=df_agent['avg_counter_goal_per_resource_conflict_ratio_monitoring_agent'],
         gf_sem=df_agent['avg_counter_goal_per_resource_conflict_ratio_goal_first_agent_sem'],
@@ -585,8 +589,8 @@ def create_agent_level_analysis_separate():
 
     save_dual_series_plot(
         filename='agent_level_distinct_agents_as_receiver',
-        title='Average Distinct Agents Interacted as Receiver',
-        ylabel='Avg Distinct Agents Interacted as R per Agent',
+        title='Distinct Agents Interacted as Receiver',
+        ylabel='Distinct Agents Interacted as R per Agent',
         gf_series=df_agent['avg_distinct_agents_interacted_r_goal_first_agent'],
         m_series=df_agent['avg_distinct_agents_interacted_r_monitoring_agent'],
         gf_sem=df_agent['avg_distinct_agents_interacted_r_goal_first_agent_sem'],
@@ -605,9 +609,9 @@ def create_agent_level_analysis_separate():
 
 
 def run_all():
-    create_agent_ratio_analysis_separate()
+    #create_agent_ratio_analysis_separate()
     create_cumulative_plots_separate()
-    create_agent_level_analysis_separate()
+    #create_agent_level_analysis_separate()
 
 
 if __name__ == "__main__":

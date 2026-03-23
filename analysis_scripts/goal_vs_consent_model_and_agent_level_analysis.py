@@ -450,10 +450,10 @@ def create_agent_ratio_analysis(experiment_name=None, experiment_date=None):
     ax1.errorbar(df_summary['goal_first_count'] / 1000, df_summary['accomplished_goals'], 
                  yerr=df_summary['accomplished_goals_sem'], 
                  fmt='o-', linewidth=2, markersize=8, capsize=5,
-                 label='Accomplished Goals', color='green')
-    ax1.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=11)
-    ax1.set_ylabel('Total Accomplished Goals', fontsize=11)
-    ax1.set_title('Accomplished Goals vs Agent Ratio', fontsize=12, fontweight='bold')
+                 label='TotalAccomplished Goals', color='green')
+    ax1.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=14)
+    ax1.set_ylabel('Total Accomplished Goals', fontsize=14)
+    ax1.set_title('Total Accomplished Goals vs Agent Ratio', fontsize=14, fontweight='bold')
     ax1.grid(True, alpha=0.3)
     ax1.legend()
     # 2. Remaining Goals vs Agent Ratio
