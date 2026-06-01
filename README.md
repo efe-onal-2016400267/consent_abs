@@ -1,72 +1,281 @@
-# Requirements from Aperion's Paper
+# Consent-Based Agent-Based Simulation (ConsentRealm / consent_abs)
 
-## Agents
-- Each agent owns only 1 resource in the paper. We abandon this assumption.
-- Goals of the agents are represented as propositional atoms in $\mathbb{G}$. For us, subgoals are represented likewise.
-- An action: $t = <p, r>, where p \subseteq \Omega$ is the non-empty post condition (changes it makes in the state) of t and r is the affected resources.
+An Agent-Based Simulation (ABS) framework built on the **Mesa** library to model, simulate, and analyze **consent, norms, and resource sharing** in multi-agent systems. This implementation operationalizes a formal consent mechanism, demonstrating how consent-based reasoning facilitates responsible autonomy and system-wide transparency in Socio-Technical Systems (STSs).
 
+---
 
-## Norms
-- There is a set of norms $\mathbb{L}$ in the STS, that are active even before any execution begins. (e.g. Prohibitions that keep agents from using others' resources.)
-- Some norms might conflict. For such cases, a norm recency based priority ordering is used.
-- $AU = <G, R, c, <p, r>>$, where $c = c_{det} \land \lnot c_{exp}$
-- $ CO = <R, G, p, g_R>$, where $g_R$ is the stated goal of $R$ and $p$ is the postcondition of the action $t$ in $AU$. 
-- An AU is activated when $c_{det}$ becomes true.
-- An AU expires if $c_{exp}$ becomes true and the authorized action was never executed. This transitions the CI into UNREALIZED state.
-- An AU is violated in a state $\mathbb{S}$ of the STS if  $R$ executes an action $<p, r>$ eventhough $c_{det}$ in $c$ remains false or after $c_{exp}$ becomaes true.
-- A CO is violated when the consequent $g_R$ does not hold after the antecedenet $p$ holds. (!!! This is problematic. We need time in between antecedent and consequent)
-- Prohibition: $Pr(A, t) = A \in \mathbb{A}, t=<p, r> \in \mathbb{T}_A, r \notin \mathbb{R}_A$ (!!! We will include both agents in this abstraction.)
+## 📖 Table of Contents
+- [Abstract](#-abstract)
+- [Research Questions](#-research-questions)
+- [Technical Background & Formalisms](#-technical-background--formalisms)
+- [Consent Operationalization](#-consent-operationalization)
+  - [Authorization ($AU$) Transitions](#authorization-au-transitions)
+  - [Commitment ($CO$) Transitions](#commitment-co-transitions)
+  - [Consent Life-Cycle Transitions](#consent-life-cycle-transitions)
+  - [Implementation via Enriched Atoms](#implementation-via-enriched-atoms)
+- [Simulation Design](#-simulation-design)
+  - [Agent Persona Mapping](#-agent-persona-mapping)
+  - [Agent Personas](#agent-personas)
+  - [Simulation Parameters](#simulation-parameters)
+- [Empirical Results & Validation](#-empirical-results--validation)
+  - [Validating Agent-Side Inference (Scenario Analysis)](#validating-agent-side-inference-scenario-analysis)
+  - [Validating System-Level Transparency (Population Dynamics)](#validating-system-level-transparency-population-dynamics)
+- [Repository Structure](#-repository-structure)
+- [Installation & Setup](#-installation--setup)
+- [Running Simulations & Experiments](#-running-simulations--experiments)
+- [Statistical Analysis & Plotting](#-statistical-analysis--plotting)
 
+---
 
-## Consent
-- A consent instance must be constrained to a specific agent, action, goal, and norms.
-- Unless permitted by the norms in $L$, an agent can perform an action only if it has consent for it.
-- $CI = <G, R, c, <p, r>>$ where $\mathbb{G}$ is the consent giver, $\mathbb{R}$ is the consent receiver, $c = c_{det} \land \lnot c_{exp}$, $<p, r>$ is the action $t$.
-- Consent must be feasible. The agent need to be able to perform the stated goal if it acquires consent. (e.g., if G is lending their car, the car should not be broken.)
-- $R$ requires consent from $G$ to use $r \in \mathbb{R}_G$
-- $G$ and $R$ can negotiate to agree upon the details of consent. When negotiation begins, a consent instance is initialized. A negotiation ends when $G$ and $R$ come to an agreement about the norms in $\mathbb{N}$
-- Agreed upon norms = $\mathbb{N} = \{AU, CO\} \cup \mathbb{N'}$, where $\mathbb{N'}$ includes any other norms that might have been invoked during the negotiation. E.g., Prohibitions to use $r$ for a goal different than $g_R$ Hence an agreement results in at least 1 CO and 1 AU (unsolicited consent is an exception to this rule).
+## 📝 Abstract
 
-- Consent Life-Cycle and States:
+Autonomous agents serve as personal assistants, decision-support companions, and AI-driven development tools. With their frequent use, they are increasingly being integrated into socio-technical systems, collaborating with each other and humans intensively. This collaboration requires the agent to take actions on behalf of humans as well as use resources that pertain to these interactions. These resources vary from information to physical objects to computational power. How can agents ensure that these resources are shared and used in line with the expectations of the resource owners? We study this problem through the lens of normative multiagent systems, where we put *consent* at the center. We operationalize a formal consent mechanism and demonstrate its effectiveness in managing resource sharing within socio-technical systems through representative scenarios and large-scale simulations. We specifically show that consent provides agents with the structures necessary to infer their normative standing and act accordingly, while simultaneously ensuring the system-wide transparency required for effective governance.
 
-![Alt text](images/consent_life_cycle.png)
+**Keywords:** Responsible autonomy, Consent, Norms, Socio-Technical Systems.
 
-- An consent instance can be terminated by an agent (i.e. when the agent requests some changes in the agreed upon norms), then CI transitions into RENEGOTIATION state.
-- a CI is violated if any of the norms in $\mathbb{N}$ are violated.
-- a CI is honored if all of the norms in $\mathbb{N}$ are fulfilled.
-- an agent should be able to check if it needs consent for the planned action. (We don't implement this as an explicit function. Our agents start negotiating for consent if the need a resource that is available to use from another agent. But we might need it if we implement pre-existing norms in L.)
-- $g_R$ might change during negotiation.
+---
 
-- Functions presented in the paper:
-1. hasConsent(R, G, L, t)
-2. solicitConsent ~ our requestConsentFunction
-3. negotiate(): 
-4. getConsentGiver()
-5. determineStatedGoal()
-6. update_L()
-7. consentBasedReasoning
+## ❓ Research Questions
 
-Question:
-Usecase 4 in the paper: isn't that an impossible consent?
+This framework is designed to empirically evaluate and answer three core research questions:
 
+1. **RQ1 (Operationalization):** How can we operationalize consent as a mechanism that facilitates responsible autonomy in socio-technical systems?
+2. **RQ2 (Agent-Side Inference):** Does the operationalized consent abstraction enable autonomous agents to deterministically infer and reason about their normative states at runtime?
+3. **RQ3 (System-Level Transparency):** How effectively does the proposed mechanism provide a transparent environment that allows STS managers to audit resource circulation, track actions and goal achievements, and trace normative events (e.g., norm violations and fulfillments)?
 
-### Unsolicited Consent
+---
 
-- Unsolicited consents do not invoke COs, only AUs.
-- $AU = <G, R, c, t>$
+## 📐 Technical Background & Formalisms
 
+We adopt and extend a formal model of consent:
 
+- $\mathbb{A}$: The set of agents operating in the STS.
+- $\mathbb{R}_A$: The set of resources under the sovereignty of agent $A \in \mathbb{A}$.
+- $\mathbb{G}$: The set of propositional atoms representing goals and actions. A goal expressed to another agent is a *stated goal* ($g_R \in \mathbb{G}$).
+- $\Phi$: A propositional language with standard operators and atoms $\Omega \cup \mathbb{G}$.
+- $\mathbb{T}_A$: The set of possible actions executed by agent $A \in \mathbb{A}$. An action $t \in \mathbb{T}_A$ is represented as $\langle p, r \rangle$, where $p \subseteq \Omega$ is the post-condition (effects) of $t$, and $r \in \mathbb{R}$ is the affected resource.
+- $\mathbb{S}$: The state of the STS (a propositional assignment). $\mathbb{S} \models \phi$ indicates that formula $\phi$ is true in state $\mathbb{S}$.
 
-# consent_abs
+A **Consent Instance (CI)** is defined as:
+$$CI = \langle G, R, \mathbb{N}, g_R, t \rangle$$
+where $G$ is the consent giver, $R$ is the consent receiver, $\mathbb{N}$ is the set of agreed-upon norms, $g_R$ is $R$'s stated goal, and $t$ is the action to be taken by $R$ to achieve $g_R$.
 
-Naming Convention for atoms:
-<agent_id>-<goal_name>-<subgoal_name>-<resource_id>-<valid_tick_count>
+---
 
-What kind atoms will there be?
-- agentX-make_rice---: AgentX made rice: TO BE IMPLEMENTED AFTER GOAL COMPLETION
-- agentx--use_stove--: Agent x has acquired a stove, so we need to update the state about this
-- agentX-make_rice---20: AgentX will make rice in 20 ticks. (Turns FALSE after 20 ticks passes from its creation): TO BE IMPLEMENTED AFTER NEGOTIATION.
-- agentX-make_rice--resourceY-: AgentX made rice by using resourceY: TO BE IMPLEMENTED AFTER GOAL COMPLETION
-- EXP_agentX--use_butter-10-20: Expiration conditions: Becomes true if agentX hasnt made rice between steps 10 and 20. An agent can give consent until they will need the resource for example. This can be a key part of negotiaion.
+## ⚙️ Consent Operationalization
 
-- Do I need soverignty atoms like: AgentX--resourceY-: AgentX holds resourceY. I don't think so
+We refine the state transitions of authorization and commitment norms to enable deterministic runtime inference using Kripke transition models.
+
+### Authorization ($AU$) Transitions
+An authorization norm is represented as $AU = \langle G, R, c, t \rangle$, where $c = \langle c_{det}, c_{exp\_au} \rangle$ defines the valid window (detachment and expiration conditions).
+
+```
+                 [ c_det ∧ ¬c_exp_au ]
+  (Not Active) ------------------------> (Active)
+       |                                    |
+       | [ p ∧ (¬c_det ∨ c_exp_au) ]        | [ p ∧ ¬c_exp_au ]
+       |                                    v
+       +--------------------------------> (Fulfilled)
+       |                                    |
+       |                                    | [ p ∧ c_exp_au ]
+       v                                    v
+   (Violated) <-----------------------------+
+```
+
+- **$Not\_active \to Active$**: Occurs when $\mathbb{S} \models c_{det} \land \neg c_{exp\_au}$.
+- **$Not\_active \to Violated$**: Triggered by unauthorized usage: $\mathbb{S} \models p \land (\neg c_{det} \lor c_{exp\_au})$.
+- **$Active \to Not\_active$**: Occurs if the expiration condition $c_{exp\_au}$ becomes true before the action is taken.
+- **$Active \to Fulfilled$**: Occurs when the action is taken within the valid window: $\mathbb{S} \models p \land \neg c_{exp\_au}$.
+- **$Active, Fulfilled \to Violated$**: Occurs if the agent fails to return resource $r$ after the authorization expires: $\mathbb{S} \models p \land c_{exp\_au}$.
+
+### Commitment ($CO$) Transitions
+A commitment is represented as $CO = \langle R, G, p, g_R, c_{exp\_co} \rangle$, where $c_{exp\_co}$ is an explicit expiration condition representing the finite interval allowed to achieve the stated goal.
+
+- **$Not\_active \to Active$**: Triggered when the antecedent $p$ holds, provided the goal is not yet achieved and the deadline has not passed: $\mathbb{S} \models p \land \neg g_R \land \neg c_{exp\_co}$.
+- **$Not\_active \to Fulfilled$**: Occurs if the goal $g_R$ is already satisfied before commitment activation: $\mathbb{S} \models g_R \land \neg c_{exp\_co}$.
+- **$Active \to Fulfilled$**: Represents successful compliance: $\mathbb{S} \models g_R \land \neg c_{exp\_co}$.
+- **$Active \to Violated$**: Occurs if the deadline passes without the goal being achieved: $\mathbb{S} \models \neg g_R \land c_{exp\_co}$.
+
+### Consent Life-Cycle Transitions
+A consent instance transitions through the following states:
+- **$\sigma_a$ (Active)**: Agreed-upon norms are active.
+- **$\sigma_h$ (Honored)**: All agreed-upon norms are fulfilled ($\forall n \in \mathbb{N} : Fulfilled(n, S)$).
+- **$\sigma_v$ (Violated)**: At least one norm is violated ($\exists n \in \mathbb{N} : Violated(n, S)$).
+- **$\sigma_u$ (Unrealized)**: An authorization expires before being exercised, or the resource is returned early without achieving the goal.
+
+We introduce two key extensions to the original model:
+1. **$\sigma_h \to \sigma_v$**: A previously honored consent transitions to violated if a post-fulfillment violation occurs (e.g., failing to return the resource after expiration).
+2. **Early Release ($\Phi_{early-release}$)**:
+   $$\Phi_{\text{early-release}} = (\forall n \in \mathbb{N} : \neg Violated(n, S)) \land Fulfilled(AU, S) \land Active(CO, S) \land Released(r)$$
+   This captures scenarios where the receiver returns the resource on time but fails to achieve the goal, which is a more responsible outcome than a violation ($\sigma_h \succ \sigma_u \succ \sigma_v$).
+
+### Implementation via Enriched Atoms
+Rather than parsing complex temporal logic at every step, agents use bottom-up evaluation to resolve norm and consent states via logical operations on **Enriched Atoms** (implemented in `base_model/atom.py`). These class objects encapsulate metadata such as `valid_from`, `valid_to`, and `truth` values, allowing deterministic, efficient runtime lookups under the closed-world assumption.
+
+---
+
+## 🧪 Simulation Design
+
+The simulation environment, **ConsentRealm**, models a kitchen where **Chef Agents** aim to cook dishes (goals) by acquiring ingredients and appliances (resources).
+
+### 🔄 Agent Persona Mapping
+To bridge the terminology used in the research paper with the actual implementation classes in the codebase, please refer to the following mapping:
+
+| Paper Terminology | Codebase Implementation Class | Description |
+| :--- | :--- | :--- |
+| **Selfish Agent (SA)** | `GoalFirstAgent` | Prioritizes goals, ignores consent violations/expirations. |
+| **Reactive Agent (RA)** | `ConsentFirstAgent` | Prioritizes consent, returns resources upon violation. |
+| **Preemptive Agent (PA)** | `MonitoringAgent` | Proactively releases resources one step before AU expiration. |
+| **Hybrid Agent** | `FiftyFiftyAgent` | Randomly behaves as either Selfish or Reactive. |
+
+### Agent Personas
+1. **Selfish Agent (SA / `GoalFirstAgent`)**: Prioritizes goal accomplishment above all else. It acquires resources through consent but never returns them unless it no longer requires them for any current or future goal, regardless of consent violations.
+2. **Reactive Agent (RA / `ConsentFirstAgent`)**: Rule-following. It monitors its received consents and immediately returns a borrowed resource if the associated consent instance is found to be violated.
+3. **Preemptive Agent (PA / `MonitoringAgent`)**: Proactive. It monitors its consents and preemptively returns resources if an authorization expiration is *about to* occur (one step before violation), avoiding the downtime of consent violations.
+
+### Simulation Parameters
+- **Population**: 1000 agents across 11 population distributions (e.g., SA-RA or SA-PA pairings).
+- **Goals & Resources**: Each agent starts with 3 unique goals and 3 sovereigned resources.
+- **Norm Expirations**: Sampled uniformly from the interval $[3, 7]$ steps.
+- **Execution**: Up to 1000 steps, with an early stopping threshold of 50 consecutive steps without any accomplished goals.
+- **Replications**: 10 independent runs per configuration using different random seeds to ensure statistical robustness.
+
+---
+
+## 📈 Empirical Results & Validation
+
+### Validating Agent-Side Inference (Scenario Analysis)
+We validate **RQ2** by tracing individual-level representative scenarios (defined in `test_cases/`):
+- **Preemptive Scenario**: Agent1 (PA / `MonitoringAgent`) borrows an oven from Agent2 to make a cake, but cannot find eggs. Realizing its authorization is about to expire at Step 3, Agent1 preemptively releases the oven, transitioning the consent to `UNREALIZED` ($\sigma_u$). This allows Agent3 (SA / `GoalFirstAgent`) to immediately acquire the oven and accomplish its goal.
+- **Selfish Scenario**: In an identical setup with SAs, Agent1 retains the oven indefinitely despite the impossibility of completing its goal, resulting in a deadlock, a consent violation ($\sigma_v$), and system-wide lock.
+
+This demonstrates that the consent mechanism successfully provides the deterministic signals necessary for agents to infer their normative standing and act responsibly.
+
+### Validating System-Level Transparency (Population Dynamics)
+We validate **RQ3** through large-scale simulations:
+- **Resource Collapse**: As the proportion of Selfish Agents increases, the system experiences severe resource collapse and deadlocks. Cumulative goal accomplishment drops significantly for all agent types (highly significant under one-way ANOVA tests: $p < 0.001$).
+- **Selfishness Doesn't Pay**: SAs do not outperform consent-sensitive agents (RAs or PAs) in terms of goal accomplishment (confirmed via Mann-Whitney tests, $p > 0.05$).
+- **Consent Violations**: As the SA ratio increases, consent violations increase dramatically due to resource hoarding. Conversely, higher proportions of PAs and RAs improve resource circulation, enabling higher system-wide goal completion rates.
+
+---
+
+## 📂 Repository Structure
+
+```bash
+consent_abs/
+├── base_model/
+│   ├── agent_personas/
+│   │   ├── consent_first_agent.py               # Implements ConsentFirst / Reactive Agent
+│   │   ├── goal_first_agent.py                  # Implements GoalFirst / Selfish Agent
+│   │   ├── fifty_fifty_consent_and_goal_agent.py # Implements FiftyFifty Agent
+│   │   └── monitoring_agent.py                  # Implements Monitoring / Preemptive Agent
+│   ├── helpers/
+│   │   ├── food_ontology_extractor.py
+│   │   └── html_data_viewer.py                  # Visualizes simulation traces
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── model.py                             # Core Mesa model implementation
+│   ├── simulation_scripts/
+│   │   ├── experiment_configs/                  # JSON configurations for batch runs
+│   │   ├── experiment_runner.py                 # Runs custom experiments
+│   │   └── simulator.py                         # Batch simulator across multiple seeds
+│   ├── action.py                                # Action class <p, r>
+│   ├── atom.py                                  # Enriched Atom implementation
+│   ├── base_agent.py                            # Base Chef Agent class
+│   ├── config.py                                # Global simulation configurations
+│   ├── consent.py                               # ConsentInstance class and state logic
+│   ├── norm.py                                  # Authorization and Commitment classes
+│   ├── resource.py                              # Resource class
+│   └── state.py                                 # EnvState (propositional assignment)
+├── goals/
+│   └── goal_tree.yaml                           # Recipe goal hierarchy
+├── test_cases/                                  # YAML files for individual scenarios
+└── analysis_scripts/                            # Statistical tests and plotting scripts
+```
+
+---
+
+## ⚙️ Installation & Setup
+
+1. **Clone the Repository**:
+   ```bash
+   git clone <repository-url>
+   cd consent_abs
+   ```
+
+2. **Install Dependencies**:
+   Install all required packages via the provided `requirements.txt` file:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Configure Paths**:
+   Update the hardcoded paths in `base_model/config.py` to match your local directory structure:
+   ```python
+   GOAL_FILE_PATH = "/path/to/consent_abs/goals/goal_tree.yaml"
+   TEST_CASE_PATH = "/path/to/consent_abs/test_cases/test_008_01_resource_conflict_counter_goal.yaml"
+   ```
+
+---
+
+## 🚀 Running Simulations & Experiments
+
+### Single Simulation Run
+Run a single simulation with real-time console output:
+```bash
+python base_model/models/model.py
+```
+This saves the agent and model data as CSV files in `base_model/results/`.
+
+### Batch Experiments
+To run the full suite of experiments across all 10 seeds:
+```bash
+python base_model/simulation_scripts/simulator.py
+```
+This executes the configurations defined in `base_model/simulation_scripts/experiment_configs/` and saves the outputs under `simulation_results/`.
+
+---
+
+## 📊 Statistical Analysis & Plotting
+
+To perform statistical analysis and generate plots, **separate analysis scripts must be run** depending on the specific agent personas being compared. Each script processes the corresponding batch simulation results, averages them across all 10 seeds, and saves high-resolution figures in the experiment's `figures/` directory.
+
+### 1. Selfish Agent vs. Reactive Agent (Goal vs. Consent-Based)
+To analyze the dynamics between `GoalFirstAgent` (Selfish) and `ConsentFirstAgent` (Reactive):
+```bash
+python analysis_scripts/goal_vs_consent_model_and_agent_level_analysis.py
+```
+*Generates combined plots for accomplished goals, remaining goals, consent violations, and resource conflicts.*
+
+For separate, individual plots:
+```bash
+python analysis_scripts/goal_vs_consent_model_and_agent_level_analysis_separate_plots.py
+```
+
+### 2. Selfish Agent vs. Preemptive Agent (Goal vs. Monitoring-Based)
+To analyze the dynamics between `GoalFirstAgent` (Selfish) and `MonitoringAgent` (Preemptive):
+```bash
+python analysis_scripts/goal_vs_monitoring_model_and_agent_level_analysis.py
+```
+
+For separate, individual plots:
+```bash
+python analysis_scripts/goal_vs_monitoring_model_and_agent_level_analysis_separate_plots.py
+```
+
+### 3. Reactive Agent vs. Preemptive Agent (Consent vs. Monitoring-Based)
+To analyze the dynamics between `ConsentFirstAgent` (Reactive) and `MonitoringAgent` (Preemptive):
+```bash
+python analysis_scripts/consent_vs_monitoring_model_and_agent_level_analysis.py
+```
+
+For separate, individual plots:
+```bash
+python analysis_scripts/consent_vs_monitoring_model_and_agent_level_analysis_separate_plots.py
+```
+
+### 4. General Simulation Analysis
+To run a general analysis across all simulation results:
+```bash
+python analysis_scripts/analyze_simulation_results.py
+```
