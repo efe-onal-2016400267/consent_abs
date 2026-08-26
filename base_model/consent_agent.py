@@ -119,9 +119,10 @@ class ConsentChefAgent(BaseChefAgent):
         consent_id = self.model.consent_count
         # 1 instance for the G, 1 for R, 1 for the model.
         # Because what if both agents are wrong about the state of the consent instance. 
-        CI_g = ConsentInstance(g=other, r=self, N=None, g_R=g_R, t=t, res=res, id=consent_id, owner=other)
-        CI_r = ConsentInstance(g=other, r=self, N=None, g_R=g_R, t=t, res=res, id=consent_id, owner=self)
-        CI_m = ConsentInstance(g=other, r=self, N=None, g_R=g_R, t=t, res=res, id=consent_id, owner=None)
+        CI_g = ConsentInstance(g=other, r=self, N=None, g_R=g_R, t=t, res=res, id=consent_id, owner=other, time_step=self.model.steps)
+        CI_r = ConsentInstance(g=other, r=self, N=None, g_R=g_R, t=t, res=res, id=consent_id, owner=self, time_step=self.model.steps)
+        CI_m = ConsentInstance(g=other, r=self, N=None, g_R=g_R, t=t, res=res, id=consent_id, owner=None, time_step=self.model.steps)
+        #CI_h = ConsentInstance(g=other, r=self, N=None, g_R=g_R, t=t, res=res, id=consent_id, owner=None, time_step=self.model.steps)
 
         agreement = False
         # Perform negotiation
@@ -143,7 +144,10 @@ class ConsentChefAgent(BaseChefAgent):
         other.consents_given.append(CI_g)
         self.last_consent_received = CI_r
         self.model.living_consents.append(CI_m)
-        self.model.consent_history.append(CI_m) # might need a 4th instance fr this.
+
+        history_log = CI_m.get_consent_dict()
+        self.model.consent_history.append(history_log)
+        #self.model.consent_history.append(CI_h) # might need a 4th instance fr this.
 
         return agreement
 

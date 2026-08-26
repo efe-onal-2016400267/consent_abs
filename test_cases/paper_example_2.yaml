@@ -1,0 +1,34 @@
+# Example 1:
+
+# 1 VA, 1 TA:
+# VA: unrealized consent, TA: 1 fulfillment, 1 violation
+
+agents:
+  - id: 1
+    persona: GoalFirstAgent
+    goals:
+      - name: make_cake
+        sub_goals: ["use_oven", "use_egg", "use_flour", "use_sugar"]
+    resources:
+      - name: flour_1
+        type: flour
+      - name: butter_1
+        type: butter
+      - name: sugar_1
+        type: sugar
+
+  - id: 2
+    persona: GoalFirstAgent
+    goals: 
+    resources:
+      - name: oven_2
+        type: oven
+
+  - id: 3
+    persona: GoalFirstAgent
+    goals: 
+      - name: make_bakedPotato
+        sub_goals: ["use_potato", "use_oven"]
+    resources:
+      - name: potato_3
+        type: potato

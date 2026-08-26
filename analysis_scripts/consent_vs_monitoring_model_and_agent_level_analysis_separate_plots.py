@@ -131,8 +131,10 @@ def create_agent_ratio_analysis_separate():
         ax.legend()
 
         output = figures_dir / f"{spec['filename']}_{exp_name_clean}.png"
+        output_eps = figures_dir / f"{spec['filename']}_{exp_name_clean}.eps"
         fig.tight_layout()
         fig.savefig(output, dpi=300, bbox_inches='tight')
+        fig.savefig(output_eps, dpi=1200, bbox_inches='tight')
         plt.close(fig)
 
     fig, ax_steps = plt.subplots(figsize=(7.5, 5))
@@ -163,8 +165,10 @@ def create_agent_ratio_analysis_separate():
     ax_steps.legend([line1[0], line2[0]], ['Average Simulation Length', 'Total Accomplished Goals'], loc='upper right')
 
     dual_output = figures_dir / f"simulation_analysis_steps_and_goals_{exp_name_clean}.png"
+    dual__output_eps = figures_dir / f"simulation_analysis_steps_and_goals_{exp_name_clean}.eps"
     fig.tight_layout()
     fig.savefig(dual_output, dpi=300, bbox_inches='tight')
+    fig.savefig(dual__output_eps, dpi=1200, bbox_inches='tight')
     plt.close(fig)
 
     steps = pd.to_numeric(df_summary['avg_steps_overall'], errors='coerce').replace(0, np.nan)
@@ -206,8 +210,10 @@ def create_agent_ratio_analysis_separate():
         ax.legend()
 
         output = figures_dir / f"{spec['filename']}_{exp_name_clean}.png"
+        output_eps = figures_dir / f"{spec['filename']}_{exp_name_clean}.eps"
         fig.tight_layout()
         fig.savefig(output, dpi=300, bbox_inches='tight')
+        fig.savefig(output_eps, dpi=1200, bbox_inches='tight')
         plt.close(fig)
 
 
@@ -296,8 +302,10 @@ def create_cumulative_plots_separate():
         ax.legend()
 
         filename = f"agent_level_cumulative_goals_{cfg.replace('-', '_')}.png"
+        filename_eps = f"agent_level_cumulative_goals_{cfg.replace('-', '_')}.eps"
         fig.tight_layout()
         fig.savefig(figures_dir / filename, dpi=300, bbox_inches='tight')
+        fig.savefig(figures_dir / filename_eps, dpi=1200, bbox_inches='tight')
         plt.close(fig)
 
 
@@ -375,17 +383,17 @@ def create_agent_level_analysis_separate():
         if cf_sem is not None and m_sem is not None:
             ax.errorbar(ratio[cf_mask], cf_series[cf_mask], yerr=cf_sem[cf_mask],
                         fmt='o-', linewidth=3, markersize=15, capsize=15,
-                        label='Deontic Agent', color='green')
+                        label='Reactive Agent', color='green')
             ax.errorbar(ratio[m_mask], m_series[m_mask], yerr=m_sem[m_mask],
                         fmt='s-', linewidth=3, markersize=15, capsize=15,
-                        label='Virtue Agent', color='blue')
+                        label='Preemptive Agent', color='blue')
         else:
             ax.plot(ratio[cf_mask], cf_series[cf_mask], 'o-', linewidth=3, markersize=15,
-                    label='Deontic Agent', color='green')
+                    label='Reactive Agent', color='green')
             ax.plot(ratio[m_mask], m_series[m_mask], 's-', linewidth=3, markersize=15,
-                    label='Virtue Agent', color='blue')
+                    label='Preemptive Agent', color='blue')
 
-        ax.set_xlabel('Virtue Agent Ratio (Virtue:All)', fontsize=18, fontweight='bold')
+        ax.set_xlabel('Preemptive Agent Ratio (Preemptive:All)', fontsize=18, fontweight='bold')
         ax.set_ylabel(ylabel, fontsize=18, fontweight='bold')
         ax.set_title(title, fontsize=20, fontweight='bold')
         ax.tick_params(labelsize=17)
@@ -394,6 +402,7 @@ def create_agent_level_analysis_separate():
 
         fig.tight_layout()
         fig.savefig(figures_dir / f"{filename}_{exp_name_clean}.png", dpi=300, bbox_inches='tight')
+        fig.savefig(figures_dir / f"{filename}_{exp_name_clean}.eps", dpi=1200, bbox_inches='tight')
         plt.close(fig)
 
     # Receiver metrics
@@ -610,8 +619,8 @@ def create_agent_level_analysis_separate():
 
 def run_all():
     #create_agent_ratio_analysis_separate()
-    create_cumulative_plots_separate()
-    #create_agent_level_analysis_separate()
+    #create_cumulative_plots_separate()
+    create_agent_level_analysis_separate()
 
 
 if __name__ == "__main__":

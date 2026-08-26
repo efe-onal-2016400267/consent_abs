@@ -131,8 +131,10 @@ def create_agent_ratio_analysis_separate():
         ax.legend()
 
         output = figures_dir / f"{spec['filename']}_{exp_name_clean}.png"
+        output_eps = figures_dir / f"{spec['filename']}_{exp_name_clean}.eps"
         fig.tight_layout()
         fig.savefig(output, dpi=300, bbox_inches='tight')
+        fig.savefig(output_eps, dpi=1200, bbox_inches='tight')
         plt.close(fig)
 
     fig, ax_steps = plt.subplots(figsize=(7.5, 5))
@@ -163,8 +165,10 @@ def create_agent_ratio_analysis_separate():
     ax_steps.legend([line1[0], line2[0]], ['Average Simulation Length', 'Total Accomplished Goals'], loc='upper right')
 
     dual_output = figures_dir / f"simulation_analysis_steps_and_goals_{exp_name_clean}.png"
+    dual_output_eps = figures_dir / f"simulation_analysis_steps_and_goals_{exp_name_clean}.eps"
     fig.tight_layout()
     fig.savefig(dual_output, dpi=300, bbox_inches='tight')
+    fig.savefig(dual_output_eps, dpi=1200, bbox_inches='tight')
     plt.close(fig)
 
     steps = pd.to_numeric(df_summary['avg_steps_overall'], errors='coerce').replace(0, np.nan)
@@ -206,8 +210,11 @@ def create_agent_ratio_analysis_separate():
         ax.legend()
 
         output = figures_dir / f"{spec['filename']}_{exp_name_clean}.png"
+        output_eps = figures_dir / f"{spec['filename']}_{exp_name_clean}.eps"
         fig.tight_layout()
         fig.savefig(output, dpi=300, bbox_inches='tight')
+        fig.savefig(output_eps, dpi=1200, bbox_inches='tight')
+
         plt.close(fig)
 
 
@@ -296,8 +303,10 @@ def create_cumulative_plots_separate():
         ax.legend()
 
         filename = f"agent_level_cumulative_goals_{cfg.replace('-', '_')}.png"
+        filename_eps = f"agent_level_cumulative_goals_{cfg.replace('-', '_')}.eps"
         fig.tight_layout()
         fig.savefig(figures_dir / filename, dpi=300, bbox_inches='tight')
+        fig.savefig(figures_dir / filename_eps, dpi=1200, bbox_inches='tight')
         plt.close(fig)
 
 
@@ -370,22 +379,38 @@ def create_agent_level_analysis_separate():
     steps = pd.to_numeric(df_agent['avg_steps_overall'], errors='coerce').replace(0, np.nan)
 
     def save_dual_series_plot(filename, title, ylabel, gf_series, m_series, gf_sem=None, m_sem=None):
-        fig, ax = plt.subplots(figsize=(7.5, 5))
+        fig, ax = plt.subplots(figsize=(7.5, 5), facecolor='white')
+        ax.set_facecolor('white')
+
+        # 1. Make all four borders (spines) visible and black
+        for spine in ax.spines.values():
+            spine.set_visible(True)
+            spine.set_color('black')
+            spine.set_linewidth(1.5) # Slightly thicker for print clarity
+
+        # 2. Make the tick marks visible
+        # 'direction="in"' is a common academic style; use "out" if you prefer
+        ax.tick_params(which='both', direction='in', length=6, width=1.5, colors='black', labelsize=17)
+
+        # 3. Ensure the axes labels and title are also pure black
+        ax.xaxis.label.set_color('black')
+        ax.yaxis.label.set_color('black')
+        ax.title.set_color('black')
 
         if gf_sem is not None and m_sem is not None:
             ax.errorbar(ratio[gf_mask], gf_series[gf_mask], yerr=gf_sem[gf_mask],
                         fmt='s-', linewidth=3, markersize=15, capsize=15,
-                        label='Teleological Agent', color='red')
+                        label='Selfish Agent', color='#000000')
             ax.errorbar(ratio[m_mask], m_series[m_mask], yerr=m_sem[m_mask],
                         fmt='o-', linewidth=3, markersize=15, capsize=15,
-                        label='Virtue Agent', color='blue')
+                        label='Preemptive Agent', color='#CCCCCC')
         else:
             ax.plot(ratio[gf_mask], gf_series[gf_mask], 's-', linewidth=3, markersize=15,
-                    label='Teleological Agent', color='red')
+                    label='Selfish Agent', color='#000000')
             ax.plot(ratio[m_mask], m_series[m_mask], 'o-', linewidth=3, markersize=15,
-                    label='Virtue Agent', color='blue')
+                    label='Preemptive Agent', color='#CCCCCC')
 
-        ax.set_xlabel('Teleological Agent Ratio (Teleological:All)', fontsize=18, fontweight='bold')
+        ax.set_xlabel('Selfish Agent Ratio (Selfish:All)', fontsize=18, fontweight='bold')
         ax.set_ylabel(ylabel, fontsize=18, fontweight='bold')
         ax.set_title(title, fontsize=20, fontweight='bold')
         ax.tick_params(labelsize=17)
@@ -394,6 +419,7 @@ def create_agent_level_analysis_separate():
 
         fig.tight_layout()
         fig.savefig(figures_dir / f"{filename}_{exp_name_clean}.png", dpi=300, bbox_inches='tight')
+        fig.savefig(figures_dir / f"{filename}_{exp_name_clean}.eps", dpi=1200, bbox_inches='tight')
         plt.close(fig)
 
     # Receiver metrics
@@ -610,8 +636,8 @@ def create_agent_level_analysis_separate():
 
 def run_all():
     #create_agent_ratio_analysis_separate()
-    create_cumulative_plots_separate()
-    #create_agent_level_analysis_separate()
+    #create_cumulative_plots_separate()
+    create_agent_level_analysis_separate()
 
 
 if __name__ == "__main__":

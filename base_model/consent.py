@@ -1,5 +1,6 @@
 from action import Action
 from norm import Norm, Authorization, Commitment
+import copy
 
 class ConsentInstance:
     """
@@ -10,7 +11,7 @@ class ConsentInstance:
         g_R: Stated goal that becomes true after CO is fulfilled. So the main goal of the agent
         t: The action for which the consent is given
     """
-    def __init__(self, g, r, N, g_R, t:"Action", res, id, owner):
+    def __init__(self, g, r, N, g_R, t:"Action", res, id, owner, time_step):
         self.g = g
         self.r = r
         self.N = N
@@ -23,6 +24,8 @@ class ConsentInstance:
         # And we use an id two bind the two instances of consent.
         self.id = id
         self.owner = owner # The owner is who holds and checks the consent instance.
+        self.time_step = time_step
+
 
     def is_violated(self, agent=None, counter=False, caller=None):
         """
@@ -39,6 +42,9 @@ class ConsentInstance:
                 if n.is_violated(agent=agent, counter=counter, caller=caller):
                     violated = True
                     self.state = "VIOLATED"
+                    history_log = self.get_consent_dict()
+                    history_log["state_transition_time_step"] = self.g.model.steps
+                    self.g.model.consent_history.append(history_log)
             return violated
         else:
             return False
@@ -63,6 +69,9 @@ class ConsentInstance:
             
         # Otherwise, ConsentInstance is fulfilled.
         self.state = "FULFILLED"
+        history_log = self.get_consent_dict()
+        history_log["state_transition_time_step"] = self.g.model.steps
+        self.g.model.consent_history.append(history_log)
         return True
 
     def is_unrealized(self, agent=None, counter=False, caller=None):
@@ -73,6 +82,9 @@ class ConsentInstance:
             for n in self.N:
                 if n.type == "AU" and n.expired:
                     self.state = "UNREALIZED"
+                    history_log = self.get_consent_dict()
+                    history_log["state_transition_time_step"] = self.g.model.steps
+                    self.g.model.consent_history.append(history_log)
                     return True
         return False
 
@@ -89,4 +101,65 @@ class ConsentInstance:
         for n in self.N:
             n.activation_update(agent=agent, counter=counter, caller=caller)
 
+    def get_consent_dict(self):
+        au_state = None
+        co_state = None
+        if self.N[0].violated:
+            au_state = "VIOLATED"
+        elif self.N[0].fulfilled:
+            au_state = "FULFILLED"
+        elif self.N[0].active:
+            au_state = "ACTIVE"
+        elif self.N[0].expired:
+            au_state = "FULFILLED"
+
+        if self.N[1].violated:
+            co_state = "VIOLATED"
+        elif self.N[1].fulfilled:
+            co_state = "FULFILLED"
+        elif self.N[1].active:
+            co_state = "ACTIVE"
+
+        consent = {
+            "id": self.id,
+            "state_transition_time_step": self.g.model.steps,
+            "state": self.state,
+            "giver": self.g.unique_id,
+            "receiver": self.r.unique_id,
+            "action": self.t[0].name,
+            "resource": self.t[1].name,
+            "stated_goal": self.g_R.name,
+            "AU_detachment_condition": self.N[0].c_det,
+            "AU_expiration_condition": f"{self.N[0].c_exp[0].name}",
+            "AU_state": au_state,
+            "CO_antecedent": self.N[1].p.name,
+            "CO_consequent": self.N[1].g_R.name,
+            "CO_expiration_condition": f"EXP_{self.N[1].g_R.name}",
+            "CO_state": co_state
+        }
+
+        return consent
+
     
+
+    """
+    print("---"*10)
+            
+                
+                
+                
+
+                print("---Related CO---:")
+                print(f"Antecedent p: {h_consent.N[1].p.name}")
+                print(f"Consequent gR: {h_consent.N[1].g_R.name}")
+                print(f"Expiration condition: {h_consent.g_R.valid_from} to {h_consent.g_R.valid_to}")
+                if h_consent.N[1].violated:
+                    print("CO State: Violated")
+                elif h_consent.N[1].fulfilled:
+                    print("CO State: Fulfilled")
+                elif h_consent.N[1].active:
+                    print("CO State: Active")
+                print("---"*10)
+    
+    
+    """

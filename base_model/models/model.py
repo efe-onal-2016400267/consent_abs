@@ -425,7 +425,29 @@ if __name__ == "__main__":
             if len(agent.remaining_goals) > 0:
                 fin = 0
 
+
         if fin or step_count >= model.MAX_STEP_COUNT:
+            for h_consent in model.consent_history:
+                print("---"*10)
+                print(f"Consent ID: {h_consent["id"]}")
+                print(f"State transition time step: {h_consent["state_transition_time_step"]}")
+                print(f"Consent state: {h_consent["state"]}")
+                print(f"Giver: {h_consent["giver"]}")
+                print(f"Receiver: {h_consent["receiver"]}")
+                print(f"Action p: {h_consent["action"]}")
+                print(f"Resource: {h_consent["resource"]}")
+                print(f"Stated goal: {h_consent["stated_goal"]}")
+                print("---Related AU---:")
+                print(f"Detachment condition: {h_consent["AU_detachment_condition"]}")
+                print(f"Expiration condition: {h_consent["AU_expiration_condition"]}")
+                print(f"AU state: {h_consent["AU_state"]}")
+                print("---Related CO---:")
+                print(f"Antecedent p: {h_consent["CO_antecedent"]}")
+                print(f"Consequent gR: {h_consent["CO_consequent"]}")
+                print(f"Expiration condition: {h_consent["CO_expiration_condition"]}")
+                print(f"CO state: {h_consent["CO_state"]}")
+                print("---"*10)
+
             agent_vars = model.datacollector.get_agent_vars_dataframe()
             model_vars = model.datacollector.get_model_vars_dataframe()
             model_vars.head()
